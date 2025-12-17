@@ -31,20 +31,36 @@ body {
   font-size: 18px;
 }
 
+.hidden {
+  display: none;
+}
+
 /* HERO */
 .hero {
-  padding: 48px 16px 32px;
+  position: relative;
 }
 
-.hero h1 {
-  font-size: 32px;
+.hero-img {
+  width: 100%;
+  display: block;
+}
+
+.hero-text {
+  position: absolute;
+  bottom: 24px;
+  left: 16px;
+  right: 16px;
+}
+
+.hero-text h1 {
+  font-size: 28px;
   line-height: 1.1;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
-.hero p {
-  font-size: 16px;
-  color: #555;
+.hero-text p {
+  font-size: 14px;
+  color: #444;
 }
 
 /* ENTRY GRID */
@@ -55,9 +71,15 @@ body {
 }
 
 .entry-card {
-  padding: 20px;
-  border-radius: 24px;
   background: #f9f9f9;
+  border-radius: 24px;
+  padding: 16px;
+}
+
+.entry-card img {
+  width: 100%;
+  border-radius: 16px;
+  margin-bottom: 12px;
 }
 
 .entry-card h2 {
@@ -79,6 +101,7 @@ body {
   cursor: pointer;
 }
 
+/* COMBO CARD */
 .entry-card.highlight {
   border: 1px solid #000;
   position: relative;
@@ -95,7 +118,7 @@ body {
   border-radius: 999px;
 }
 
-/* READYMADE */
+/* READY MADE */
 .ready-made {
   padding: 24px 16px 40px;
 }
@@ -109,4 +132,3 @@ body {
   font-size: 14px;
   cursor: pointer;
 }
-
