@@ -80,6 +80,7 @@ body {
 
 /* IMAGE */
 .card-image {
+  position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: 16px;
@@ -92,44 +93,8 @@ body {
   object-fit: cover;
 }
 
-/* TEXT */
-.entry-card h2 {
-  margin: 0 0 4px;
-}
-
-.entry-card p {
-  margin: 0 0 6px;
-  color: #666;
-}
-
-.combo-subtext {
-  color: #444;
-}
-
-.price-hint {
-  font-size: 12px;
-  color: #777;
-  margin-bottom: 10px;
-}
-
-/* BUTTONS */
-button {
-  border: none;
-  background: #000;
-  color: #fff;
-  padding: 11px 16px;
-  border-radius: 999px;
-  font-size: 14px;
-}
-
-.secondary-btn {
-  background: transparent;
-  color: #000;
-  border: 1px solid #000;
-}
-
-/* BADGE */
-.badge {
+/* COMBO BADGE (ONLY FOR COMBO) */
+.combo-badge {
   position: absolute;
   bottom: 12px;
   right: 12px;
@@ -140,32 +105,43 @@ button {
   font-size: 11px;
 }
 
-/* PREMIUM MOTION */
-.premium {
-  transition:
-    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1);
+/* TEXT */
+.entry-card h2 {
+  margin: 0 0 4px;
 }
 
-.premium:active {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(0,0,0,0.08);
+.entry-card p {
+  margin: 0 0 10px;
+  color: #666;
 }
 
-.premium .card-image img {
-  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+.combo-subtext {
+  margin-bottom: 14px;
+  color: #444;
 }
 
-.premium:active .card-image img {
-  transform: scale(1.02);
+.price-hint {
+  display: block;
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 12px;
 }
 
-/* CURATED — CALMER */
-.curated {
-  transition:
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+/* BUTTONS */
+.primary-btn {
+  border: none;
+  background: #000;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
 }
 
-.curated:active {
-  transform: translateY(-1px);
+.secondary-btn {
+  background: transparent;
+  color: #000;
+  border: 1px solid #000;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
 }
