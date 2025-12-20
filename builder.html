@@ -126,49 +126,40 @@
   }
 
   function render() {
-    document.querySelectorAll(".charm").forEach(el => el.remove());
-    if (charms.length === 0) return;
+  document.querySelectorAll(".charm").forEach(el => el.remove());
+  if (charms.length === 0) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
+  const rect = canvas.getBoundingClientRect();
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
 
-    const radius = rect.width * 0.36;   // bracelet radius
-    const attachOffset = 8;              // pulls charms closer to chain
+  const radius = rect.width * 0.36;
+  const attachOffset = 8;
 
-    const ARC_START = 30;
-    const ARC_END = 150;
+  const activeSlots = POSITION_MAP[charms.length];
 
-    const step =
-      charms.length === 1
-        ? 0
-        : (ARC_END - ARC_START) / (charms.length - 1);
+  charms.forEach((src, i) => {
+    const angleDeg = POSITIONS[activeSlots[i]];
+    const rad = angleDeg * Math.PI / 180;
 
-    charms.forEach((src, i) => {
-      const angleDeg =
-        charms.length === 1
-          ? 90
-          : ARC_START + step * i;
+    const x = cx + radius * Math.cos(rad);
+    const y = cy + radius * Math.sin(rad) + attachOffset;
 
-      const rad = angleDeg * Math.PI / 180;
+    const img = document.createElement("img");
+    img.src = src;
+    img.className = "charm";
 
-      const x = cx + radius * Math.cos(rad);
-      const y = cy + radius * Math.sin(rad) + attachOffset;
+    img.style.left = `${x - 21}px`;
+    img.style.top = `${y - 21}px`;
 
-      const img = document.createElement("img");
-      img.src = src;
-      img.className = "charm";
+    // Correct orientation (left tilt / right tilt)
+    img.style.transform = `rotate(${angleDeg - 270}deg)`;
 
-      img.style.left = `${x - 21}px`;
-      img.style.top = `${y - 21}px`;
+    img.onclick = () => removeCharm(i);
+    canvas.appendChild(img);
+  });
+}
 
-      // Directional tilt (LEFT → RIGHT)
-      img.style.transform = `rotate(${angleDeg - 90}deg)`;
-
-      img.onclick = () => removeCharm(i);
-      canvas.appendChild(img);
-    });
-  }
 </script>
 
 </body>
