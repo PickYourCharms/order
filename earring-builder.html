@@ -72,21 +72,28 @@ h2 { margin: 8px 0 10px; }
 }
 
 /* HOOKS — FIXED */
+/* HOOKS — FIXED */
 .hook {
   position: absolute;
-  top: 48px;
-  left: 50%;
+  top: 40px; /* Adjusted slightly for better spacing */
+  width: 200px; /* Explicit width ensures alignment calculations work */
   transform-origin: top center;
 }
+
 .hook.left {
-  transform: translateX(-50px) scale(var(--scale));
+  left: 25%; /* Centers it in the left half */
+  transform: translateX(-50%) scale(var(--scale));
 }
+
 .hook.right {
-  transform: translateX(0px) scale(var(--scale));
+  left: 75%; /* Centers it in the right half */
+  transform: translateX(-50%) scale(var(--scale));
 }
+
 .hook img {
   display: block;
   pointer-events: none;
+  width: 100%; /* Ensures image fills the 200px container */
 }
 
 /* CHARMS */
@@ -281,8 +288,8 @@ const CHARMS = {
 
 const PHYSICS = {
   charmSize: 64,
-  left:  { x: 34, y: 74 },
-  right: { x: 34, y: 74 }
+  left:  { x: 32, y: 74 },
+  right: { x: 32, y: 74 }
 };
 
 let metal = 'gold';
