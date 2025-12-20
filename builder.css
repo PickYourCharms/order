@@ -1,0 +1,172 @@
+* {
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #fff;
+  color: #111;
+}
+
+/* HEADER */
+.builder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.builder-header h1 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.back-btn,
+.link-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* METAL TOGGLE */
+.metal-toggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.metal-toggle span {
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+.metal-toggle span.active {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.toggle-track {
+  width: 42px;
+  height: 22px;
+  background: #eee;
+  border-radius: 999px;
+  position: relative;
+}
+
+.toggle-thumb {
+  width: 18px;
+  height: 18px;
+  background: #000;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+}
+
+/* CANVAS */
+.canvas-wrapper {
+  position: relative;
+  padding: 20px;
+}
+
+.bracelet-canvas {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.bracelet-canvas img {
+  width: 100%;
+  display: block;
+}
+
+/* PRICE PILL */
+.price-pill {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  background: rgba(255,255,255,0.9);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.premium-label {
+  font-size: 11px;
+  color: #555;
+  margin-top: 2px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* CHARMS */
+.charm {
+  position: absolute;
+  width: 40px;
+  transform-origin: top center;
+  cursor: pointer;
+}
+
+.charm .remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #000;
+  color: #fff;
+  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* TRAY */
+.charm-tray {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  padding: 16px;
+}
+
+.charm-tray img {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* CTA */
+.bottom-cta {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 12px;
+}
+
+.bottom-cta button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 999px;
+  border: none;
+  background: #000;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.bottom-cta button:disabled {
+  opacity: 0.3;
+}
+
+/* INSTRUCTION */
+.instruction {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.5;
+}
