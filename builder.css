@@ -1,33 +1,39 @@
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
+  margin: 0;
   background: #ffffff;
-  color: #000;
+  color: #111;
 }
 
-/* HEADER */
 .builder-header {
   display: flex;
   align-items: center;
+  gap: 12px;
   padding: 14px 16px;
   border-bottom: 1px solid #eee;
 }
 
+.builder-header h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
 .back-btn {
-  background: none;
   border: none;
-  font-size: 20px;
-  margin-right: 12px;
+  background: none;
+  font-size: 18px;
   cursor: pointer;
 }
 
-/* CANVAS */
-.builder-canvas-wrapper {
+.builder-container {
+  padding: 16px;
+}
+
+.canvas-wrapper {
   display: flex;
   justify-content: center;
   margin-top: 24px;
@@ -35,66 +41,60 @@ body {
 
 #bracelet-canvas {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: 260px;
+  height: 260px;
 }
 
 #bracelet-base {
   width: 100%;
   height: 100%;
-  display: block;
 }
 
-/* CHARMS ON CANVAS */
-.canvas-charm {
+.charm {
   position: absolute;
   width: 44px;
   height: 44px;
-  transform-origin: center center;
+  cursor: pointer;
 }
 
-.canvas-charm img {
+.charm img {
   width: 100%;
   height: 100%;
 }
 
 .remove-btn {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -6px;
+  right: -6px;
   width: 18px;
   height: 18px;
+  background: black;
+  color: white;
   border-radius: 50%;
-  background: #000;
-  color: #fff;
   font-size: 12px;
-  border: none;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* HELPER */
-.helper-text {
+.hint-text {
   text-align: center;
-  margin: 20px 0;
+  font-size: 13px;
   color: #666;
-  font-size: 14px;
+  margin-top: 16px;
 }
 
-/* TRAY */
 .charm-tray {
   display: flex;
-  justify-content: space-around;
+  gap: 14px;
   padding: 16px;
+  overflow-x: auto;
+  margin-top: 24px;
   border-top: 1px solid #eee;
 }
 
 .charm-tray img {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.charm-tray img:hover {
-  transform: scale(1.08);
 }
