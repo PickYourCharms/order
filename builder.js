@@ -1,13 +1,14 @@
 const canvas = document.getElementById("bracelet-canvas");
 const tray = document.querySelector(".charm-tray");
 
-const centerX = 130;
-const centerY = 130;
-const radius = 95;
+const centerX = 150;
+const centerY = 150;
+const radius = 115;
+const HANG_OFFSET = 18;
 
 let selectedCharms = [];
 
-/* --------- CORE MATH --------- */
+/* ---------- MATH ---------- */
 
 function getAngles(count) {
   if (count === 1) return [Math.PI / 2];
@@ -26,7 +27,7 @@ function polarToXY(angle) {
   };
 }
 
-/* --------- RENDER --------- */
+/* ---------- RENDER ---------- */
 
 function renderCharms() {
   document.querySelectorAll(".charm").forEach(el => el.remove());
@@ -40,10 +41,10 @@ function renderCharms() {
     const wrapper = document.createElement("div");
     wrapper.className = "charm";
     wrapper.style.left = `${pos.x}px`;
-    wrapper.style.top = `${pos.y}px`;
+    wrapper.style.top = `${pos.y + HANG_OFFSET}px`;
     wrapper.style.transform = `
       translate(-50%, -50%)
-      rotate(${(angle - Math.PI / 2) * -1}rad)
+      rotate(${angle - Math.PI / 2}rad)
     `;
 
     const img = document.createElement("img");
@@ -63,7 +64,7 @@ function renderCharms() {
   });
 }
 
-/* --------- ADD CHARM --------- */
+/* ---------- ADD ---------- */
 
 tray.addEventListener("click", e => {
   if (e.target.tagName !== "IMG") return;
