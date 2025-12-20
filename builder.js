@@ -1,82 +1,71 @@
-const canvas = document.getElementById("braceletCanvas");
-const priceValue = document.getElementById("priceValue");
-const premiumLabel = document.getElementById("premiumLabel");
-const addToBagBtn = document.getElementById("addToBagBtn");
+const canvas = document.getElementById("bracelet-canvas");
+const trayCharms = document.querySelectorAll("[data-charm]");
 
-const BASE_PRICE = 249;
-let charms = [];
-let baseCharmPrice = 80;
+let placedCharms = [];
 
-const positions = [
-  { x: 50, y: 82, r: -15 },
-  { x: 120, y: 95, r: -5 },
-  { x: 170, y: 100, r: 0 },
-  { x: 220, y: 95, r: 5 },
-  { x: 290, y: 82, r: 15 }
-];
+/**
+ * Recalculate positions for charms
+ * Lower arc only
+ * Perfect symmetry
+ */
+function layoutCharms() {
+  const total = placedCharms.length;
+  if (total === 0) return;
 
-document.querySelectorAll(".charm-tray img").forEach(img => {
-  img.addEventListener("click", () => addCharm(img.src, parseInt(img.dataset.price)));
-});
+  const centerX = 140;
+  const centerY = 140;
+  const radius = 110;
 
-function addCharm(src, price) {
-  if (charms.length >= 5) return;
+  // Angles for LOWER arc only
+  const startAngle = Math.PI + Math.PI / 6;
+  const endAngle = 2 * Math.PI - Math.PI / 6;
 
-  charms.push({ src, price });
-  renderCharms();
-  updatePrice();
-}
+  const angles =
+    total === 1
+      ? [(startAngle + endAngle) / 2]
+      : Array.from({ length: total }, (_, i) =>
+          startAngle + (i / (total - 1)) * (endAngle - startAngle)
+        );
 
-function removeCharm(index) {
-  charms.splice(index, 1);
-  renderCharms();
-  updatePrice();
-}
+  placedCharms.forEach((charm, index) => {
+    const angle = angles[index];
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
 
-function renderCharms() {
-  canvas.querySelectorAll(".charm").forEach(c => c.remove());
-
-  const count = charms.length;
-  const start = Math.floor((5 - count) / 2);
-
-  charms.forEach((charm, i) => {
-    const pos = positions[start + i];
-    const el = document.createElement("div");
-    el.className = "charm";
-    el.style.left = pos.x + "px";
-    el.style.top = pos.y + "px";
-    el.style.transform = `rotate(${pos.r}deg)`;
-
-    el.innerHTML = `
-      <img src="${charm.src}" />
-      <div class="remove">×</div>
-    `;
-
-    el.querySelector(".remove").onclick = () => removeCharm(i);
-    canvas.appendChild(el);
+    charm.el.style.left = `${x - 22}px`;
+    charm.el.style.top = `${y - 22}px`;
+    charm.el.style.transform = `rotate(${angle + Math.PI / 2}rad)`;
   });
-
-  addToBagBtn.disabled = charms.length === 0;
 }
 
-function updatePrice() {
-  let total = BASE_PRICE;
-  let premiumUsed = false;
+/**
+ * Add charm
+ */
+trayCharms.forEach((img) => {
+  img.addEventListener("click", () => {
+    if (placedCharms.length >= 5) return;
 
-  if (charms.length > 0) {
-    const cheapest = Math.min(...charms.map(c => c.price));
-    charms.forEach(c => {
-      if (c.price > cheapest) {
-        total += c.price;
-        if (c.price > baseCharmPrice) premiumUsed = true;
-      }
-    });
-  }
+    const wrapper = document.createElement("div");
+    wrapper.className = "canvas-charm";
 
-  priceValue.textContent = total;
+    const charmImg = document.createElement("img");
+    charmImg.src = img.src;
 
-  if (premiumUsed) {
-    premiumLabel.style.opacity = 1;
-    setTimeout(() => premiumLabel.style.opacity = 0, 1500);
-  }
-}
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "remove-btn";
+    removeBtn.innerText = "×";
+
+    removeBtn.onclick = () => {
+      canvas.removeChild(wrapper);
+      placedCharms = placedCharms.filter((c) => c.el !== wrapper);
+      layoutCharms();
+    };
+
+    wrapper.appendChild(charmImg);
+    wrapper.appendChild(removeBtn);
+    canvas.appendChild(wrapper);
+
+    placedCharms.push({ el: wrapper });
+    layoutCharms();
+  });
+});
