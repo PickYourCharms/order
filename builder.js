@@ -5,6 +5,8 @@ const centerX = 150;
 const centerY = 150;
 const radius = 115;
 const HANG_OFFSET = 8;
+const CHARM_LOOP_OFFSET = 14; // pixels from top of image to loop
+
 
 let selectedCharms = [];
 
@@ -41,7 +43,7 @@ function renderCharms() {
     const wrapper = document.createElement("div");
     wrapper.className = "charm";
     wrapper.style.left = `${pos.x}px`;
-    wrapper.style.top = `${pos.y + HANG_OFFSET}px`;
+    wrapper.style.top = `${pos.y + HANG_OFFSET - CHARM_LOOP_OFFSET}px`;
     wrapper.style.transform = `
       translate(-50%, -50%)
       rotate(${angle - Math.PI / 2}rad)
