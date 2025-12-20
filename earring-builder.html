@@ -6,7 +6,6 @@
 <title>Style My Earrings</title>
 
 <style>
-/* ===== BASE ===== */
 body {
   margin: 0;
   padding: 14px;
@@ -235,7 +234,6 @@ h2 { margin: 8px 0 10px; }
 
 <button id="cta" class="cta">Love it · Add to Bag</button>
 
-<!-- MODAL -->
 <div id="modal" class="modal">
   <div class="modal-card">
     <div id="modalText"></div>
@@ -247,18 +245,17 @@ h2 { margin: 8px 0 10px; }
 </div>
 
 <script>
-/* ===== CONFIG ===== */
 const BASE_PRICE = 249;
 
 const CHARMS = {
-  gold:[
+  gold: [
     '3DBowRibbon_Charm_Gold.png',
     'EvilEye_Charm_Gold.png',
     'LetterA_Charm_Gold.png',
     'NorthStar_Charm_Gold.png',
     'RedCherry_Charm_Gold.png'
   ],
-  silver:[
+  silver: [
     '3DBowRibbon_Charm_Silver.png',
     'EvilEye_Charm_Silver.png',
     'LetterA_Charm_Silver.png',
@@ -267,128 +264,116 @@ const CHARMS = {
   ]
 };
 
-/* PHYSICS */
 const PHYSICS = {
-  hookScale:0.45,
-  charmSize:60,
-  left:{x:96,y:168},
-  right:{x:104,y:168}
+  hookScale: 0.45,
+  charmSize: 60,
+  left: { x: 96, y: 168 },
+  right:{ x: 104, y: 168 }
 };
 
-let metal='gold';
-let charms={left:null,right:null};
+let metal = 'gold';
+let charms = { left: null, right: null };
 
-/* ELEMENTS */
-const tray=document.getElementById('tray');
-const pricePill=document.getElementById('pricePill');
-const cta=document.getElementById('cta');
-const modal=document.getElementById('modal');
-const modalText=document.getElementById('modalText');
-const modalConfirm=document.getElementById('modalConfirm');
+const tray = document.getElementById('tray');
+const canvas = document.getElementById('canvas');
+const modal = document.getElementById('modal');
+const modalText = document.getElementById('modalText');
+const modalConfirm = document.getElementById('modalConfirm');
 
 loadTray();
 
 /* TRAY */
-function loadTray(){
-  tray.innerHTML='';
-  CHARMS[metal].forEach(f=>{
-    const img=document.createElement('img');
-    img.src='assets/charms/'+f;
-    img.onclick=()=>addCharm(f);
+function loadTray() {
+  tray.innerHTML = '';
+  CHARMS[metal].forEach(file => {
+    const img = document.createElement('img');
+    img.src = 'assets/charms/' + file;
+    img.onclick = () => addCharm(file);
     tray.appendChild(img);
   });
 }
 
-/* ADD / REMOVE */
-function addCharm(file){
-  // LEFT FIRST, THEN RIGHT — ALWAYS
+/* ADD CHARMS — LEFT FIRST, THEN RIGHT */
+function addCharm(file) {
   if (!charms.left) {
     charms.left = file;
   } else if (!charms.right) {
     charms.right = file;
   } else {
-    return; // both hooks filled, do nothing
+    return;
   }
   render();
 }
 
-
+/* RENDER */
 function render() {
   document.querySelectorAll('.charm').forEach(el => el.remove());
 
-  // LEFT MUST RENDER FIRST
-  if (charms.left) {
-    renderCharm('left');
-  }
-
-  // RIGHT MUST RENDER SECOND
-  if (charms.right) {
-    renderCharm('right');
-  }
+  if (charms.left) drawCharm('left');
+  if (charms.right) drawCharm('right');
 }
 
+/* DRAW */
+function drawCharm(side) {
+  const hook = document.querySelector('.hook.' + side + ' img');
+  const hRect = hook.getBoundingClientRect();
+  const cRect = canvas.getBoundingClientRect();
 
-function drawCharm(side){
-  if(!charms[side]) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'charm';
+  wrapper.style.left = (hRect.left - cRect.left + PHYSICS[side].x - PHYSICS.charmSize / 2) + 'px';
+  wrapper.style.top  = (hRect.top - cRect.top + PHYSICS[side].y) + 'px';
 
-  const hook=document.querySelector('.hook.'+side+' img');
-  const hRect=hook.getBoundingClientRect();
-  const cRect=document.getElementById('canvas').getBoundingClientRect();
+  const img = document.createElement('img');
+  img.src = 'assets/charms/' + charms[side];
+  img.style.width = PHYSICS.charmSize + 'px';
 
-  const w=document.createElement('div');
-  w.className='charm';
-  w.style.left=(hRect.left-cRect.left+PHYSICS[side].x-PHYSICS.charmSize/2)+'px';
-  w.style.top=(hRect.top-cRect.top+PHYSICS[side].y)+'px';
+  wrapper.appendChild(img);
+  wrapper.onclick = () => { charms[side] = null; render(); };
 
-  const img=document.createElement('img');
-  img.src='assets/charms/'+charms[side];
-  img.style.width=PHYSICS.charmSize+'px';
-
-  w.appendChild(img);
-  w.onclick=()=>{charms[side]=null;render()};
-  document.getElementById('canvas').appendChild(w);
+  canvas.appendChild(wrapper);
 }
 
 /* METAL */
-function onMetalClick(next){
-  if(next===metal) return;
-  if(charms.left||charms.right){
-    showModal('Switching metal will reset your design.',()=>{
-      charms={left:null,right:null};
-      metal=next;
+function onMetalClick(next) {
+  if (next === metal) return;
+  if (charms.left || charms.right) {
+    showModal('Switching metal will reset your design.', () => {
+      charms = { left: null, right: null };
+      metal = next;
       updateMetal();
     });
-  }else{
-    metal=next;
+  } else {
+    metal = next;
     updateMetal();
   }
 }
 
-function updateMetal(){
-  document.getElementById('leftHook').src='assets/bases/LeftHook_'+metal+'.png';
-  document.getElementById('rightHook').src='assets/bases/RightHook_'+metal+'.png';
-  document.getElementById('goldBtn').classList.toggle('active',metal==='gold');
-  document.getElementById('silverBtn').classList.toggle('active',metal==='silver');
+function updateMetal() {
+  document.getElementById('leftHook').src = 'assets/bases/LeftHook_' + metal + '.png';
+  document.getElementById('rightHook').src = 'assets/bases/RightHook_' + metal + '.png';
+  document.getElementById('goldBtn').classList.toggle('active', metal === 'gold');
+  document.getElementById('silverBtn').classList.toggle('active', metal === 'silver');
   loadTray();
   render();
 }
 
 /* RESET */
-function onResetClick(){
-  if(!charms.left&&!charms.right) return;
-  showModal('Reset earring design?',()=>{
-    charms={left:null,right:null};
+function onResetClick() {
+  if (!charms.left && !charms.right) return;
+  showModal('Reset earring design?', () => {
+    charms = { left: null, right: null };
     render();
   });
 }
 
 /* MODAL */
-function showModal(text,fn){
-  modalText.textContent=text;
-  modalConfirm.onclick=()=>{closeModal();fn()};
-  modal.style.display='flex';
+function showModal(text, fn) {
+  modalText.textContent = text;
+  modalConfirm.onclick = () => { closeModal(); fn(); };
+  modal.style.display = 'flex';
 }
-function closeModal(){ modal.style.display='none'; }
+function closeModal() { modal.style.display = 'none'; }
 </script>
 
 </body>
