@@ -1,81 +1,122 @@
-const canvas = document.getElementById("bracelet-canvas");
-const tray = document.querySelector(".charm-tray");
+/* ================================
+   BRACELET BUILDER – FINAL PHYSICS
+   ================================ */
 
-const centerX = 150;
-const centerY = 150;
-const radius = 115;
-const HANG_OFFSET = 8;
-const CHARM_LOOP_OFFSET = 14; // pixels from top of image to loop
+/* ---------- CONFIG ---------- */
 
+const CANVAS_SIZE = 300;
+const CENTER = CANVAS_SIZE / 2;
+const RADIUS = 115;
+
+// Vertical tuning (LOCKED)
+const HANG_OFFSET = 6;          // how much charm hangs down
+const CHAIN_THICKNESS = 10;     // visual thickness of chain
+
+// Per-charm loop offsets (VERY IMPORTANT)
+const CHARM_LOOP_MAP = {
+  "3DBowRibbon_Charm_Gold.png": 18,
+  "EvilEye_Charm_Gold.png": 14,
+  "LetterA_Charm_Gold.png": 16,
+  "NorthStar_Charm_Gold.png": 12,
+  "RedCherry_Charm_Gold.png": 10
+};
+
+// Lower arc angles (centered at bottom)
+const ARC_START = Math.PI * 0.65;
+const ARC_END   = Math.PI * 1.35;
+const MAX_CHARMS = 5;
+
+/* ---------- STATE ---------- */
 
 let selectedCharms = [];
 
-/* ---------- MATH ---------- */
+/* ---------- DOM ---------- */
 
-function getAngles(count) {
-  if (count === 1) return [Math.PI / 2];
+const canvas = document.getElementById("bracelet-canvas");
 
-  const start = Math.PI * 0.75; // left lower
-  const end = Math.PI * 0.25;   // right lower
-  const step = (start - end) / (count - 1);
-
-  return Array.from({ length: count }, (_, i) => start - i * step);
-}
+/* ---------- HELPERS ---------- */
 
 function polarToXY(angle) {
   return {
-    x: centerX + radius * Math.cos(angle),
-    y: centerY + radius * Math.sin(angle)
+    x: CENTER + RADIUS * Math.cos(angle),
+    y: CENTER + RADIUS * Math.sin(angle)
   };
+}
+
+function getAngles(count) {
+  if (count === 1) return [(ARC_START + ARC_END) / 2];
+
+  const step = (ARC_END - ARC_START) / (count - 1);
+  return Array.from({ length: count }, (_, i) => ARC_START + step * i);
 }
 
 /* ---------- RENDER ---------- */
 
-function renderCharms() {
-  document.querySelectorAll(".charm").forEach(el => el.remove());
+function renderBracelet() {
+  // Clear previous charms
+  document.querySelectorAll(".placed-charm").forEach(el => el.remove());
 
-  const angles = getAngles(selectedCharms.length);
+  const count = selectedCharms.length;
+  if (count === 0) return;
+
+  const angles = getAngles(count);
 
   selectedCharms.forEach((charm, index) => {
     const angle = angles[index];
     const pos = polarToXY(angle);
 
+    const loopOffset =
+      CHARM_LOOP_MAP[charm.file] ?? 14;
+
     const wrapper = document.createElement("div");
-    wrapper.className = "charm";
+    wrapper.className = "placed-charm";
+
     wrapper.style.left = `${pos.x}px`;
-    wrapper.style.top = `${pos.y + HANG_OFFSET - CHARM_LOOP_OFFSET}px`;
+    wrapper.style.top = `${
+      pos.y +
+      HANG_OFFSET -
+      loopOffset +
+      CHAIN_THICKNESS / 2
+    }px`;
+
     wrapper.style.transform = `
       translate(-50%, -50%)
       rotate(${angle - Math.PI / 2}rad)
     `;
 
+    // Charm image
     const img = document.createElement("img");
-    img.src = charm.src;
+    img.src = `assets/charms/${charm.file}`;
+    img.draggable = false;
 
-    const remove = document.createElement("div");
-    remove.className = "remove-btn";
-    remove.innerText = "×";
-    remove.onclick = () => {
+    // Remove button
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "remove-charm";
+    removeBtn.innerText = "×";
+    removeBtn.onclick = () => {
       selectedCharms.splice(index, 1);
-      renderCharms();
+      renderBracelet();
     };
 
     wrapper.appendChild(img);
-    wrapper.appendChild(remove);
+    wrapper.appendChild(removeBtn);
     canvas.appendChild(wrapper);
   });
 }
 
-/* ---------- ADD ---------- */
+/* ---------- ADD CHARM ---------- */
 
-tray.addEventListener("click", e => {
-  if (e.target.tagName !== "IMG") return;
-  if (selectedCharms.length >= 5) return;
+function addCharm(file) {
+  if (selectedCharms.length >= MAX_CHARMS) return;
 
-  selectedCharms.push({
-    id: e.target.dataset.id,
-    src: e.target.src
+  selectedCharms.push({ file });
+  renderBracelet();
+}
+
+/* ---------- INIT ---------- */
+
+document.querySelectorAll(".charm-item").forEach(item => {
+  item.addEventListener("click", () => {
+    addCharm(item.dataset.file);
   });
-
-  renderCharms();
 });
