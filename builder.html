@@ -2,63 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>Build My Bracelet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Build My Bracelet | PickYourCharms</title>
-
   <link rel="stylesheet" href="builder.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-
 <body>
 
-  <!-- HEADER -->
-  <header class="builder-header">
-    <button class="back-btn" onclick="window.location.href='index.html'">←</button>
-    <h1>Build My Bracelet</h1>
-    <button id="rearrangeToggle" class="link-btn">Rearrange charms</button>
-  </header>
+<header class="builder-header">
+  <button class="back-btn">←</button>
+  <h1>Build My Bracelet</h1>
+</header>
 
-  <!-- METAL TOGGLE -->
-  <div class="metal-toggle">
-    <span id="goldOption" class="active">Gold</span>
-    <div class="toggle-track">
-      <div class="toggle-thumb"></div>
-    </div>
-    <span id="silverOption">Silver</span>
+<main class="builder-canvas-wrapper">
+  <div id="bracelet-canvas">
+    <img
+      id="bracelet-base"
+      src="assets/bases/bracelet_base_gold.png"
+      alt="Bracelet Base"
+    />
   </div>
+</main>
 
-  <!-- CANVAS -->
-  <div class="canvas-wrapper">
-    <div class="price-pill">
-      ₹<span id="priceValue">249</span>
-      <div id="premiumLabel" class="premium-label">Includes premium charm</div>
-    </div>
+<p class="helper-text">
+  Tap a charm to add • × to remove
+</p>
 
-    <div id="braceletCanvas" class="bracelet-canvas">
-      <img id="braceletBase" src="assets/bases/bracelet_base_gold.png" alt="Bracelet Base" />
-      <!-- Charms injected here -->
-    </div>
-  </div>
+<section class="charm-tray">
+  <img src="assets/charms/3DBowRibbon_Charm_Gold.png" data-charm />
+  <img src="assets/charms/EvilEye_Charm_Gold.png" data-charm />
+  <img src="assets/charms/LetterA_Charm_Gold.png" data-charm />
+  <img src="assets/charms/NorthStar_Charm_Gold.png" data-charm />
+  <img src="assets/charms/RedCherry_Charm_Gold.png" data-charm />
+</section>
 
-  <!-- INSTRUCTION -->
-  <div class="instruction">
-    Tap to add • Drag to replace • ✕ to remove
-  </div>
-
-  <!-- CHARM TRAY -->
-  <div class="charm-tray">
-    <img src="assets/charms/3DBowRibbon_Charm_Gold.png" data-price="80" />
-    <img src="assets/charms/EvilEye_Charm_Gold.png" data-price="80" />
-    <img src="assets/charms/LetterA_Charm_Gold.png" data-price="120" />
-    <img src="assets/charms/NorthStar_Charm_Gold.png" data-price="100" />
-    <img src="assets/charms/RedCherry_Charm_Gold.png" data-price="120" />
-  </div>
-
-  <!-- CTA -->
-  <div class="bottom-cta">
-    <button id="addToBagBtn" disabled>Love it! Add to bag 🛍️</button>
-  </div>
-
-  <script src="builder.js"></script>
+<script src="builder.js"></script>
 </body>
 </html>
