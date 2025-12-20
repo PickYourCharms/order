@@ -316,7 +316,10 @@ function render() {
 
 /* DRAW */
 function drawCharm(side) {
-  const hook = document.querySelector('.hook.' + side + ' img');
+  const hook =
+  side === 'left'
+    ? document.querySelector('.hook.right img')
+    : document.querySelector('.hook.left img');
   const hRect = hook.getBoundingClientRect();
   const cRect = canvas.getBoundingClientRect();
 
