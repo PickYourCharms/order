@@ -4,7 +4,7 @@ const tray = document.querySelector(".charm-tray");
 const centerX = 150;
 const centerY = 150;
 const radius = 115;
-const HANG_OFFSET = 18;
+const HANG_OFFSET = 8;
 
 let selectedCharms = [];
 
