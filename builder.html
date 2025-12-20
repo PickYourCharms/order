@@ -2,38 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Build My Bracelet</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="builder.css" />
+  <link rel="stylesheet" href="builder.css"/>
 </head>
 <body>
 
 <header class="builder-header">
-  <button class="back-btn">←</button>
+  <button class="back-btn" onclick="history.back()">←</button>
   <h1>Build My Bracelet</h1>
 </header>
 
-<main class="builder-canvas-wrapper">
-  <div id="bracelet-canvas">
-    <img
-      id="bracelet-base"
-      src="assets/bases/bracelet_base_gold.png"
-      alt="Bracelet Base"
-    />
+<main class="builder-container">
+
+  <!-- CANVAS -->
+  <div class="canvas-wrapper">
+    <div id="bracelet-canvas">
+      <img
+        id="bracelet-base"
+        src="assets/bases/bracelet_base_gold.png"
+        alt="Bracelet Base"
+      />
+      <!-- charms injected here -->
+    </div>
   </div>
+
+  <p class="hint-text">
+    Tap a charm to add • ✕ to remove
+  </p>
+
+  <!-- CHARM TRAY -->
+  <div class="charm-tray">
+    <img src="assets/charms/3DBowRibbon_Charm_Gold.png" data-id="bow"/>
+    <img src="assets/charms/EvilEye_Charm_Gold.png" data-id="eye"/>
+    <img src="assets/charms/LetterA_Charm_Gold.png" data-id="a"/>
+    <img src="assets/charms/NorthStar_Charm_Gold.png" data-id="star"/>
+    <img src="assets/charms/RedCherry_Charm_Gold.png" data-id="cherry"/>
+  </div>
+
 </main>
-
-<p class="helper-text">
-  Tap a charm to add • × to remove
-</p>
-
-<section class="charm-tray">
-  <img src="assets/charms/3DBowRibbon_Charm_Gold.png" data-charm />
-  <img src="assets/charms/EvilEye_Charm_Gold.png" data-charm />
-  <img src="assets/charms/LetterA_Charm_Gold.png" data-charm />
-  <img src="assets/charms/NorthStar_Charm_Gold.png" data-charm />
-  <img src="assets/charms/RedCherry_Charm_Gold.png" data-charm />
-</section>
 
 <script src="builder.js"></script>
 </body>
