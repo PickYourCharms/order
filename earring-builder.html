@@ -52,7 +52,7 @@ h2 { margin: 8px 0 10px; }
   border-color: #000;
 }
 
-/* BUILDER SURFACE */
+/* BUILDER */
 .builder-surface {
   background: #fff;
   border-radius: 26px;
@@ -70,17 +70,24 @@ h2 { margin: 8px 0 10px; }
   aspect-ratio: 1 / 1.2;
   margin: 0 auto;
 }
-  
 
-/* HOOKS */
+/* HOOKS — FIXED */
 .hook {
   position: absolute;
-  top: 40px;
+  top: 48px;
+  left: 50%;
   transform-origin: top center;
 }
-.hook.left { left: 24%; }
-.hook.right { right: 24%; }
-.hook img { pointer-events: none; }
+.hook.left {
+  transform: translateX(-120px) scale(var(--scale));
+}
+.hook.right {
+  transform: translateX(120px) scale(var(--scale));
+}
+.hook img {
+  display: block;
+  pointer-events: none;
+}
 
 /* CHARMS */
 .charm {
@@ -88,7 +95,10 @@ h2 { margin: 8px 0 10px; }
   cursor: pointer;
   transform-origin: top center;
 }
-.charm img { width: 60px; pointer-events: none; }
+.charm img {
+  width: 64px;
+  pointer-events: none;
+}
 
 /* PRICE */
 .price-pill {
@@ -140,7 +150,10 @@ h2 { margin: 8px 0 10px; }
   justify-content: center;
   gap: 18px;
 }
-.tray img { width: 44px; cursor: pointer; }
+.tray img {
+  width: 44px;
+  cursor: pointer;
+}
 
 /* CTA */
 .cta {
@@ -213,10 +226,10 @@ h2 { margin: 8px 0 10px; }
 
 <div class="builder-surface">
   <div class="canvas" id="canvas">
-    <div class="hook left">
+    <div class="hook left" style="--scale:0.32">
       <img id="leftHook" src="assets/bases/LeftHook_gold.png">
     </div>
-    <div class="hook right">
+    <div class="hook right" style="--scale:0.32">
       <img id="rightHook" src="assets/bases/RightHook_gold.png">
     </div>
     <div id="pricePill" class="price-pill"></div>
@@ -235,6 +248,7 @@ h2 { margin: 8px 0 10px; }
 
 <button id="cta" class="cta">Love it · Add to Bag</button>
 
+<!-- MODAL -->
 <div id="modal" class="modal">
   <div class="modal-card">
     <div id="modalText"></div>
@@ -266,10 +280,9 @@ const CHARMS = {
 };
 
 const PHYSICS = {
-  hookScale: 0.3,
   charmSize: 64,
-  left: { x: 96, y: 118 },
-  right:{ x: 96, y: 118 }
+  left:  { x: 96, y: 118 },
+  right: { x: 96, y: 118 }
 };
 
 let metal = 'gold';
@@ -282,111 +295,86 @@ const modalText = document.getElementById('modalText');
 const modalConfirm = document.getElementById('modalConfirm');
 const cta = document.getElementById('cta');
 
-
 loadTray();
 
 /* TRAY */
-function loadTray() {
-  tray.innerHTML = '';
-  CHARMS[metal].forEach(file => {
-    const img = document.createElement('img');
-    img.src = 'assets/charms/' + file;
-    img.onclick = () => addCharm(file);
+function loadTray(){
+  tray.innerHTML='';
+  CHARMS[metal].forEach(file=>{
+    const img=document.createElement('img');
+    img.src='assets/charms/'+file;
+    img.onclick=()=>addCharm(file);
     tray.appendChild(img);
   });
 }
 
-/* ADD CHARMS — LEFT FIRST, THEN RIGHT */
-function addCharm(file) {
-  if (!charms.left) {
-    charms.left = file;
-  } else if (!charms.right) {
-    charms.right = file;
-  } else {
-    return;
-  }
+/* ADD — LEFT FIRST */
+function addCharm(file){
+  if(!charms.left) charms.left=file;
+  else if(!charms.right) charms.right=file;
   render();
 }
 
 /* RENDER */
-function render() {
-  document.querySelectorAll('.charm').forEach(el => el.remove());
-
-  if (charms.left) drawCharm('left');
-  if (charms.right) drawCharm('right');
-
-  // CTA visibility logic (THIS WAS MISSING)
-  if (charms.left && charms.right) {
-    cta.classList.add('show');
-  } else {
-    cta.classList.remove('show');
-  }
+function render(){
+  document.querySelectorAll('.charm').forEach(el=>el.remove());
+  if(charms.left) drawCharm('left');
+  if(charms.right) drawCharm('right');
+  cta.classList.toggle('show', charms.left && charms.right);
 }
 
 /* DRAW */
-function drawCharm(side) {
-  const hook =
-  side === 'left'
-    ? document.querySelector('.hook.right img')
-    : document.querySelector('.hook.left img');
-  const hRect = hook.getBoundingClientRect();
-  const cRect = canvas.getBoundingClientRect();
+function drawCharm(side){
+  const hookImg=document.querySelector('.hook.'+side+' img');
+  const h=hookImg.getBoundingClientRect();
+  const c=canvas.getBoundingClientRect();
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'charm';
-  wrapper.style.left = (hRect.left - cRect.left + PHYSICS[side].x - PHYSICS.charmSize / 2) + 'px';
-  wrapper.style.top  = (hRect.top - cRect.top + PHYSICS[side].y) + 'px';
+  const w=document.createElement('div');
+  w.className='charm';
+  w.style.left=(h.left-c.left+PHYSICS[side].x-PHYSICS.charmSize/2)+'px';
+  w.style.top=(h.top-c.top+PHYSICS[side].y)+'px';
 
-  const img = document.createElement('img');
-  img.src = 'assets/charms/' + charms[side];
-  img.style.width = PHYSICS.charmSize + 'px';
+  const img=document.createElement('img');
+  img.src='assets/charms/'+charms[side];
+  img.style.width=PHYSICS.charmSize+'px';
 
-  wrapper.appendChild(img);
-  wrapper.onclick = () => { charms[side] = null; render(); };
-
-  canvas.appendChild(wrapper);
+  w.appendChild(img);
+  w.onclick=()=>{charms[side]=null;render()};
+  canvas.appendChild(w);
 }
 
 /* METAL */
-function onMetalClick(next) {
-  if (next === metal) return;
-  if (charms.left || charms.right) {
-    showModal('Switching metal will reset your design.', () => {
-      charms = { left: null, right: null };
-      metal = next;
-      updateMetal();
+function onMetalClick(next){
+  if(next===metal) return;
+  if(charms.left||charms.right){
+    showModal('Switching metal will reset your design.',()=>{
+      charms={left:null,right:null};
+      metal=next;updateMetal();
     });
-  } else {
-    metal = next;
-    updateMetal();
-  }
+  } else { metal=next;updateMetal(); }
 }
 
-function updateMetal() {
-  document.getElementById('leftHook').src = 'assets/bases/LeftHook_' + metal + '.png';
-  document.getElementById('rightHook').src = 'assets/bases/RightHook_' + metal + '.png';
-  document.getElementById('goldBtn').classList.toggle('active', metal === 'gold');
-  document.getElementById('silverBtn').classList.toggle('active', metal === 'silver');
-  loadTray();
-  render();
+function updateMetal(){
+  leftHook.src='assets/bases/LeftHook_'+metal+'.png';
+  rightHook.src='assets/bases/RightHook_'+metal+'.png';
+  goldBtn.classList.toggle('active',metal==='gold');
+  silverBtn.classList.toggle('active',metal==='silver');
+  loadTray();render();
 }
 
 /* RESET */
-function onResetClick() {
-  if (!charms.left && !charms.right) return;
-  showModal('Reset earring design?', () => {
-    charms = { left: null, right: null };
-    render();
-  });
+function onResetClick(){
+  if(!charms.left&&!charms.right) return;
+  showModal('Reset earring design?',()=>{charms={left:null,right:null};render();});
 }
 
 /* MODAL */
-function showModal(text, fn) {
-  modalText.textContent = text;
-  modalConfirm.onclick = () => { closeModal(); fn(); };
-  modal.style.display = 'flex';
+function showModal(text,fn){
+  modalText.textContent=text;
+  modalConfirm.onclick=()=>{closeModal();fn();};
+  modal.style.display='flex';
 }
-function closeModal() { modal.style.display = 'none'; }
+function closeModal(){modal.style.display='none';}
 </script>
 
 </body>
