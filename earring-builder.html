@@ -4,215 +4,37 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Style My Earrings</title>
-
 <style>
-body {
-  margin: 0;
-  padding: 14px;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: #f6f3ec;
-  text-align: center;
-  color: #111;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* HEADER */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.header button {
-  background: none;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-/* TITLE */
+/* ... (Same CSS as before) ... */
+body { margin: 0; padding: 14px; font-family: system-ui, -apple-system, sans-serif; background: #f6f3ec; text-align: center; color: #111; -webkit-tap-highlight-color: transparent; }
+.header { display: flex; justify-content: space-between; align-items: center; }
+.header button { background: none; border: none; font-size: 14px; cursor: pointer; }
 h2 { margin: 8px 0 10px; }
-
-/* METAL TOGGLE */
-.metal-toggle {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.metal-toggle button {
-  padding: 8px 18px;
-  border-radius: 999px;
-  border: 1px solid #ddd;
-  background: #fff;
-  cursor: pointer;
-}
-.metal-toggle button.active {
-  background: #000;
-  color: #fff;
-  border-color: #000;
-}
-
-/* BUILDER */
-.builder-surface {
-  background: #fff;
-  border-radius: 26px;
-  padding: 10px 12px 18px;
-  margin: 0 auto;
-  max-width: 420px;
-  box-shadow: 0 18px 40px rgba(0,0,0,0.06);
-}
-
-/* CANVAS */
-.canvas {
-  position: relative;
-  width: 100%;
-  max-width: 360px;
-  aspect-ratio: 1 / 0.8;
-  margin: 0 auto;
-}
-
-/* HOOKS — FIXED */
-/* HOOKS — FIXED */
-.hook {
-  position: absolute;
-  top: 70px; /* Adjusted slightly for better spacing */
-  width: 200px; /* Explicit width ensures alignment calculations work */
-  transform-origin: top center;
-}
-
-.hook.left {
-  left: 30%; /* Centers it in the left half */
-  transform: translateX(-50%) scale(var(--scale));
-}
-
-.hook.right {
-  left: 70%; /* Centers it in the right half */
-  transform: translateX(-50%) scale(var(--scale));
-}
-
-.hook img {
-  display: block;
-  pointer-events: none;
-  width: 100%; /* Ensures image fills the 200px container */
-}
-
-/* CHARMS */
-.charm {
-  position: absolute;
-  cursor: pointer;
-  transform-origin: top center;
-}
-.charm img {
-  width: 64px;
-  pointer-events: none;
-}
-
-/* PRICE */
-.price-pill {
-  position: absolute;
-  top: 6%;
-  right: 6%;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.95);
-  font-size: 14px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  opacity: 0;
-  transform: translateY(6px);
-  transition: all 0.2s ease;
-}
-.price-pill.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* RESET */
-.reset-row {
-  text-align: right;
-  margin: 6px auto 10px;
-  max-width: 360px;
-}
-.reset-row button {
-  background: none;
-  border: none;
-  font-size: 14px;
-  color: #777;
-  cursor: pointer;
-}
-
-/* HELPER */
+.metal-toggle { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+.metal-toggle button { padding: 8px 18px; border-radius: 999px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+.metal-toggle button.active { background: #000; color: #fff; border-color: #000; }
+.builder-surface { background: #fff; border-radius: 26px; padding: 10px 12px 18px; margin: 0 auto; max-width: 420px; box-shadow: 0 18px 40px rgba(0,0,0,0.06); }
+.canvas { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1 / 0.8; margin: 0 auto; }
+.hook { position: absolute; top: 70px; width: 200px; transform-origin: top center; }
+.hook.left { left: 30%; transform: translateX(-50%) scale(var(--scale)); }
+.hook.right { left: 70%; transform: translateX(-50%) scale(var(--scale)); }
+.hook img { display: block; pointer-events: none; width: 100%; }
+.charm { position: absolute; cursor: pointer; transform-origin: top center; }
+.charm img { width: 64px; pointer-events: none; }
+.price-pill { position: absolute; top: 6%; right: 6%; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.95); font-size: 14px; box-shadow: 0 6px 16px rgba(0,0,0,0.15); opacity: 0; transform: translateY(6px); transition: all 0.2s ease; }
+.price-pill.show { opacity: 1; transform: translateY(0); }
+.reset-row { text-align: right; margin: 6px auto 10px; max-width: 360px; }
+.reset-row button { background: none; border: none; font-size: 14px; color: #777; cursor: pointer; }
 .helper { font-size: 13px; color: #777; }
-
-/* TRAY */
-.tray-surface {
-  background: #fff;
-  border-radius: 22px;
-  padding: 14px 10px;
-  margin: 14px auto 90px;
-  max-width: 420px;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.05);
-}
-.tray {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-}
-.tray img {
-  width: 44px;
-  cursor: pointer;
-}
-
-/* CTA */
-.cta {
-  position: fixed;
-  bottom: 14px;
-  left: 14px;
-  right: 14px;
-  padding: 16px;
-  border-radius: 999px;
-  background: #000;
-  color: #fff;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  opacity: 0;
-  transform: translateY(12px);
-  transition: all 0.25s ease;
-}
-.cta.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* MODAL */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 99;
-}
-.modal-card {
-  background: #fff;
-  border-radius: 18px;
-  padding: 20px;
-  width: 86%;
-  max-width: 320px;
-}
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-.modal-actions button {
-  flex: 1;
-  padding: 12px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-}
+.tray-surface { background: #fff; border-radius: 22px; padding: 14px 10px; margin: 14px auto 90px; max-width: 420px; box-shadow: 0 12px 28px rgba(0,0,0,0.05); }
+.tray { display: flex; justify-content: center; gap: 18px; }
+.tray img { width: 44px; cursor: pointer; }
+.cta { position: fixed; bottom: 14px; left: 14px; right: 14px; padding: 16px; border-radius: 999px; background: #000; color: #fff; border: none; font-size: 16px; cursor: pointer; opacity: 0; transform: translateY(12px); transition: all 0.25s ease; }
+.cta.show { opacity: 1; transform: translateY(0); }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 99; }
+.modal-card { background: #fff; border-radius: 18px; padding: 20px; width: 86%; max-width: 320px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+.modal-actions button { flex: 1; padding: 12px; border-radius: 999px; border: none; cursor: pointer; }
 .primary { background: #000; color: #fff; }
 .secondary { background: #eee; }
 </style>
@@ -255,7 +77,6 @@ h2 { margin: 8px 0 10px; }
 
 <button id="cta" class="cta">Love it · Add to Bag</button>
 
-<!-- MODAL -->
 <div id="modal" class="modal">
   <div class="modal-card">
     <div id="modalText"></div>
@@ -267,7 +88,6 @@ h2 { margin: 8px 0 10px; }
 </div>
 
 <script>
-// ... (Constants remain same)
 const BASE_PRICE = 249;
 const CHARMS = {
   gold: [ '3DBowRibbon_Charm_Gold.png', 'EvilEye_Charm_Gold.png', 'LetterA_Charm_Gold.png', 'NorthStar_Charm_Gold.png', 'RedCherry_Charm_Gold.png' ],
@@ -289,44 +109,39 @@ const modalText = document.getElementById('modalText');
 const modalConfirm = document.getElementById('modalConfirm');
 const cta = document.getElementById('cta');
 
-// === NEW: COMBO LOGIC START ===
+// === COMBO LOGIC ===
 const urlParams = new URLSearchParams(window.location.search);
 const isCombo = urlParams.get('mode') === 'combo';
 
 function init() {
   if (isCombo) {
-    // Restore Earring State if exists
     const savedData = sessionStorage.getItem('combo_earring_data');
     if (savedData) {
       const data = JSON.parse(savedData);
       metal = data.metal;
       charms = data.charms;
     }
-    // Update CTA text
     cta.textContent = "Love it · Add Bundle to Bag";
   }
   updateMetal();
 }
 
-// Handle the "Back" button click
+// === NEW: Go Back Logic with Saving ===
 function goBack() {
   if (isCombo) {
-    // 1. Save current earring state before leaving
+    // Save current Earring state
     const state = { metal: metal, charms: charms };
     sessionStorage.setItem('combo_earring_data', JSON.stringify(state));
     
-    // 2. Go back to Bracelet with combo mode
+    // Explicitly go to builder.html in combo mode
     window.location.href = 'builder.html?mode=combo';
   } else {
-    // Normal behavior
     history.back();
   }
 }
-// === NEW: COMBO LOGIC END ===
 
-init(); // Run init
+init(); 
 
-/* TRAY */
 function loadTray(){
   tray.innerHTML='';
   CHARMS[metal].forEach(file=>{
@@ -352,7 +167,6 @@ function render(){
   if (hasLeft) drawCharm('left');
   if (hasRight) drawCharm('right');
 
-  // CTA only when both charms added
   cta.classList.toggle('show', hasLeft && hasRight);
 
   if (hasLeft && hasRight) {
@@ -410,25 +224,22 @@ function onResetClick(){
   showModal('Reset earring design?',()=>{charms={left:null,right:null};render();});
 }
 
-// === UPDATED: CTA CLICK HANDLER ===
 cta.onclick = function() {
   if (isCombo) {
-    // Retrieve Bracelet Data
     const braceletData = JSON.parse(sessionStorage.getItem('combo_bracelet_data'));
     const earringData = { metal: metal, charms: charms };
     
-    // Clear storage after purchase
     sessionStorage.removeItem('combo_bracelet_data');
     sessionStorage.removeItem('combo_earring_data');
 
     console.log("ORDER: ", { bracelet: braceletData, earrings: earringData });
     alert("Bundle added to bag! (Bracelet + Earrings)");
+    window.location.href = 'index.html'; // Or cart page
   } else {
     alert("Earrings added to bag!");
   }
 };
 
-/* MODAL */
 function showModal(text,fn){
   modalText.textContent=text;
   modalConfirm.onclick=()=>{closeModal();fn();};
@@ -436,6 +247,5 @@ function showModal(text,fn){
 }
 function closeModal(){modal.style.display='none';}
 </script>
-
 </body>
 </html>
