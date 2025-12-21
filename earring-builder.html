@@ -4,11 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Style My Earrings</title>
-<link rel="stylesheet" href="styles.css?v=2.2">
+<link rel="stylesheet" href="styles.css?v=2.3">
 <style>
 /* Internal overrides */
-body { background: #f6f3ec; padding: 14px 14px 100px 14px; }
-h2 { margin: 8px 0 10px; }
+body { background: #f6f3ec; }
+h2 { margin: 8px 0 10px; text-align: center; }
 .metal-toggle { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
 .metal-toggle button { padding: 8px 18px; border-radius: 999px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
 .metal-toggle button.active { background: #000; color: #fff; border-color: #000; }
@@ -39,7 +39,9 @@ h2 { margin: 8px 0 10px; }
 <body>
 <div class="header">
   <button onclick="goBack()">← Back</button>
-  <img src="assets/home/PYC_LOGO_TEXT.png" class="logo-img" alt="PickYourCharms">
+  <a href="index.html" class="logo-link">
+    <img src="assets/home/PYC_LOGO_TEXT.png" class="logo-img" alt="PickYourCharms">
+  </a>
   <button id="navCartBtn" class="cart-icon-btn" onclick="window.location.href='cart.html'">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 5.68c.496 2.238.242 3.666-2.203 4.095-.97.17-2.025.218-3.116.218-1.09 0-2.146-.048-3.116-.218-2.445-.429-2.7-1.857-2.203-4.095l1.263-5.68c.24-1.08.385-1.92 2.053-2.008 2.025-.107 4.053-.107 6.078 0 1.668.088 1.813.928 2.053 2.008z" />
@@ -47,24 +49,26 @@ h2 { margin: 8px 0 10px; }
   </button>
 </div>
 
-<h2>Style My Earrings</h2>
+<div class="main-container">
+  <h2>Style My Earrings</h2>
 
-<div class="metal-toggle">
-  <button id="goldBtn" class="active" onclick="onMetalClick('gold')">Gold</button>
-  <button id="silverBtn" onclick="onMetalClick('silver')">Silver</button>
-</div>
-
-<div class="builder-surface">
-  <div class="canvas" id="canvas">
-    <div class="hook left" style="--scale:0.5"> <img id="leftHook" src="assets/bases/LeftHook_gold.png"> </div>
-    <div class="hook right" style="--scale:0.5"> <img id="rightHook" src="assets/bases/RightHook_gold.png"> </div>
-    <div id="pricePill" class="price-pill"></div>
+  <div class="metal-toggle">
+    <button id="goldBtn" class="active" onclick="onMetalClick('gold')">Gold</button>
+    <button id="silverBtn" onclick="onMetalClick('silver')">Silver</button>
   </div>
-  <div class="reset-row"> <button onclick="onResetClick()">Reset</button> </div>
-  <div class="helper">Tap a charm to add • Tap charm to remove</div>
-</div>
 
-<div class="tray-surface"> <div class="tray" id="tray"></div> </div>
+  <div class="builder-surface">
+    <div class="canvas" id="canvas">
+      <div class="hook left" style="--scale:0.5"> <img id="leftHook" src="assets/bases/LeftHook_gold.png"> </div>
+      <div class="hook right" style="--scale:0.5"> <img id="rightHook" src="assets/bases/RightHook_gold.png"> </div>
+      <div id="pricePill" class="price-pill"></div>
+    </div>
+    <div class="reset-row"> <button onclick="onResetClick()">Reset</button> </div>
+    <div class="helper">Tap a charm to add • Tap charm to remove</div>
+  </div>
+
+  <div class="tray-surface"> <div class="tray" id="tray"></div> </div>
+</div>
 
 <button id="cta" class="cta">Love it · Add to Bag</button>
 
@@ -134,18 +138,15 @@ function init() {
 }
 
 function saveDraft() {
-  // LOGIC: If empty, remove draft
   if (!charms.left && !charms.right) {
     sessionStorage.removeItem('pyc_draft');
     return;
   }
-
   let comboCtx = null;
   if(isCombo) {
     const braceletData = sessionStorage.getItem('combo_bracelet_data');
     if(braceletData) comboCtx = { bracelet: JSON.parse(braceletData) };
   }
-
   const draftData = {
     url: 'earring-builder.html' + window.location.search,
     data: { metal, charms },
@@ -156,24 +157,20 @@ function saveDraft() {
 }
 
 function goBack() {
-  // If frozen (added to cart), back means Home
   if (document.body.classList.contains('frozen-state')) {
     window.location.href = 'index.html';
     return;
   }
-
   if (isCombo) {
     const state = { metal, charms };
     sessionStorage.setItem('combo_earring_data', JSON.stringify(state));
     const braceletData = JSON.parse(sessionStorage.getItem('combo_bracelet_data'));
-    
     const draftData = {
       url: 'builder.html?mode=combo',
       data: braceletData, 
       timestamp: Date.now()
     };
     sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
-    
     window.location.href = 'builder.html?mode=combo';
   } else {
     history.back();
@@ -201,12 +198,9 @@ function render(){
   document.querySelectorAll('.charm').forEach(el => el.remove());
   const hasLeft = !!charms.left;
   const hasRight = !!charms.right;
-
   if (hasLeft) drawCharm('left');
   if (hasRight) drawCharm('right');
-
   cta.classList.toggle('show', hasLeft && hasRight);
-
   if (hasLeft && hasRight) {
     pricePill.textContent = 'Rs. ' + BASE_PRICE;
     pricePill.classList.add('show');
@@ -219,16 +213,13 @@ function drawCharm(side){
   const hookImg=document.querySelector('.hook.'+side+' img');
   const h=hookImg.getBoundingClientRect();
   const c=canvas.getBoundingClientRect();
-
   const w=document.createElement('div');
   w.className='charm';
   w.style.left=(h.left-c.left+PHYSICS[side].x-PHYSICS.charmSize/2)+'px';
   w.style.top=(h.top-c.top+PHYSICS[side].y)+'px';
-
   const img=document.createElement('img');
   img.src='assets/charms/'+charms[side];
   img.style.width=PHYSICS.charmSize+'px';
-
   w.appendChild(img);
   w.onclick=()=>{
     if(document.body.classList.contains('frozen-state')) return;
@@ -248,6 +239,18 @@ function onMetalClick(next){
   } else { metal=next;updateMetal(); saveDraft(); }
 }
 
+function updateMetal(){
+  const leftHook = document.getElementById('leftHook');
+  const rightHook = document.getElementById('rightHook');
+  const goldBtn = document.getElementById('goldBtn');
+  const silverBtn = document.getElementById('silverBtn');
+  leftHook.src='assets/bases/LeftHook_'+metal+'.png';
+  rightHook.src='assets/bases/RightHook_'+metal+'.png';
+  goldBtn.classList.toggle('active',metal==='gold');
+  silverBtn.classList.toggle('active',metal==='silver');
+  loadTray();render();
+}
+
 function onResetClick(){
   if(!charms.left&&!charms.right) return;
   showModal('Reset earring design?',()=>{charms={left:null,right:null};render();saveDraft();});
@@ -255,14 +258,11 @@ function onResetClick(){
 
 cta.onclick = function() {
   if(!cta.classList.contains('show')) return;
-
   if (isCombo) {
     const braceletData = JSON.parse(sessionStorage.getItem('combo_bracelet_data'));
     const earringData = { metal: metal, charms: charms };
-    
     sessionStorage.removeItem('combo_bracelet_data');
     sessionStorage.removeItem('combo_earring_data');
-
     const product = {
       id: Date.now(),
       type: 'Combo (Bracelet + Earrings)',
@@ -271,9 +271,7 @@ cta.onclick = function() {
       price: calculateComboPrice(braceletData, earringData),
       image: 'assets/home/model_combo_mobile.png'
     };
-
     addToCart(product);
-
   } else {
     const product = {
       id: Date.now(),
@@ -297,9 +295,7 @@ function addToCart(item) {
   let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
   cart.push(item);
   localStorage.setItem('pyc_cart', JSON.stringify(cart));
-  
   sessionStorage.removeItem('pyc_draft');
-
   document.body.classList.add('frozen-state');
   navCartBtn.style.display = 'block';
 }
