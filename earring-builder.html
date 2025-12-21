@@ -324,11 +324,26 @@ function addCharm(file){
 
 /* RENDER */
 function render(){
-  document.querySelectorAll('.charm').forEach(el=>el.remove());
-  if(charms.left) drawCharm('left');
-  if(charms.right) drawCharm('right');
-  cta.classList.toggle('show', charms.left && charms.right);
+  document.querySelectorAll('.charm').forEach(el => el.remove());
+
+  const hasLeft = !!charms.left;
+  const hasRight = !!charms.right;
+
+  if (hasLeft) drawCharm('left');
+  if (hasRight) drawCharm('right');
+
+  // CTA only when both charms added
+  cta.classList.toggle('show', hasLeft && hasRight);
+
+  // PRICE PILL LOGIC
+  if (hasLeft || hasRight) {
+    pricePill.textContent = 'Rs. ' + BASE_PRICE;
+    pricePill.classList.add('show');
+  } else {
+    pricePill.classList.remove('show');
+  }
 }
+
 
 /* DRAW */
 function drawCharm(side){
