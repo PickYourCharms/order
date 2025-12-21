@@ -50,14 +50,14 @@ h2 { margin: 8px 0 10px; text-align: center; }
 </div>
 
 <div class="main-container">
-  <h2>Style My Earrings</h2>
+  <h2 id="pageTitle">Style My Earrings</h2>
 
   <div class="metal-toggle">
     <button id="goldBtn" class="active" onclick="onMetalClick('gold')">Gold</button>
     <button id="silverBtn" onclick="onMetalClick('silver')">Silver</button>
   </div>
 
-  <div class="builder-surface">
+  <div class="builder-surface" id="builderSurface">
     <div class="canvas" id="canvas">
       <div class="hook left" style="--scale:0.5"> <img id="leftHook" src="assets/bases/LeftHook_gold.png"> </div>
       <div class="hook right" style="--scale:0.5"> <img id="rightHook" src="assets/bases/RightHook_gold.png"> </div>
@@ -95,16 +95,22 @@ const CHARMS = {
 };
 const PHYSICS = { charmSize: 64, left: { x: 20, y: 100 }, right: { x: 80, y: 100 } };
 
+// --- BRACELET CONSTANTS FOR COMBO PREVIEW RENDER ---
+const B_PHYSICS = { size:46, anchorX:23, anchorY:6, attachOffset:2 };
+const B_ANGLES = { 1:[90], 2:[70,110], 3:[60,90,120], 4:[45,75,105,135], 5:[40,65,90,115,140] };
+
 let metal = 'gold';
 let charms = { left: null, right: null };
 
 const tray = document.getElementById('tray');
 const canvas = document.getElementById('canvas');
+const builderSurface = document.getElementById('builderSurface');
 const modal = document.getElementById('modal');
 const modalText = document.getElementById('modalText');
 const modalConfirm = document.getElementById('modalConfirm');
 const cta = document.getElementById('cta');
 const navCartBtn = document.getElementById('navCartBtn');
+const pageTitle = document.getElementById('pageTitle');
 
 const urlParams = new URLSearchParams(window.location.search);
 const isCombo = urlParams.get('mode') === 'combo';
@@ -138,21 +144,19 @@ function init() {
 }
 
 function saveDraft() {
+  // LOGIC: If earring empty but bracelet exists, Keep Draft.
+  const isEarringsEmpty = !charms.left && !charms.right;
   let comboCtx = null;
+  
   if(isCombo) {
     const braceletData = sessionStorage.getItem('combo_bracelet_data');
     if(braceletData) comboCtx = { bracelet: JSON.parse(braceletData) };
   }
 
-  // FIX: If earrings are empty BUT we have bracelet data (Combo Step 2), we MUST keep the draft.
-  const isEarringsEmpty = !charms.left && !charms.right;
-  const hasBracelet = !!comboCtx;
-
   if (isEarringsEmpty) {
-    if (isCombo && hasBracelet) {
-      // Keep draft alive because user has already built bracelet
+    if (isCombo && comboCtx) {
+      // Valid combo state (Empty earring + Valid Bracelet) -> Keep Draft
     } else {
-      // Single flow empty or Combo empty with no bracelet data (impossible in Step 2)
       sessionStorage.removeItem('pyc_draft');
       return;
     }
@@ -269,11 +273,18 @@ function onResetClick(){
 
 cta.onclick = function() {
   if(!cta.classList.contains('show')) return;
+  
   if (isCombo) {
+    // 1. Get Bracelet Data BEFORE removing from session
     const braceletData = JSON.parse(sessionStorage.getItem('combo_bracelet_data'));
     const earringData = { metal: metal, charms: charms };
+    
+    // 2. Clear Session
     sessionStorage.removeItem('combo_bracelet_data');
     sessionStorage.removeItem('combo_earring_data');
+    sessionStorage.removeItem('pyc_draft');
+
+    // 3. Add to Cart
     const product = {
       id: Date.now(),
       type: 'Combo (Bracelet + Earrings)',
@@ -282,8 +293,71 @@ cta.onclick = function() {
       price: calculateComboPrice(braceletData, earringData),
       image: 'assets/home/model_combo_mobile.png'
     };
-    addToCart(product);
+    
+    // 4. Local Cart Update
+    let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
+    cart.push(product);
+    localStorage.setItem('pyc_cart', JSON.stringify(cart));
+    
+    // 5. Freeze & UI Update
+    document.body.classList.add('frozen-state');
+    navCartBtn.style.display = 'block';
+    
+    // === COMBO UI TRANSFORMATION ===
+    pageTitle.textContent = "The Perfect Duo ✨";
+    
+    // Create Combo Stack
+    const comboStack = document.createElement('div');
+    comboStack.className = 'combo-stack';
+    
+    // A. Create Bracelet Preview Canvas
+    const bCanvas = document.createElement('div');
+    bCanvas.className = 'canvas bracelet-preview';
+    
+    // Bracelet Base
+    const bImg = document.createElement('img');
+    bImg.className = 'bracelet-base-img';
+    bImg.src = 'assets/bases/bracelet_base_' + braceletData.metal + '.png';
+    bCanvas.appendChild(bImg);
+    
+    // Bracelet Charms
+    const bRect = { width: 300, height: 300 }; // approximation for preview
+    const cx = bRect.width/2, cy = bRect.height/2;
+    const radius = bRect.width * 0.36;
+    const angles = B_ANGLES[braceletData.charms.length];
+    
+    braceletData.charms.forEach((file, i) => {
+       const a = angles[angles.length-1-i];
+       const rad = a * Math.PI / 180;
+       const x = cx + radius * Math.cos(rad);
+       const y = cy + radius * Math.sin(rad) + B_PHYSICS.attachOffset;
+       
+       const w = document.createElement('div');
+       w.className = 'bracelet-charm';
+       w.style.left = (x - B_PHYSICS.anchorX) + 'px';
+       w.style.top = (y - B_PHYSICS.anchorY) + 'px';
+       w.style.transform = 'rotate(' + (a - 90) + 'deg)';
+       
+       const img = document.createElement('img');
+       img.src = 'assets/charms/' + file;
+       img.style.width = '100%';
+       w.appendChild(img);
+       bCanvas.appendChild(w);
+    });
+    
+    // Add Bracelet to Stack
+    comboStack.appendChild(bCanvas);
+    
+    // B. Add Existing Earring Canvas to Stack
+    comboStack.appendChild(canvas);
+    
+    // Update Surface
+    builderSurface.insertBefore(comboStack, builderSurface.firstChild); // Insert at top
+    
+    // Hide Price Pill in frozen state is handled by CSS, but ensure visual cleanness
+
   } else {
+    // SINGLE FLOW
     const product = {
       id: Date.now(),
       type: 'Earrings',
@@ -303,12 +377,18 @@ function calculateComboPrice(b, e) {
 }
 
 function addToCart(item) {
+  // STANDARD SINGLE FLOW ADD
   let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
   cart.push(item);
   localStorage.setItem('pyc_cart', JSON.stringify(cart));
+  
   sessionStorage.removeItem('pyc_draft');
+
   document.body.classList.add('frozen-state');
   navCartBtn.style.display = 'block';
+  
+  // Single Flow Title
+  pageTitle.textContent = "Added to Bag ✨";
 }
 
 function showModal(text,fn){
