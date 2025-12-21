@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Style My Earrings</title>
-<link rel="stylesheet" href="styles.css?v=2.3">
+<link rel="stylesheet" href="styles.css?v=2.4">
 <style>
 /* Internal overrides */
 body { background: #f6f3ec; }
@@ -138,15 +138,26 @@ function init() {
 }
 
 function saveDraft() {
-  if (!charms.left && !charms.right) {
-    sessionStorage.removeItem('pyc_draft');
-    return;
-  }
   let comboCtx = null;
   if(isCombo) {
     const braceletData = sessionStorage.getItem('combo_bracelet_data');
     if(braceletData) comboCtx = { bracelet: JSON.parse(braceletData) };
   }
+
+  // FIX: If earrings are empty BUT we have bracelet data (Combo Step 2), we MUST keep the draft.
+  const isEarringsEmpty = !charms.left && !charms.right;
+  const hasBracelet = !!comboCtx;
+
+  if (isEarringsEmpty) {
+    if (isCombo && hasBracelet) {
+      // Keep draft alive because user has already built bracelet
+    } else {
+      // Single flow empty or Combo empty with no bracelet data (impossible in Step 2)
+      sessionStorage.removeItem('pyc_draft');
+      return;
+    }
+  }
+
   const draftData = {
     url: 'earring-builder.html' + window.location.search,
     data: { metal, charms },
