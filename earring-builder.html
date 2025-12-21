@@ -336,7 +336,7 @@ function render(){
   cta.classList.toggle('show', hasLeft && hasRight);
 
   // PRICE PILL LOGIC
-  if (hasLeft || hasRight) {
+  if (hasLeft && hasRight) {
     pricePill.textContent = 'Rs. ' + BASE_PRICE;
     pricePill.classList.add('show');
   } else {
