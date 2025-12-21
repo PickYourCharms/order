@@ -4,12 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Style My Earrings</title>
-<link rel="stylesheet" href="styles.css?v=2.1">
+<link rel="stylesheet" href="styles.css?v=2.2">
 <style>
-/* Internal overrides kept minimal */
+/* Internal overrides */
 body { background: #f6f3ec; padding: 14px 14px 100px 14px; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.header button { background: none; border: none; font-size: 14px; cursor: pointer; }
+h2 { margin: 8px 0 10px; }
 .metal-toggle { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
 .metal-toggle button { padding: 8px 18px; border-radius: 999px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
 .metal-toggle button.active { background: #000; color: #fff; border-color: #000; }
@@ -40,6 +39,7 @@ body { background: #f6f3ec; padding: 14px 14px 100px 14px; }
 <body>
 <div class="header">
   <button onclick="goBack()">← Back</button>
+  <img src="assets/home/PYC_LOGO_TEXT.png" class="logo-img" alt="PickYourCharms">
   <button id="navCartBtn" class="cart-icon-btn" onclick="window.location.href='cart.html'">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 5.68c.496 2.238.242 3.666-2.203 4.095-.97.17-2.025.218-3.116.218-1.09 0-2.146-.048-3.116-.218-2.445-.429-2.7-1.857-2.203-4.095l1.263-5.68c.24-1.08.385-1.92 2.053-2.008 2.025-.107 4.053-.107 6.078 0 1.668.088 1.813.928 2.053 2.008z" />
@@ -116,7 +116,6 @@ function init() {
       metal = draft.data.metal;
       charms = draft.data.charms;
       if(isCombo && draft.comboContext) {
-        // RESTORE BRACELET CONTEXT SO BACK BUTTON WORKS
         sessionStorage.setItem('combo_bracelet_data', JSON.stringify(draft.comboContext.bracelet));
       }
     }
@@ -135,6 +134,12 @@ function init() {
 }
 
 function saveDraft() {
+  // LOGIC: If empty, remove draft
+  if (!charms.left && !charms.right) {
+    sessionStorage.removeItem('pyc_draft');
+    return;
+  }
+
   let comboCtx = null;
   if(isCombo) {
     const braceletData = sessionStorage.getItem('combo_bracelet_data');
@@ -151,6 +156,12 @@ function saveDraft() {
 }
 
 function goBack() {
+  // If frozen (added to cart), back means Home
+  if (document.body.classList.contains('frozen-state')) {
+    window.location.href = 'index.html';
+    return;
+  }
+
   if (isCombo) {
     const state = { metal, charms };
     sessionStorage.setItem('combo_earring_data', JSON.stringify(state));
@@ -237,26 +248,12 @@ function onMetalClick(next){
   } else { metal=next;updateMetal(); saveDraft(); }
 }
 
-function updateMetal(){
-  const leftHook = document.getElementById('leftHook');
-  const rightHook = document.getElementById('rightHook');
-  const goldBtn = document.getElementById('goldBtn');
-  const silverBtn = document.getElementById('silverBtn');
-
-  leftHook.src='assets/bases/LeftHook_'+metal+'.png';
-  rightHook.src='assets/bases/RightHook_'+metal+'.png';
-  goldBtn.classList.toggle('active',metal==='gold');
-  silverBtn.classList.toggle('active',metal==='silver');
-  loadTray();render();
-}
-
 function onResetClick(){
   if(!charms.left&&!charms.right) return;
   showModal('Reset earring design?',()=>{charms={left:null,right:null};render();saveDraft();});
 }
 
 cta.onclick = function() {
-  // SAFETY CHECK
   if(!cta.classList.contains('show')) return;
 
   if (isCombo) {
