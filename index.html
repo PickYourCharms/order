@@ -7,12 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2.0">
+  <link rel="stylesheet" href="styles.css?v=2.2">
 </head>
 
 <body>
 
 <header class="navbar">
+  <div style="width:24px"></div> 
   <img src="assets/home/PYC_LOGO_TEXT.png" class="logo-img" alt="PickYourCharms">
   <button id="navCartBtn" class="cart-icon-btn" onclick="window.location.href='cart.html'">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -32,80 +33,77 @@
 
 <section class="entry-grid">
   <div class="entry-card interactive">
-    <div class="card-image">
-      <img src="assets/home/model_bracelet_mobile.png" loading="lazy">
-    </div>
-    <h2>Bracelet</h2>
-    <p>Build it charm by charm.</p>
-    <span class="price-hint">Starting from Rs. 249</span>
+    <div class="card-image"> <img src="assets/home/model_bracelet_mobile.png" loading="lazy"> </div>
+    <h2>Bracelet</h2> <p>Build it charm by charm.</p> <span class="price-hint">Starting from Rs. 249</span>
     <button class="primary-btn" onclick="startFresh('builder.html')">I want to build this →</button>
   </div>
 
   <div class="entry-card interactive">
-    <div class="card-image">
-      <img src="assets/home/model_earring_mobile.png" loading="lazy">
-    </div>
-    <h2>Earrings</h2>
-    <p>Style both ears your way.</p>
-    <span class="price-hint">Starting from Rs. 199</span>
+    <div class="card-image"> <img src="assets/home/model_earring_mobile.png" loading="lazy"> </div>
+    <h2>Earrings</h2> <p>Style both ears your way.</p> <span class="price-hint">Starting from Rs. 199</span>
     <button class="primary-btn" onclick="startFresh('earring-builder.html')">Let’s start →</button>
   </div>
 
   <div class="entry-card interactive combo-card">
-    <div class="card-image">
-      <img src="assets/home/model_combo_mobile.png" loading="lazy">
-      <span class="combo-badge">SAVE 10% ✨</span>
-    </div>
-    <h2>Combo</h2>
-    <p>Bracelet + Earrings</p>
-    <span class="price-hint">Better together</span>
+    <div class="card-image"> <img src="assets/home/model_combo_mobile.png" loading="lazy"> <span class="combo-badge">SAVE 10% ✨</span> </div>
+    <h2>Combo</h2> <p>Bracelet + Earrings</p> <span class="price-hint">Better together</span>
     <button class="primary-btn" onclick="startFresh('builder.html?mode=combo')">I want it all →</button>
   </div>
 
   <div class="entry-card interactive curated-card">
-    <div class="card-image">
-      <img src="assets/home/curated_teaser.png" loading="lazy">
-    </div>
-    <h2>Curated Pieces</h2>
-    <p>Designed by us, for days you don’t want to decide.</p>
+    <div class="card-image"> <img src="assets/home/curated_teaser.png" loading="lazy"> </div>
+    <h2>Curated Pieces</h2> <p>Designed by us, for days you don’t want to decide.</p>
     <button class="secondary-btn">Explore curated designs →</button>
   </div>
 </section>
 
 <div id="resumeBar" class="resume-bar" onclick="resumeDraft()">
-  <div class="resume-info">
-    <span class="resume-title">I left something unfinished...</span>
-    <span class="resume-sub">Tap to pick up where you left off</span>
-  </div>
+  <div class="resume-info"> <span class="resume-title">I left something unfinished...</span> <span class="resume-sub">Tap to pick up where you left off</span> </div>
   <div class="resume-btn">Let's finish →</div>
 </div>
 
 <script>
-  // 1. Check for draft in SESSION STORAGE
+// Use 'pageshow' to ensure this runs even on Back button navigation
+window.addEventListener('pageshow', function(event) {
+  checkState();
+});
+
+function checkState() {
+  // 1. Check for draft
   const draftStr = sessionStorage.getItem('pyc_draft');
+  const resumeBar = document.getElementById('resumeBar');
+  
   if (draftStr) {
-    const draft = JSON.parse(draftStr);
-    document.getElementById('resumeBar').classList.add('show');
+    // Only show if draft is valid
+    resumeBar.classList.add('show');
+  } else {
+    // Explicitly hide if no draft (important for back nav after checkout)
+    resumeBar.classList.remove('show');
   }
 
-  // 2. Check for Cart Items (Local Storage)
+  // 2. Check for Cart
   const cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
+  const cartBtn = document.getElementById('navCartBtn');
   if (cart.length > 0) {
-    document.getElementById('navCartBtn').style.display = 'block';
+    cartBtn.style.display = 'block';
+  } else {
+    cartBtn.style.display = 'none';
   }
+}
 
-  // 3. Resume Action
-  function resumeDraft() {
-    const draft = JSON.parse(sessionStorage.getItem('pyc_draft'));
-    if (draft && draft.url) {
-      const separator = draft.url.includes('?') ? '&' : '?';
-      window.location.href = draft.url + separator + 'resume=true';
-    }
+function resumeDraft() {
+  const draft = JSON.parse(sessionStorage.getItem('pyc_draft'));
+  if (draft && draft.url) {
+    const separator = draft.url.includes('?') ? '&' : '?';
+    window.location.href = draft.url + separator + 'resume=true';
   }
+}
 
-  function startFresh(url) {
-    window.location.href = url;
-  }
+function startFresh(url) {
+  // Optional: clear draft on explicit new start, 
+  // but usually better to overwrite on interaction.
+  window.location.href = url;
+}
 </script>
 
 </body>
