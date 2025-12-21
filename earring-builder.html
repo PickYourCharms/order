@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Style My Earrings</title>
 <style>
-/* ... (Same CSS as before) ... */
+/* ... (Your CSS) ... */
+.bottom-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 24px 24px 0 0; padding: 24px 20px 30px; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 100; display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.bottom-sheet.active { transform: translateY(0); }
+.sheet-actions { display: flex; gap: 10px; }
+.sheet-btn { flex: 1; padding: 14px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+.sheet-btn.primary { background: #000; color: #fff; }
+.sheet-btn.secondary { background: #f0f0f0; color: #000; }
 body { margin: 0; padding: 14px; font-family: system-ui, -apple-system, sans-serif; background: #f6f3ec; text-align: center; color: #111; -webkit-tap-highlight-color: transparent; }
 .header { display: flex; justify-content: space-between; align-items: center; }
 .header button { background: none; border: none; font-size: 14px; cursor: pointer; }
@@ -41,40 +47,22 @@ h2 { margin: 8px 0 10px; }
 </head>
 
 <body>
-
-<div class="header">
-  <button onclick="goBack()">← Back</button>
-</div>
-
+<div class="header"> <button onclick="goBack()">← Back</button> </div>
 <h2>Style My Earrings</h2>
-
 <div class="metal-toggle">
   <button id="goldBtn" class="active" onclick="onMetalClick('gold')">Gold</button>
   <button id="silverBtn" onclick="onMetalClick('silver')">Silver</button>
 </div>
-
 <div class="builder-surface">
   <div class="canvas" id="canvas">
-    <div class="hook left" style="--scale:0.5">
-      <img id="leftHook" src="assets/bases/LeftHook_gold.png">
-    </div>
-    <div class="hook right" style="--scale:0.5">
-      <img id="rightHook" src="assets/bases/RightHook_gold.png">
-    </div>
+    <div class="hook left" style="--scale:0.5"> <img id="leftHook" src="assets/bases/LeftHook_gold.png"> </div>
+    <div class="hook right" style="--scale:0.5"> <img id="rightHook" src="assets/bases/RightHook_gold.png"> </div>
     <div id="pricePill" class="price-pill"></div>
   </div>
-
-  <div class="reset-row">
-    <button onclick="onResetClick()">Reset</button>
-  </div>
-
+  <div class="reset-row"> <button onclick="onResetClick()">Reset</button> </div>
   <div class="helper">Tap a charm to add • Tap charm to remove</div>
 </div>
-
-<div class="tray-surface">
-  <div class="tray" id="tray"></div>
-</div>
-
+<div class="tray-surface"> <div class="tray" id="tray"></div> </div>
 <button id="cta" class="cta">Love it · Add to Bag</button>
 
 <div id="modal" class="modal">
@@ -87,17 +75,22 @@ h2 { margin: 8px 0 10px; }
   </div>
 </div>
 
+<div id="successSheet" class="bottom-sheet">
+  <h3>Added to Cart ✨</h3>
+  <p>Your design has been saved.</p>
+  <div class="sheet-actions">
+    <button class="sheet-btn secondary" onclick="window.location.href='index.html'">Build More</button>
+    <button class="sheet-btn primary" onclick="window.location.href='cart.html'">View Cart</button>
+  </div>
+</div>
+
 <script>
 const BASE_PRICE = 249;
 const CHARMS = {
   gold: [ '3DBowRibbon_Charm_Gold.png', 'EvilEye_Charm_Gold.png', 'LetterA_Charm_Gold.png', 'NorthStar_Charm_Gold.png', 'RedCherry_Charm_Gold.png' ],
   silver: [ '3DBowRibbon_Charm_Silver.png', 'EvilEye_Charm_Silver.png', 'LetterA_Charm_Silver.png', 'NorthStar_Charm_Silver.png', 'RedCherry_Charm_Silver.png' ]
 };
-const PHYSICS = {
-  charmSize: 64,
-  left:  { x: 20, y: 100 }, 
-  right: { x: 80, y: 100 } 
-};
+const PHYSICS = { charmSize: 64, left: { x: 20, y: 100 }, right: { x: 80, y: 100 } };
 
 let metal = 'gold';
 let charms = { left: null, right: null };
@@ -108,13 +101,26 @@ const modal = document.getElementById('modal');
 const modalText = document.getElementById('modalText');
 const modalConfirm = document.getElementById('modalConfirm');
 const cta = document.getElementById('cta');
+const successSheet = document.getElementById('successSheet');
 
-// === COMBO LOGIC ===
 const urlParams = new URLSearchParams(window.location.search);
 const isCombo = urlParams.get('mode') === 'combo';
+const isResume = urlParams.get('resume') === 'true';
 
 function init() {
-  if (isCombo) {
+  if (isResume) {
+    // RESUME from SESSION STORAGE
+    const draft = JSON.parse(sessionStorage.getItem('pyc_draft'));
+    if (draft && draft.data) {
+      metal = draft.data.metal;
+      charms = draft.data.charms;
+      if(isCombo && draft.comboContext) {
+        sessionStorage.setItem('combo_bracelet_data', JSON.stringify(draft.comboContext.bracelet));
+      }
+    }
+    if (isCombo) cta.textContent = "Love it · Add Bundle to Bag";
+  }
+  else if (isCombo) {
     const savedData = sessionStorage.getItem('combo_earring_data');
     if (savedData) {
       const data = JSON.parse(savedData);
@@ -126,21 +132,42 @@ function init() {
   updateMetal();
 }
 
-// === NEW: Go Back Logic with Saving ===
+function saveDraft() {
+  let comboCtx = null;
+  if(isCombo) {
+    const braceletData = sessionStorage.getItem('combo_bracelet_data');
+    if(braceletData) comboCtx = { bracelet: JSON.parse(braceletData) };
+  }
+
+  const draftData = {
+    url: 'earring-builder.html' + window.location.search,
+    data: { metal, charms },
+    comboContext: comboCtx,
+    timestamp: Date.now()
+  };
+  // SAVE to SESSION STORAGE
+  sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
+}
+
 function goBack() {
   if (isCombo) {
-    // Save current Earring state
-    const state = { metal: metal, charms: charms };
+    const state = { metal, charms };
     sessionStorage.setItem('combo_earring_data', JSON.stringify(state));
+    const braceletData = JSON.parse(sessionStorage.getItem('combo_bracelet_data'));
     
-    // Explicitly go to builder.html in combo mode
+    const draftData = {
+      url: 'builder.html?mode=combo',
+      data: braceletData, 
+      timestamp: Date.now()
+    };
+    // SAVE BACK-NAV TO SESSION STORAGE
+    sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
+    
     window.location.href = 'builder.html?mode=combo';
   } else {
     history.back();
   }
 }
-
-init(); 
 
 function loadTray(){
   tray.innerHTML='';
@@ -156,11 +183,11 @@ function addCharm(file){
   if(!charms.left) charms.left=file;
   else if(!charms.right) charms.right=file;
   render();
+  saveDraft(); 
 }
 
 function render(){
   document.querySelectorAll('.charm').forEach(el => el.remove());
-
   const hasLeft = !!charms.left;
   const hasRight = !!charms.right;
 
@@ -192,7 +219,7 @@ function drawCharm(side){
   img.style.width=PHYSICS.charmSize+'px';
 
   w.appendChild(img);
-  w.onclick=()=>{charms[side]=null;render()};
+  w.onclick=()=>{charms[side]=null;render();saveDraft();}; 
   canvas.appendChild(w);
 }
 
@@ -202,8 +229,9 @@ function onMetalClick(next){
     showModal('Switching metal will reset your design.',()=>{
       charms={left:null,right:null};
       metal=next;updateMetal();
+      saveDraft(); 
     });
-  } else { metal=next;updateMetal(); }
+  } else { metal=next;updateMetal(); saveDraft(); }
 }
 
 function updateMetal(){
@@ -221,7 +249,7 @@ function updateMetal(){
 
 function onResetClick(){
   if(!charms.left&&!charms.right) return;
-  showModal('Reset earring design?',()=>{charms={left:null,right:null};render();});
+  showModal('Reset earring design?',()=>{charms={left:null,right:null};render();saveDraft();});
 }
 
 cta.onclick = function() {
@@ -232,13 +260,48 @@ cta.onclick = function() {
     sessionStorage.removeItem('combo_bracelet_data');
     sessionStorage.removeItem('combo_earring_data');
 
-    console.log("ORDER: ", { bracelet: braceletData, earrings: earringData });
-    alert("Bundle added to bag! (Bracelet + Earrings)");
-    window.location.href = 'index.html'; // Or cart page
+    const product = {
+      id: Date.now(),
+      type: 'Combo (Bracelet + Earrings)',
+      bracelet: braceletData,
+      earrings: earringData,
+      price: calculateComboPrice(braceletData, earringData),
+      image: 'assets/home/model_combo_mobile.png'
+    };
+
+    addToCart(product);
+
   } else {
-    alert("Earrings added to bag!");
+    const product = {
+      id: Date.now(),
+      type: 'Earrings',
+      metal: metal,
+      charms: charms,
+      price: BASE_PRICE,
+      image: 'assets/bases/LeftHook_'+metal+'.png' 
+    };
+    addToCart(product);
   }
 };
+
+function calculateComboPrice(b, e) {
+  const bPrice = 249 + (b.charms.length-1)*50;
+  const ePrice = 249;
+  return Math.floor((bPrice + ePrice) * 0.9); 
+}
+
+function addToCart(item) {
+  // KEEP CART IN LOCAL STORAGE
+  let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
+  cart.push(item);
+  localStorage.setItem('pyc_cart', JSON.stringify(cart));
+  
+  // CLEAR DRAFT FROM SESSION STORAGE
+  sessionStorage.removeItem('pyc_draft');
+
+  successSheet.classList.add('active');
+  cta.style.display = 'none';
+}
 
 function showModal(text,fn){
   modalText.textContent=text;
@@ -246,6 +309,8 @@ function showModal(text,fn){
   modal.style.display='flex';
 }
 function closeModal(){modal.style.display='none';}
+
+init();
 </script>
 </body>
 </html>
