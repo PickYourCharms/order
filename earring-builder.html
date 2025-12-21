@@ -221,7 +221,18 @@ h2 { margin: 8px 0 10px; }
 <body>
 
 <div class="header">
-  <button onclick="history.back()">← Back</button>
+function goBackToBracelet() {
+  // Save current earring WIP
+  if (charms.length > 0) {
+    sessionStorage.setItem('comboEarrings', JSON.stringify({
+      metal,
+      charms
+    }));
+  }
+  window.location.href = 'builder.html';
+}
+<button onclick="goBackToBracelet()">← Back</button>
+
 </div>
 
 <h2>Style My Earrings</h2>
