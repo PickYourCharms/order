@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3.0">
+  <link rel="stylesheet" href="styles.css?v=3.1">
 </head>
 
 <body>
@@ -82,19 +82,8 @@
     </div>
 
     <div class="cart-footer-spacer"></div>
-    <button id="checkoutBtn" class="checkout-pill">Proceed to Checkout</button>
+    <button id="checkoutBtn" class="checkout-pill" onclick="window.location.href='checkout.html'">Proceed to Checkout</button>
 
-  </div>
-</div>
-
-<div id="bratTrapModal" class="modal">
-  <div class="modal-card brat-card">
-    <h3>Wait up! ✋</h3>
-    <p>Are you sure you're done styling?</p>
-    <div class="modal-actions vertical">
-      <button class="secondary" onclick="window.location.href='index.html'">Ughhh!!! I want to design more</button>
-      <button class="primary" onclick="window.location.href='checkout.html'">Maybe Later!!</button>
-    </div>
   </div>
 </div>
 
@@ -165,10 +154,6 @@ function renderItems() {
       }
     }
 
-    // Determine Base Price for display (before cart discounts)
-    // Note: If it's a combo from previous step, it might have a discounted price stored.
-    // For the UI listing, we show the stored price. 
-    // The Math engine will handle the actual recalculations.
     const displayPrice = item.price; 
 
     const card = document.createElement('div');
@@ -194,15 +179,9 @@ function renderItems() {
 // === MATH ENGINE ===
 function calculateTotals() {
   // 1. FLATTEN CART FOR CALCULATION
-  // We need to separate Combos into individual components to apply the "Global Pairing Rule"
-  // effectively, or we trust the stored price. 
-  // *Decision:* To strictly follow the prompt's "Step B" logic (Pair cheapest bracelet with earring),
-  // we will extract base prices.
-  
   let bracelets = [];
   let earrings = [];
   
-  // Helper to get raw price of a component
   const getBraceletPrice = (bData) => BASE_PRICE + (bData.charms.length - 1) * EXTRA_CHARM_PRICE;
   const getEarringPrice = () => BASE_PRICE;
 
@@ -212,26 +191,24 @@ function calculateTotals() {
     } else if (item.type === 'Earrings') {
       earrings.push(getEarringPrice());
     } else if (item.type.includes('Combo')) {
-      // Explode combo for math
       bracelets.push(getBraceletPrice(item.bracelet));
       earrings.push(getEarringPrice());
     }
   });
 
-  // Step A: Subtotal (Sum of all individual components raw price)
+  // Step A: Subtotal
   let subtotal = 0;
   bracelets.forEach(p => subtotal += p);
   earrings.forEach(p => subtotal += p);
 
   // Step B: Combo Discount Logic
-  // Sort Bracelets Ascending
   bracelets.sort((a, b) => a - b);
   
   let comboDiscount = 0;
   const pairCount = Math.min(bracelets.length, earrings.length);
 
   for (let i = 0; i < pairCount; i++) {
-    const pairSum = bracelets[i] + earrings[i]; // earring price is constant 249 usually
+    const pairSum = bracelets[i] + earrings[i]; 
     comboDiscount += Math.floor(pairSum * 0.10);
   }
 
@@ -245,7 +222,7 @@ function calculateTotals() {
       couponMsg.textContent = `Coupon Applied: ${activeCoupon.code}`;
       couponMsg.className = 'coupon-msg success';
     } else {
-      activeCoupon = null; // Remove if criteria no longer met
+      activeCoupon = null;
       couponMsg.textContent = `Order value too low for this coupon`;
       couponMsg.className = 'coupon-msg error';
     }
@@ -322,9 +299,6 @@ function editItem(index) {
     targetUrl = 'earring-builder.html?resume=true';
   }
   else if (item.type.includes('Combo')) {
-    // Reconstitute Combo
-    // We need to set the SessionStorage for the bracelet part 
-    // AND the Draft for the earring part (since that's the last step)
     sessionStorage.setItem('combo_bracelet_data', JSON.stringify(item.bracelet));
     
     draftData = {
@@ -353,7 +327,7 @@ function applyCoupon() {
   const valid = MOCK_COUPONS.find(c => c.code === code);
   if (valid) {
     activeCoupon = valid;
-    calculateTotals(); // Will update UI message
+    calculateTotals(); 
   } else {
     activeCoupon = null;
     couponMsg.textContent = "Invalid Coupon Code";
@@ -362,20 +336,6 @@ function applyCoupon() {
   }
 }
 
-// === BRAT TRAP (MODAL) ===
-const modal = document.getElementById('bratTrapModal');
-const checkoutBtn = document.getElementById('checkoutBtn');
-
-checkoutBtn.onclick = function() {
-  modal.style.display = 'flex';
-}
-
-// Click outside to close (optional, but good UX)
-modal.onclick = function(e) {
-  if (e.target === modal) modal.style.display = 'none';
-}
-
-// Run
 init();
 
 </script>
