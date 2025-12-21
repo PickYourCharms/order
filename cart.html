@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3.5">
+  <link rel="stylesheet" href="styles.css?v=3.6">
 </head>
 
 <body>
@@ -73,7 +73,12 @@ const MOCK_COUPONS = [ { code: "WELCOME10", percent: 10, minOrder: 0 }, { code: 
 const REF_SIZE = 300; 
 const PHYSICS = { 
   bracelet: { anchorX:23, anchorY:6, attachOffset:2 },
-  earrings: { leftX: 85, rightX: 215, y: 120 } 
+  // FIXED EARRING COORDINATES:
+  // Container 300px wide. 30% left = 90px. 70% left = 210px.
+  // Charm anchorX is 23 (center).
+  // Y position: Hooks top at 40px. Height approx 120px? 
+  // Charm should hang at approx 160px.
+  earrings: { leftX: 90, rightX: 210, y: 160 } 
 };
 const B_ANGLES = { 1:[90], 2:[70,110], 3:[60,90,120], 4:[45,75,105,135], 5:[40,65,90,115,140] };
 
@@ -148,7 +153,7 @@ function buildMiniEarrings(metal, charms) {
     const c = document.createElement('img');
     c.className = 'mini-charm';
     c.src = `assets/charms/${charms.left}`;
-    c.style.left = (PHYSICS.earrings.leftX - 23) + 'px';
+    c.style.left = (PHYSICS.earrings.leftX - 23) + 'px'; // Center 46px charm
     c.style.top = PHYSICS.earrings.y + 'px';
     container.appendChild(c);
   }
@@ -174,7 +179,7 @@ function renderItems() {
       const comboCard = document.createElement('div');
       comboCard.className = 'combo-card-group';
 
-      // 1. Header (No Delete here anymore)
+      // 1. Header
       const header = document.createElement('div');
       header.className = 'combo-group-header';
       header.innerHTML = `
@@ -188,60 +193,76 @@ function renderItems() {
       // 2. Bracelet Row
       const bRow = document.createElement('div');
       bRow.className = 'combo-sub-item';
-      
+      const bWrapper = document.createElement('div');
+      bWrapper.className = 'item-row-content'; // Common wrapper for flex layout
+
+      // Thumb
       const bThumb = document.createElement('div');
       bThumb.className = 'item-thumb';
       bThumb.appendChild(buildMiniBracelet(item.bracelet.metal, item.bracelet.charms));
-      
       const bBadge = document.createElement('div');
       bBadge.className = 'charm-badge';
       bBadge.textContent = item.bracelet.charms.length;
       bThumb.appendChild(bBadge);
 
-      bRow.appendChild(bThumb);
-      
-      // Bracelet Actions: Edit Bracelet OR Delete Bracelet (Breaking Combo)
-      bRow.innerHTML += `
-        <div class="item-details">
-          <div class="sub-item-name">Bracelet</div>
-          <div class="sub-item-meta">${item.bracelet.metal} base</div>
-        </div>
-        <div class="item-actions">
-          <button class="icon-btn edit-btn" onclick="editItem(${index}, 'bracelet')">✎</button>
-          <button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'bracelet')">✕</button>
-        </div>
+      // Text
+      const bDetails = document.createElement('div');
+      bDetails.className = 'item-details';
+      bDetails.innerHTML = `
+        <div class="sub-item-name">Bracelet</div>
+        <div class="sub-item-meta">${item.bracelet.metal} base</div>
       `;
-      bRow.insertBefore(bThumb, bRow.children[0]);
+
+      // Actions
+      const bActions = document.createElement('div');
+      bActions.className = 'item-actions';
+      bActions.innerHTML = `
+        <button class="icon-btn edit-btn" onclick="editItem(${index}, 'bracelet')">✎</button>
+        <button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'bracelet')">✕</button>
+      `;
+
+      bWrapper.appendChild(bThumb);
+      bWrapper.appendChild(bDetails);
+      bWrapper.appendChild(bActions);
+      bRow.appendChild(bWrapper);
       comboCard.appendChild(bRow);
 
       // 3. Earring Row
       const eRow = document.createElement('div');
       eRow.className = 'combo-sub-item';
-      
+      const eWrapper = document.createElement('div');
+      eWrapper.className = 'item-row-content';
+
+      // Thumb
       const eThumb = document.createElement('div');
       eThumb.className = 'item-thumb';
       eThumb.appendChild(buildMiniEarrings(item.earrings.metal, item.earrings.charms));
-      
       const eCount = (item.earrings.charms.left?1:0) + (item.earrings.charms.right?1:0);
       const eBadge = document.createElement('div');
       eBadge.className = 'charm-badge';
       eBadge.textContent = eCount;
       eThumb.appendChild(eBadge);
 
-      eRow.appendChild(eThumb);
-
-      // Earring Actions
-      eRow.innerHTML += `
-        <div class="item-details">
-          <div class="sub-item-name">Earrings</div>
-          <div class="sub-item-meta">${item.earrings.metal} base</div>
-        </div>
-        <div class="item-actions">
-          <button class="icon-btn edit-btn" onclick="editItem(${index}, 'earrings')">✎</button>
-          <button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'earrings')">✕</button>
-        </div>
+      // Text
+      const eDetails = document.createElement('div');
+      eDetails.className = 'item-details';
+      eDetails.innerHTML = `
+        <div class="sub-item-name">Earrings</div>
+        <div class="sub-item-meta">${item.earrings.metal} base</div>
       `;
-      eRow.insertBefore(eThumb, eRow.children[0]);
+
+      // Actions
+      const eActions = document.createElement('div');
+      eActions.className = 'item-actions';
+      eActions.innerHTML = `
+        <button class="icon-btn edit-btn" onclick="editItem(${index}, 'earrings')">✎</button>
+        <button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'earrings')">✕</button>
+      `;
+
+      eWrapper.appendChild(eThumb);
+      eWrapper.appendChild(eDetails);
+      eWrapper.appendChild(eActions);
+      eRow.appendChild(eWrapper);
       comboCard.appendChild(eRow);
 
       listContainer.appendChild(comboCard);
@@ -250,6 +271,8 @@ function renderItems() {
       // === SINGLE CARD ===
       const card = document.createElement('div');
       card.className = 'cart-item-card';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'item-row-content';
       
       const thumbBox = document.createElement('div');
       thumbBox.className = 'item-thumb';
@@ -282,9 +305,10 @@ function renderItems() {
         <button class="icon-btn delete-btn" onclick="deleteItem(${index})">✕</button>
       `;
 
-      card.appendChild(thumbBox);
-      card.appendChild(details);
-      card.appendChild(actions);
+      wrapper.appendChild(thumbBox);
+      wrapper.appendChild(details);
+      wrapper.appendChild(actions);
+      card.appendChild(wrapper);
       listContainer.appendChild(card);
     }
   });
@@ -429,10 +453,6 @@ function editItem(index, subType) {
 
   sessionStorage.setItem('pyc_draft', JSON.stringify(draft));
   
-  // NOTE: For Combos, we only delete the whole combo if editing. 
-  // You might want to remove just the part being edited, but technically 
-  // "Editing" a combo means you are re-entering the flow.
-  // Standard UX: Remove the old object, user must re-add at end of flow.
   cart.splice(index, 1);
   localStorage.setItem('pyc_cart', JSON.stringify(cart));
   
