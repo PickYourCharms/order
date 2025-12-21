@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Build My Bracelet</title>
 <style>
-/* ... (Your existing CSS remains exactly the same) ... */
+/* ... (Your CSS) ... */
+.bottom-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 24px 24px 0 0; padding: 24px 20px 30px; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 100; display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.bottom-sheet.active { transform: translateY(0); }
+.sheet-actions { display: flex; gap: 10px; }
+.sheet-btn { flex: 1; padding: 14px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+.sheet-btn.primary { background: #000; color: #fff; }
+.sheet-btn.secondary { background: #f0f0f0; color: #000; }
 body { margin: 0; padding: 14px; font-family: system-ui, -apple-system, sans-serif; background: #f6f3ec; text-align: center; color: #111; -webkit-tap-highlight-color: transparent; }
 .header { display: flex; justify-content: space-between; align-items: center; }
 .header button { background: none; border: none; font-size: 14px; cursor: pointer; }
@@ -38,35 +44,21 @@ h2 { margin: 8px 0 10px; }
 </head>
 
 <body>
-
-<div class="header">
-  <button onclick="goBack()">← Back</button>
-</div>
-
+<div class="header"> <button onclick="goBack()">← Back</button> </div>
 <h2>Build My Bracelet</h2>
-
 <div class="metal-toggle">
   <button id="goldBtn" class="active" onclick="onMetalClick('gold')">Gold</button>
   <button id="silverBtn" onclick="onMetalClick('silver')">Silver</button>
 </div>
-
 <div class="builder-surface">
   <div class="canvas" id="canvas">
     <img id="bracelet" class="bracelet" src="assets/bases/bracelet_base_gold.png">
     <div id="pricePill" class="price-pill"></div>
   </div>
-
-  <div class="reset-row">
-    <button onclick="onResetClick()">Reset</button>
-  </div>
-
+  <div class="reset-row"> <button onclick="onResetClick()">Reset</button> </div>
   <div class="helper">Tap a charm to add • Tap charm to remove</div>
 </div>
-
-<div class="tray-surface">
-  <div class="tray" id="tray"></div>
-</div>
-
+<div class="tray-surface"> <div class="tray" id="tray"></div> </div>
 <button id="cta" class="cta">Love it · Add to Bag</button>
 
 <div id="modal" class="modal">
@@ -79,19 +71,20 @@ h2 { margin: 8px 0 10px; }
   </div>
 </div>
 
+<div id="successSheet" class="bottom-sheet">
+  <h3>Added to Cart ✨</h3>
+  <p>Your design has been saved.</p>
+  <div class="sheet-actions">
+    <button class="sheet-btn secondary" onclick="window.location.href='index.html'">Build More</button>
+    <button class="sheet-btn primary" onclick="window.location.href='cart.html'">View Cart</button>
+  </div>
+</div>
+
 <script>
 const BASE_PRICE = 249;
 const EXTRA_CHARM_PRICE = 50;
 const PHYSICS = { size:46, anchorX:23, anchorY:6, attachOffset:2 };
-
-const SLOT_ANGLES = {
-  1:[90],
-  2:[70,110],
-  3:[60,90,120],
-  4:[45,75,105,135],
-  5:[40,65,90,115,140]
-};
-
+const SLOT_ANGLES = { 1:[90], 2:[70,110], 3:[60,90,120], 4:[45,75,105,135], 5:[40,65,90,115,140] };
 const CHARMS = {
   gold: [ '3DBowRibbon_Charm_Gold.png', 'EvilEye_Charm_Gold.png', 'LetterA_Charm_Gold.png', 'NorthStar_Charm_Gold.png', 'RedCherry_Charm_Gold.png' ],
   silver: [ '3DBowRibbon_Charm_Silver.png', 'EvilEye_Charm_Silver.png', 'LetterA_Charm_Silver.png', 'NorthStar_Charm_Silver.png', 'RedCherry_Charm_Silver.png' ]
@@ -108,13 +101,22 @@ const cta = document.getElementById('cta');
 const modal = document.getElementById('modal');
 const modalText = document.getElementById('modalText');
 const modalConfirm = document.getElementById('modalConfirm');
+const successSheet = document.getElementById('successSheet');
 
-// === COMBO LOGIC ===
 const urlParams = new URLSearchParams(window.location.search);
 const isCombo = urlParams.get('mode') === 'combo';
+const isResume = urlParams.get('resume') === 'true';
 
 function init() {
-  if (isCombo) {
+  if (isResume) {
+    // RESUME from SESSION STORAGE
+    const draft = JSON.parse(sessionStorage.getItem('pyc_draft'));
+    if (draft && draft.data) {
+      metal = draft.data.metal;
+      charms = draft.data.charms;
+    }
+  } 
+  else if (isCombo) {
     const savedData = sessionStorage.getItem('combo_bracelet_data');
     if (savedData) {
       const data = JSON.parse(savedData);
@@ -126,20 +128,23 @@ function init() {
   updateMetal(); 
 }
 
-// === NEW: Explicit Go Back Logic ===
+function saveDraft() {
+  const draftData = {
+    url: 'builder.html' + window.location.search,
+    data: { metal, charms },
+    timestamp: Date.now()
+  };
+  // SAVE to SESSION STORAGE
+  sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
+}
+
 function goBack() {
   if (isCombo) {
-    // If we are in combo mode, 'Back' from the bracelet page 
-    // means we want to exit the entire flow and go Home.
-    // This breaks the loop.
     window.location.href = 'index.html'; 
   } else {
-    // Normal flow
     history.back();
   }
 }
-
-init(); 
 
 function loadTray(){
   tray.innerHTML='';
@@ -155,6 +160,7 @@ function addCharm(file){
   if(charms.length>=5) return;
   charms.push(file);
   render();
+  saveDraft(); 
 }
 
 function render(){
@@ -166,7 +172,8 @@ function render(){
     return;
   }
 
-  pricePill.textContent='Rs. '+(BASE_PRICE + (charms.length-1)*EXTRA_CHARM_PRICE);
+  const totalPrice = BASE_PRICE + (charms.length-1)*EXTRA_CHARM_PRICE;
+  pricePill.textContent='Rs. '+ totalPrice;
   pricePill.classList.add('show');
   cta.classList.add('show');
 
@@ -186,11 +193,11 @@ function render(){
     w.style.left=(x-PHYSICS.anchorX)+'px';
     w.style.top=(y-PHYSICS.anchorY)+'px';
     w.style.transform='rotate('+(a-90)+'deg)';
-
+    
     const img=document.createElement('img');
     img.src='assets/charms/'+file;
     w.appendChild(img);
-    w.onclick=()=>{charms.splice(i,1);render()};
+    w.onclick=()=>{charms.splice(i,1);render();saveDraft();};
     canvas.appendChild(w);
   });
 }
@@ -198,29 +205,26 @@ function render(){
 function onMetalClick(next){
   if(next===metal) return;
   if(charms.length>0){
-    showModal(
-      'Switching metal will reset your design.',
-      ()=>{
-        charms=[];
-        metal=next;
-        updateMetal();
-      }
-    );
+    showModal('Switching metal will reset your design.',()=>{
+      charms=[];
+      metal=next;
+      updateMetal();
+      saveDraft(); 
+    });
   } else {
     metal=next;
     updateMetal();
+    saveDraft(); 
   }
 }
 
 function onResetClick(){
   if(charms.length===0) return;
-  showModal(
-    'Reset bracelet design?',
-    ()=>{
-      charms=[];
-      render();
-    }
-  );
+  showModal('Reset bracelet design?',()=>{
+    charms=[];
+    render();
+    saveDraft(); 
+  });
 }
 
 function updateMetal(){
@@ -233,25 +237,53 @@ function updateMetal(){
 
 cta.onclick = function() {
   if (isCombo) {
-    const state = { metal: metal, charms: charms };
+    const state = { metal, charms };
     sessionStorage.setItem('combo_bracelet_data', JSON.stringify(state));
+    
+    const draftData = {
+      url: 'earring-builder.html?mode=combo',
+      data: { metal: 'gold', charms: {left:null,right:null} }, 
+      comboContext: { bracelet: state }
+    };
+    // SAVE draft to SESSION STORAGE
+    sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
+
     window.location.href = 'earring-builder.html?mode=combo';
   } else {
-    alert("Added Bracelet to Bag!");
+    const product = {
+      id: Date.now(),
+      type: 'Bracelet',
+      metal: metal,
+      charms: charms,
+      price: BASE_PRICE + (charms.length-1)*EXTRA_CHARM_PRICE,
+      image: 'assets/bases/bracelet_base_'+metal+'.png'
+    };
+
+    addToCart(product);
   }
 };
 
+function addToCart(item) {
+  // KEEP CART IN LOCAL STORAGE
+  let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
+  cart.push(item);
+  localStorage.setItem('pyc_cart', JSON.stringify(cart));
+
+  // CLEAR DRAFT FROM SESSION STORAGE
+  sessionStorage.removeItem('pyc_draft');
+
+  successSheet.classList.add('active');
+  cta.style.display = 'none';
+}
+
 function showModal(text,confirmFn){
   modalText.textContent=text;
-  modalConfirm.onclick=()=>{
-    closeModal();
-    confirmFn();
-  };
+  modalConfirm.onclick=()=>{ closeModal(); confirmFn(); };
   modal.style.display='flex';
 }
-function closeModal(){
-  modal.style.display='none';
-}
+function closeModal(){ modal.style.display='none'; }
+
+init();
 </script>
 </body>
 </html>
