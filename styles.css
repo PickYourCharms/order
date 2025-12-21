@@ -156,7 +156,7 @@ body.frozen-state .post-actions-container { display: flex; }
   padding: 0;
 }
 
-/* ... (Keep existing Global/Navbar styles) ... */
+/* ... (Keep existing Global/Navbar/Hero/General styles) ... */
 
 /* === CART PAGE LAYOUT === */
 .cart-page {
@@ -172,36 +172,37 @@ body.frozen-state .post-actions-container { display: flex; }
   margin-bottom: 30px;
 }
 
-/* === STANDARD ITEM CARD === */
-.cart-item-card {
+/* === SHARED ITEM STYLES === */
+/* Common style for both Standalone Items and Combo Sub-items */
+.item-row-content {
   display: flex;
   align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* === STANDALONE CARD === */
+.cart-item-card {
   background: #f9f9f9;
   border-radius: 16px;
   padding: 10px;
-  gap: 12px;
   position: relative;
   overflow: hidden;
   border: 1px solid transparent;
 }
 
-/* === COMBO GROUP CARD (The "Expanded" look) === */
+/* === COMBO GROUP CARD === */
 .combo-card-group {
   display: flex;
   flex-direction: column;
   background: #fff;
-  border: 1px solid #e5e5e5; /* Distinct border for the group */
+  border: 1px solid #e5e5e5;
   border-radius: 16px;
   overflow: hidden;
-  position: relative;
 }
 
-/* Header for the Combo Group (Title + Price + Delete) */
 .combo-group-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
+  padding: 10px 14px;
   background: #fdfdfd;
   border-bottom: 1px solid #f0f0f0;
 }
@@ -219,17 +220,15 @@ body.frozen-state .post-actions-container { display: flex; }
 
 .combo-header-price {
   font-size: 13px;
-  color: #15803d; /* Green to signify bundle deal */
+  color: #15803d;
   font-weight: 600;
 }
 
-/* Individual Rows inside Combo */
+/* The rows inside the combo look just like standalone cards, but with a bottom border */
 .combo-sub-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 14px;
-  gap: 12px;
-  border-bottom: 1px solid #f9f9f9;
+  padding: 10px; /* Same padding as cart-item-card */
+  background: #fff;
+  border-bottom: 1px solid #f5f5f5;
 }
 .combo-sub-item:last-child {
   border-bottom: none;
@@ -240,13 +239,13 @@ body.frozen-state .post-actions-container { display: flex; }
   position: relative;
   width: 70px;
   height: 70px;
-  background: #f5f5f5; /* Light grey bg for contrast */
+  background: #f5f5f5;
   border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
 }
 
-/* The Mini Engine (300px -> 70px) */
+/* Mini Builder Engine (300px -> 70px) */
 .mini-canvas-scaler {
   position: absolute;
   width: 300px;
@@ -272,10 +271,11 @@ body.frozen-state .post-actions-container { display: flex; }
   transform-origin: top center;
 }
 
+/* Earring Hook Positioning - Adjusted for 300px Canvas */
 .mini-hook {
   position: absolute;
-  top: 60px;
-  width: 50%;
+  top: 40px; /* Moved up slightly */
+  width: 60%; /* Wider hooks for better visual fill */
 }
 .mini-hook.left { left: 50%; transform: translateX(-100%); }
 .mini-hook.right { left: 50%; }
@@ -296,16 +296,8 @@ body.frozen-state .post-actions-container { display: flex; }
 .item-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; text-transform: capitalize; }
 .item-price { font-size: 13px; color: #555; }
 
-/* Sub-item specific text */
-.sub-item-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-.sub-item-meta {
-  font-size: 12px;
-  color: #888;
-}
+.sub-item-name { font-size: 14px; font-weight: 600; color: #333; }
+.sub-item-meta { font-size: 12px; color: #888; }
 
 .item-actions { display: flex; gap: 8px; }
 .icon-btn {
@@ -315,10 +307,8 @@ body.frozen-state .post-actions-container { display: flex; }
   font-size: 14px; color: #333;
 }
 .delete-btn { color: #dc2626; border-color: #fee2e2; background: #fef2f2; }
-/* Make header delete button slightly smaller/cleaner */
-.combo-group-header .delete-btn { width: 28px; height: 28px; font-size: 12px; }
 
-/* === SUMMARY & FOOTER (Existing) === */
+/* === SUMMARY & FOOTER === */
 .bill-summary { background: #f9f9f9; border-radius: 20px; padding: 20px; margin-bottom: 100px; }
 .math-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #444; }
 .discount-row { color: #15803d; }
