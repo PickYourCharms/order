@@ -263,7 +263,7 @@ body.frozen-state .post-actions-container { display: flex; }
 /* FIXED EARRING PHYSICS */
 .mini-hook {
   position: absolute;
-  top: 20px; /* Moved up to allow charms to hang in view */
+  top: 5px; /* Moved up to allow charms to hang in view */
   width: 60%;
 }
 .mini-hook.left { left: 50%; transform: translateX(-100%); }
