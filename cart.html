@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3.6">
+  <link rel="stylesheet" href="styles.css?v=3.7">
 </head>
 
 <body>
@@ -35,21 +35,29 @@
 <div class="main-container cart-page">
   
   <div id="emptyState" class="empty-state" style="display: none;">
-    <img src="assets/home/curated_teaser.png" class="empty-img" style="opacity:0.5; filter:grayscale(1);">
+    <img src="assets/home/curated_teaser.png" class="empty-img" style="filter:grayscale(1);">
     <h3>Nothing to see here yet!</h3>
     <p>Your bag is feeling lonely...</p>
     <button class="primary-btn" onclick="window.location.href='index.html'">Start Building</button>
   </div>
 
   <div id="cartContent" style="display: none;">
+    
     <div id="cartItemsList" class="cart-list"></div>
 
     <div class="bill-summary">
-      <div class="coupon-section">
-        <input type="text" id="couponInput" placeholder="Enter Coupon Code" autocomplete="off">
-        <button id="applyCouponBtn" onclick="applyCoupon()">Apply</button>
+      
+      <div id="couponTrigger" class="coupon-trigger-btn" onclick="toggleCouponSheet()">
+        <span>%</span> Apply Coupon
       </div>
-      <p id="couponMsg" class="coupon-msg"></p>
+
+      <div id="couponSheet" class="coupon-sheet">
+        </div>
+
+      <div id="appliedCouponView" class="coupon-applied-view">
+        <span id="appliedCouponText"></span>
+        <button class="remove-coupon-btn" onclick="removeCoupon()">✕</button>
+      </div>
 
       <div class="math-row"> <span>Subtotal</span> <span id="subtotalVal">Rs. 0</span> </div>
       <div class="math-row discount-row" id="comboRow" style="display: none;"> <span>Combo Savings</span> <span id="comboVal">-Rs. 0</span> </div>
@@ -68,17 +76,22 @@
 // --- CONSTANTS ---
 const BASE_PRICE = 249;
 const EXTRA_CHARM_PRICE = 50;
-const MOCK_COUPONS = [ { code: "WELCOME10", percent: 10, minOrder: 0 }, { code: "SAVE20", percent: 20, minOrder: 500 } ];
+
+// PREDEFINED COUPONS
+const COUPONS_DB = [
+  { code: "WELCOME10", percent: 10, minOrder: 0, desc: "10% off on your first order" },
+  { code: "CHARM20", percent: 20, minOrder: 999, desc: "20% off on orders above Rs. 999" },
+  { code: "FREESHIP", percent: 0, minOrder: 0, desc: "Free Shipping on all orders", freeShip: true }
+];
 
 const REF_SIZE = 300; 
 const PHYSICS = { 
   bracelet: { anchorX:23, anchorY:6, attachOffset:2 },
-  // FIXED EARRING COORDINATES:
-  // Container 300px wide. 30% left = 90px. 70% left = 210px.
-  // Charm anchorX is 23 (center).
-  // Y position: Hooks top at 40px. Height approx 120px? 
-  // Charm should hang at approx 160px.
-  earrings: { leftX: 90, rightX: 210, y: 160 } 
+  // FIXED EARRING PHYSICS FOR 70px THUMBNAIL
+  // Hook Image has been moved up in CSS (top: 20px)
+  // Charms need to hang from the loop of the hook.
+  // Calculated for 300px scale:
+  earrings: { leftX: 85, rightX: 215, y: 130 } 
 };
 const B_ANGLES = { 1:[90], 2:[70,110], 3:[60,90,120], 4:[45,75,105,135], 5:[40,65,90,115,140] };
 
@@ -89,6 +102,7 @@ const listContainer = document.getElementById('cartItemsList');
 const cartCountBadge = document.getElementById('cartCountBadge');
 const emptyState = document.getElementById('emptyState');
 const cartContent = document.getElementById('cartContent');
+const couponSheet = document.getElementById('couponSheet');
 
 function init() {
   cartCountBadge.textContent = cart.length;
@@ -101,6 +115,7 @@ function init() {
     emptyState.style.display = 'none';
     cartContent.style.display = 'block';
     renderItems();
+    renderCoupons();
     calculateTotals();
   }
 }
@@ -153,7 +168,7 @@ function buildMiniEarrings(metal, charms) {
     const c = document.createElement('img');
     c.className = 'mini-charm';
     c.src = `assets/charms/${charms.left}`;
-    c.style.left = (PHYSICS.earrings.leftX - 23) + 'px'; // Center 46px charm
+    c.style.left = (PHYSICS.earrings.leftX - 23) + 'px';
     c.style.top = PHYSICS.earrings.y + 'px';
     container.appendChild(c);
   }
@@ -166,6 +181,15 @@ function buildMiniEarrings(metal, charms) {
     container.appendChild(c);
   }
   return container;
+}
+
+// --- HELPER: Title Generator ---
+function getComboTitle(bMetal, eMetal) {
+  if (bMetal === eMetal) {
+    return `${bMetal.charAt(0).toUpperCase() + bMetal.slice(1)} Combo Set`;
+  } else {
+    return `Mixed Metal Combo`;
+  }
 }
 
 // --- RENDERER ---
@@ -182,9 +206,12 @@ function renderItems() {
       // 1. Header
       const header = document.createElement('div');
       header.className = 'combo-group-header';
+      // Use helper for title
+      const title = getComboTitle(item.bracelet.metal, item.earrings.metal);
+      
       header.innerHTML = `
         <div class="combo-header-info">
-          <span class="combo-header-title">${item.bracelet.metal} Combo Set</span>
+          <span class="combo-header-title">${title}</span>
           <span class="combo-header-price">Rs. ${item.price}</span>
         </div>
       `;
@@ -194,9 +221,8 @@ function renderItems() {
       const bRow = document.createElement('div');
       bRow.className = 'combo-sub-item';
       const bWrapper = document.createElement('div');
-      bWrapper.className = 'item-row-content'; // Common wrapper for flex layout
+      bWrapper.className = 'item-row-content';
 
-      // Thumb
       const bThumb = document.createElement('div');
       bThumb.className = 'item-thumb';
       bThumb.appendChild(buildMiniBracelet(item.bracelet.metal, item.bracelet.charms));
@@ -205,7 +231,6 @@ function renderItems() {
       bBadge.textContent = item.bracelet.charms.length;
       bThumb.appendChild(bBadge);
 
-      // Text
       const bDetails = document.createElement('div');
       bDetails.className = 'item-details';
       bDetails.innerHTML = `
@@ -213,7 +238,6 @@ function renderItems() {
         <div class="sub-item-meta">${item.bracelet.metal} base</div>
       `;
 
-      // Actions
       const bActions = document.createElement('div');
       bActions.className = 'item-actions';
       bActions.innerHTML = `
@@ -233,7 +257,6 @@ function renderItems() {
       const eWrapper = document.createElement('div');
       eWrapper.className = 'item-row-content';
 
-      // Thumb
       const eThumb = document.createElement('div');
       eThumb.className = 'item-thumb';
       eThumb.appendChild(buildMiniEarrings(item.earrings.metal, item.earrings.charms));
@@ -243,7 +266,6 @@ function renderItems() {
       eBadge.textContent = eCount;
       eThumb.appendChild(eBadge);
 
-      // Text
       const eDetails = document.createElement('div');
       eDetails.className = 'item-details';
       eDetails.innerHTML = `
@@ -251,7 +273,6 @@ function renderItems() {
         <div class="sub-item-meta">${item.earrings.metal} base</div>
       `;
 
-      // Actions
       const eActions = document.createElement('div');
       eActions.className = 'item-actions';
       eActions.innerHTML = `
@@ -278,12 +299,16 @@ function renderItems() {
       thumbBox.className = 'item-thumb';
       
       let charmCount = 0;
+      let displayTitle = '';
+      
       if (item.type === 'Bracelet') {
         thumbBox.appendChild(buildMiniBracelet(item.metal, item.charms));
         charmCount = item.charms.length;
+        displayTitle = `${item.metal} Bracelet`;
       } else {
         thumbBox.appendChild(buildMiniEarrings(item.metal, item.charms));
         charmCount = (item.charms.left?1:0) + (item.charms.right?1:0);
+        displayTitle = `${item.metal} Earrings`;
       }
 
       const badge = document.createElement('div');
@@ -294,7 +319,7 @@ function renderItems() {
       const details = document.createElement('div');
       details.className = 'item-details';
       details.innerHTML = `
-        <div class="item-title">${item.metal} ${item.type}</div>
+        <div class="item-title">${displayTitle}</div>
         <div class="item-price">Rs. ${item.price}</div>
       `;
 
@@ -314,8 +339,50 @@ function renderItems() {
   });
 }
 
-// --- MATH & ACTIONS ---
+// --- COUPON SYSTEM ---
+function renderCoupons() {
+  couponSheet.innerHTML = '';
+  COUPONS_DB.forEach(coupon => {
+    const card = document.createElement('div');
+    card.className = 'coupon-card';
+    card.onclick = () => selectCoupon(coupon);
+    card.innerHTML = `
+      <div class="coupon-info">
+        <h4>${coupon.code}</h4>
+        <p>${coupon.desc}</p>
+      </div>
+      <div class="coupon-apply-text">APPLY</div>
+    `;
+    couponSheet.appendChild(card);
+  });
+}
 
+function toggleCouponSheet() {
+  couponSheet.classList.toggle('active');
+  const trigger = document.getElementById('couponTrigger');
+  trigger.style.display = couponSheet.classList.contains('active') ? 'none' : 'flex';
+}
+
+function selectCoupon(coupon) {
+  activeCoupon = coupon;
+  toggleCouponSheet();
+  
+  // Show Applied View
+  document.getElementById('couponTrigger').style.display = 'none';
+  document.getElementById('appliedCouponView').style.display = 'flex';
+  document.getElementById('appliedCouponText').textContent = `Applied: ${coupon.code}`;
+  
+  calculateTotals();
+}
+
+function removeCoupon() {
+  activeCoupon = null;
+  document.getElementById('appliedCouponView').style.display = 'none';
+  document.getElementById('couponTrigger').style.display = 'flex';
+  calculateTotals();
+}
+
+// --- MATH & ACTIONS ---
 function calculateTotals() {
   let bracelets = [];
   let earrings = [];
@@ -344,19 +411,24 @@ function calculateTotals() {
 
   let discountable = subtotal - comboDiscount;
   let couponDisc = 0;
+  let forceFreeShip = false;
+
   if (activeCoupon) {
-    if (discountable >= activeCoupon.minOrder) {
+    if (activeCoupon.freeShip) {
+      forceFreeShip = true;
+    } else if (discountable >= activeCoupon.minOrder) {
       couponDisc = Math.floor(discountable * (activeCoupon.percent / 100));
-      document.getElementById('couponMsg').textContent = `Applied: ${activeCoupon.code}`;
-      document.getElementById('couponMsg').className = 'coupon-msg success';
     } else {
-      activeCoupon = null;
-      document.getElementById('couponMsg').textContent = "Order too low for coupon";
-      document.getElementById('couponMsg').className = 'coupon-msg error';
+      // Coupon invalid for amount
+      // Ideally show toast, but for now just don't apply discount
     }
   }
 
-  let shipping = (discountable - couponDisc >= 399) ? 0 : 80;
+  let shipping = 80;
+  if (forceFreeShip || (discountable - couponDisc >= 399)) {
+    shipping = 0;
+  }
+
   let total = subtotal - comboDiscount - couponDisc + shipping;
 
   document.getElementById('subtotalVal').textContent = `Rs. ${subtotal}`;
@@ -366,9 +438,11 @@ function calculateTotals() {
   document.getElementById('comboVal').textContent = `-Rs. ${comboDiscount}`;
 
   const couponRow = document.getElementById('couponRow');
-  couponRow.style.display = couponDisc > 0 ? 'flex' : 'none';
-  if(activeCoupon) document.getElementById('couponCodeLabel').textContent = `Coupon (${activeCoupon.code})`;
-  document.getElementById('couponVal').textContent = `-Rs. ${couponDisc}`;
+  couponRow.style.display = (couponDisc > 0 || forceFreeShip) ? 'flex' : 'none';
+  if(activeCoupon) {
+    document.getElementById('couponCodeLabel').textContent = `Coupon (${activeCoupon.code})`;
+    document.getElementById('couponVal').textContent = couponDisc > 0 ? `-Rs. ${couponDisc}` : 'Applied';
+  }
 
   const shipEl = document.getElementById('shippingVal');
   shipEl.textContent = shipping === 0 ? 'FREE' : `Rs. ${shipping}`;
@@ -377,31 +451,23 @@ function calculateTotals() {
   document.getElementById('finalTotal').textContent = `Rs. ${total}`;
 }
 
-// --- NEW GRANULAR DELETE LOGIC ---
 function deleteItem(index, subType = null) {
-  
   if (subType === null) {
-    // Standard delete (single item or fallback)
     cart.splice(index, 1);
-  
   } else {
-    // Breaking a Combo
     const combo = cart[index];
-    
     if (subType === 'bracelet') {
-      // User deleted bracelet -> Keep Earring as Single Item
       const newEarring = {
-        id: Date.now(), // Generate new unique ID
+        id: Date.now(),
         type: 'Earrings',
         metal: combo.earrings.metal,
         charms: combo.earrings.charms,
-        price: BASE_PRICE, // Revert to standard price
-        image: `assets/bases/LeftHook_${combo.earrings.metal}.png` // Fallback image
+        price: BASE_PRICE,
+        image: `assets/bases/LeftHook_${combo.earrings.metal}.png`
       };
       cart[index] = newEarring;
     } 
     else if (subType === 'earrings') {
-      // User deleted earring -> Keep Bracelet as Single Item
       const bPrice = BASE_PRICE + (combo.bracelet.charms.length - 1) * EXTRA_CHARM_PRICE;
       const newBracelet = {
         id: Date.now(),
@@ -414,9 +480,8 @@ function deleteItem(index, subType = null) {
       cart[index] = newBracelet;
     }
   }
-
   localStorage.setItem('pyc_cart', JSON.stringify(cart));
-  init(); // Re-render & Re-calc totals (discount logic updates automatically)
+  init();
 }
 
 function editItem(index, subType) {
@@ -452,24 +517,9 @@ function editItem(index, subType) {
   }
 
   sessionStorage.setItem('pyc_draft', JSON.stringify(draft));
-  
   cart.splice(index, 1);
   localStorage.setItem('pyc_cart', JSON.stringify(cart));
-  
   window.location.href = url;
-}
-
-function applyCoupon() {
-  const code = document.getElementById('couponInput').value.trim().toUpperCase();
-  if(!code) return;
-  const valid = MOCK_COUPONS.find(c => c.code === code);
-  if(valid) { activeCoupon = valid; calculateTotals(); }
-  else {
-    activeCoupon = null;
-    document.getElementById('couponMsg').textContent = "Invalid Coupon";
-    document.getElementById('couponMsg').className = 'coupon-msg error';
-    calculateTotals();
-  }
 }
 
 init();
