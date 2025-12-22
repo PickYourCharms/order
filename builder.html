@@ -134,15 +134,23 @@ function init() {
     cta.textContent = "Continue to Earrings →";
   }
   updateMetal(); 
-  // === FIX: HIJACK PHONE BACK BUTTON ===
-  // Push a dummy state so the back button doesn't leave the page immediately
-  window.history.pushState(null, null, window.location.href);
+  // === FIX: DELAY THE HIJACK TO BYPASS BROWSER RESTRICTIONS ===
+  setTimeout(() => {
+    window.history.pushState({ page: 'loaded' }, null, window.location.href);
+  }, 100); // 100ms delay helps it register on stricter phones
 
-  // Listen for the back button press
-  window.onpopstate = function () {
-    // Instead of defaulting to previous history, run our custom logic
-    goBack();
-    };
+  window.onpopstate = function (event) {
+    // If we are in "Frozen State" (Added to Bag), just unfreeze!
+    if (document.body.classList.contains('frozen-state')) {
+      document.body.classList.remove('frozen-state');
+      navCartBtn.style.display = 'none'; // Hide cart button if needed
+      // Restore the button text if necessary, or just let them edit
+      return; 
+    }
+    
+    // Otherwise, run normal back logic
+    goBack(); 
+  };
 }
 
 function saveDraft() {
@@ -291,6 +299,8 @@ cta.onclick = function() {
 };
 
 function addToCart(item) {
+  // === FORCE HISTORY ENTRY ON USER CLICK (Reliable on all phones) ===
+  window.history.pushState({ page: 'frozen' }, null, window.location.href);
   let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
   cart.push(item);
   localStorage.setItem('pyc_cart', JSON.stringify(cart));
