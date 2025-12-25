@@ -32,6 +32,7 @@
       margin-bottom: 6px; margin-left: 4px;
     }
     .required-star { color: #dc2626; margin-left: 2px; }
+    .optional-tag { color: #999; font-weight: 400; font-size: 12px; margin-left: 4px; }
 
     .premium-input {
       width: 100%; padding: 14px 16px;
@@ -49,7 +50,6 @@
       font-size: 16px; color: #111; font-weight: 500; pointer-events: none;
       display: flex; align-items: center; gap: 6px;
     }
-    /* Padding left accommodates the +91 prefix */
     input.phone-field { padding-left: 85px; }
 
     /* ERROR STATE (Red Highlight) */
@@ -191,7 +191,7 @@
     <label class="form-label">Phone Number <span class="required-star">*</span></label>
     <div class="phone-wrapper">
       <span class="phone-prefix">🇮🇳 +91</span>
-      <input type="tel" id="customerPhone" class="premium-input phone-field" placeholder="98765 43210" oninput="handlePhoneInput(this); saveDraft()">
+      <input type="tel" id="customerPhone" class="premium-input phone-field" placeholder="98765 43210" maxlength="10" oninput="handlePhoneInput(this); saveDraft()">
     </div>
   </div>
 
@@ -217,33 +217,32 @@
       <label for="copyDetails" style="font-size:14px; font-weight:600;">Same as contact info</label>
     </div>
 
-    <div class="form-row">
-      <div class="form-col">
-        <label class="form-label">Receiver Name <span class="required-star">*</span></label>
-        <input type="text" id="receiverName" class="premium-input" oninput="validateInput(this); saveDraft()">
-      </div>
-      <div class="form-col">
-        <label class="form-label">Receiver Phone <span class="required-star">*</span></label>
-        <div class="phone-wrapper">
-          <span class="phone-prefix">🇮🇳 +91</span>
-          <input type="tel" id="receiverPhone" class="premium-input phone-field" oninput="handlePhoneInput(this); saveDraft()">
-        </div>
+    <div class="form-group">
+      <label class="form-label">Receiver Name <span class="required-star">*</span></label>
+      <input type="text" id="receiverName" class="premium-input" oninput="validateInput(this); saveDraft()">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Receiver Phone <span class="required-star">*</span></label>
+      <div class="phone-wrapper">
+        <span class="phone-prefix">🇮🇳 +91</span>
+        <input type="tel" id="receiverPhone" class="premium-input phone-field" maxlength="10" oninput="handlePhoneInput(this); saveDraft()">
       </div>
     </div>
 
     <div class="form-row" style="margin-top: 16px;">
       <div class="form-col">
-        <label class="form-label">Relation</label>
+        <label class="form-label">Relation <span class="optional-tag">(Optional)</span></label>
         <input type="text" id="relation" class="premium-input" placeholder="Sister..." oninput="saveDraft()">
       </div>
       <div class="form-col">
-        <label class="form-label">Occasion</label>
+        <label class="form-label">Occasion <span class="optional-tag">(Optional)</span></label>
         <input type="text" id="occasion" class="premium-input" placeholder="Birthday..." oninput="saveDraft()">
       </div>
     </div>
 
     <div class="form-group" style="margin-top: 16px;">
-      <label class="form-label">Message on Card</label>
+      <label class="form-label">Message on Card <span class="optional-tag">(Optional)</span></label>
       <input type="text" id="giftMessage" class="premium-input" placeholder="Write a short note..." oninput="saveDraft()">
     </div>
   </div>
@@ -252,7 +251,23 @@
   
   <div class="form-group">
     <label class="form-label">Flat / House No / Building <span class="required-star">*</span></label>
-    <input type="text" id="shippingAddress" class="premium-input" placeholder="e.g. 104, Sunrise Apartments" oninput="validateInput(this); saveDraft()">
+    <input type="text" id="addressLine1" class="premium-input" placeholder="e.g. 104, Sunrise Apartments" oninput="validateInput(this); saveDraft()">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Road Name / Area / Colony <span class="required-star">*</span></label>
+    <input type="text" id="addressLine2" class="premium-input" placeholder="e.g. MG Road, Indiranagar" oninput="validateInput(this); saveDraft()">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Landmark <span class="optional-tag">(Optional)</span></label>
+    <input type="text" id="landmark" class="premium-input" placeholder="e.g. Near Metro Station" oninput="saveDraft()">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Pincode <span class="required-star">*</span></label>
+    <input type="tel" id="pincode" class="premium-input" placeholder="560001" maxlength="6" oninput="handlePincodeInput(this)">
+    <div id="pincodeMsg" class="helper-text"></div>
   </div>
 
   <div class="form-row">
@@ -261,11 +276,10 @@
       <input type="text" id="city" class="premium-input" placeholder="City" oninput="validateInput(this); saveDraft()">
     </div>
     <div class="form-col">
-      <label class="form-label">Pincode <span class="required-star">*</span></label>
-      <input type="tel" id="pincode" class="premium-input" placeholder="560001" oninput="handlePincodeInput(this)">
+      <label class="form-label">State <span class="required-star">*</span></label>
+      <input type="text" id="state" class="premium-input" placeholder="State" oninput="validateInput(this); saveDraft()">
     </div>
   </div>
-  <div id="pincodeMsg" class="helper-text"></div>
 
   <div class="receipt-card">
     <h3 class="section-title" style="margin-top:0; margin-bottom: 20px;">Payment Summary</h3>
@@ -457,9 +471,9 @@
     // 1. Remove anything that is NOT a number
     let val = el.value.replace(/\D/g, '');
     
-    // 2. Paste Logic: If copying a long string (like +91 9876...), take last 10
+    // 2. Strict Length Cap (Slice FIRST 10 chars, ignore the rest)
     if (val.length > 10) {
-      val = val.slice(-10);
+      val = val.slice(0, 10);
     }
     
     el.value = val;
@@ -472,9 +486,44 @@
     if (val.length > 6) val = val.slice(0, 6);
     el.value = val;
     
+    // AUTO-FETCH CITY/STATE (New Feature)
+    if(val.length === 6) {
+        fetchPincodeDetails(val);
+    }
+
     validateInput(el);
     saveDraft();
     calculateTotals();
+  }
+
+  function fetchPincodeDetails(pincode) {
+    const msg = document.getElementById('pincodeMsg');
+    msg.textContent = "Fetching location...";
+    msg.style.color = "#888";
+
+    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+      .then(res => res.json())
+      .then(data => {
+        if(data[0].Status === 'Success') {
+          const details = data[0].PostOffice[0];
+          document.getElementById('city').value = details.District;
+          document.getElementById('state').value = details.State;
+          
+          // Clear errors if they were highlighted
+          validateInput(document.getElementById('city'));
+          validateInput(document.getElementById('state'));
+          
+          msg.textContent = ""; // Clear loader
+          saveDraft();
+        } else {
+          msg.textContent = "Invalid Pincode";
+          msg.style.color = "#dc2626";
+        }
+      })
+      .catch(err => {
+        console.error("Pincode fetch error", err);
+        msg.textContent = ""; // Fail silently, allow manual entry
+      });
   }
   
   function validateInput(el) {
@@ -489,8 +538,11 @@
       name: document.getElementById('customerName').value,
       phone: document.getElementById('customerPhone').value,
       email: document.getElementById('customerEmail').value,
-      address: document.getElementById('shippingAddress').value,
+      addressLine1: document.getElementById('addressLine1').value,
+      addressLine2: document.getElementById('addressLine2').value,
+      landmark: document.getElementById('landmark').value,
       city: document.getElementById('city').value,
+      state: document.getElementById('state').value,
       pincode: document.getElementById('pincode').value,
       vibe: currentVibe,
       vibeText: document.getElementById('vibeText').value,
@@ -511,8 +563,13 @@
     document.getElementById('customerName').value = data.name || '';
     document.getElementById('customerPhone').value = data.phone || '';
     document.getElementById('customerEmail').value = data.email || '';
-    document.getElementById('shippingAddress').value = data.address || '';
+    
+    document.getElementById('addressLine1').value = data.addressLine1 || '';
+    document.getElementById('addressLine2').value = data.addressLine2 || '';
+    document.getElementById('landmark').value = data.landmark || '';
+    
     document.getElementById('city').value = data.city || '';
+    document.getElementById('state').value = data.state || '';
     document.getElementById('pincode').value = data.pincode || '';
     
     if(data.vibe) {
@@ -578,7 +635,8 @@
     let firstError = null;
 
     // 1. Mandatory Fields
-    const mandatoryIds = ['customerName', 'customerPhone', 'customerEmail', 'shippingAddress', 'city', 'pincode'];
+    const mandatoryIds = ['customerName', 'customerPhone', 'customerEmail', 'addressLine1', 'addressLine2', 'city', 'state', 'pincode'];
+    
     if(document.getElementById('isGift').checked) {
       mandatoryIds.push('receiverName', 'receiverPhone');
     }
@@ -624,7 +682,11 @@
       itemsStr += `\n${i+1}. ${desc} - Rs. ${item.price}`;
     });
 
-    let msg = `*New Order: ${orderID}* ✨\n\n*Customer:* ${data.name}\nPhone: ${data.phone}\nEmail: ${data.email}\n\n*Address:*\n${data.address}\n${data.city} - ${data.pincode}\n\n*Order Details:*${itemsStr}\n\n*Total Payable: ${total}*`;
+    let addressBlock = `${data.addressLine1}\n${data.addressLine2}\n`;
+    if(data.landmark) addressBlock += `Landmark: ${data.landmark}\n`;
+    addressBlock += `${data.city}, ${data.state} - ${data.pincode}`;
+
+    let msg = `*New Order: ${orderID}* ✨\n\n*Customer:* ${data.name}\nPhone: ${data.phone}\nEmail: ${data.email}\n\n*Address:*\n${addressBlock}\n\n*Order Details:*${itemsStr}\n\n*Total Payable: ${total}*`;
 
     if(data.vibe) msg += `\n\n*Vibe:* ${data.vibe === 'Other' ? data.vibeText : data.vibe}`;
     if(data.isGift) {
@@ -637,8 +699,7 @@
 
   // --- NAVIGATION HIJACK ---
   function handleBackNavigation() {
-    // If user has unsaved data (actually we auto-save, so checking if fields are non-empty might be better)
-    // But consistent behavior: Show modal
+    // Consistent behavior: Show modal
     document.getElementById('confirmBackModal').style.display = 'flex';
   }
   function confirmGoBack() { 
