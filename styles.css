@@ -524,4 +524,4 @@ body.frozen-state .post-actions-container { display: flex; }
   height: 4px; width: 100%; background: #eee; border-radius: 2px; overflow: hidden; margin-top: 8px;
 }
 .c-progress-fill { height: 100%; background: #fbbf24; width: 0%; transition: width 0.3s; }
-.c-progress-text { font-size: 11px; color: #d97706; margin-top: 4px; font-weight: 600; }
+.c-progress-text { font-size: 11px; color: #7D5C29; margin-top: 4px; font-weight: 600; }
