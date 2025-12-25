@@ -49,15 +49,15 @@
       
      <div id="couponTrigger" class="coupon-trigger-bar" onclick="openCouponDrawer()">
   <div class="coupon-left">
-    <svg class="coupon-icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
-    </svg>
-    Apply Coupon
+    <div style="display:flex; align-items:center; gap:8px;">
+        <svg class="coupon-icon-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+        </svg>
+        <span style="font-weight:700;">Apply Coupon</span>
+    </div>
+    <span id="couponCondition" class="coupon-condition-text"></span>
   </div>
-  <div class="view-all-btn">
-    View All 
-    <span>&rsaquo;</span>
-  </div>
+  <div class="view-all-btn">View All <span>&rsaquo;</span></div>
 </div>
 
 <div id="appliedSection" class="coupon-applied-container" style="display: none;">
@@ -90,20 +90,110 @@ const EXTRA_CHARM_PRICE = 50;
 
 // === COUPON LOGIC ===
 const AVAILABLE_COUPONS = [
-  { code: 'WELCOME10', discount: 0.10, desc: '10% off your first order' },
-  { code: 'SAVE20', discount: 0.20, desc: '20% off on orders above ₹999' },
-  { code: 'FREESHIP', discount: 0, type: 'free_shipping', desc: 'Free Shipping on all orders' }
+  { code: 'PYC100', discount: 100, minOrder: 500, desc: '₹100 off on orders above ₹500' },
+  { code: 'COMBO20', discount: 0.20, minOrder: 1500, desc: '20% off on orders above ₹1500' }
 ];
 
 let appliedCoupon = null;
 
+function renderCartItems() {
+  const container = document.getElementById('cartItems');
+  container.innerHTML = '';
+  
+  if (cart.length === 0) {
+    container.innerHTML = `<div class="empty-msg">Your bag is empty</div>`;
+    document.querySelector('.summary-card').style.display = 'none';
+    document.getElementById('couponTrigger').style.display = 'none';
+    return;
+  }
+
+  cart.forEach((item, index) => {
+    const card = document.createElement('div');
+    card.className = 'cart-item';
+    
+    // Logic to handle both Single and Combo items in UI
+    if (item.type.includes('Combo')) {
+      card.innerHTML = `
+        <img src="${item.bracelet.image}" class="item-img">
+        <div class="item-details">
+          <div class="item-type">Charm Combo (Bracelet + Earrings)</div>
+          <div class="item-price">₹${item.price} <span style="text-decoration:line-through; font-size:12px; color:#999;">₹${item.originalPrice}</span></div>
+          <div class="item-actions">
+            <span onclick="editItem(${index}, 'bracelet')">Edit Bracelet</span>
+            <span onclick="editItem(${index}, 'earrings')">Edit Earrings</span>
+            <span onclick="removeItem(${index})">Remove</span>
+          </div>
+        </div>`;
+    } else {
+      card.innerHTML = `
+        <img src="${item.image || 'assets/bases/bracelet_base_gold.png'}" class="item-img">
+        <div class="item-details">
+          <div class="item-type">${item.type}</div>
+          <div class="item-price">₹${item.price}</div>
+          <div class="item-actions">
+            <span onclick="editItem(${index})">Edit</span>
+            <span onclick="removeItem(${index})">Remove</span>
+          </div>
+        </div>`;
+    }
+    container.appendChild(card);
+  });
+}
+
+function updateBill() {
+  let subtotal = 0;
+  cart.forEach(item => {
+    // Issue #3: Ensure price is treated as a number
+    subtotal += Number(item.price) || 0;
+  });
+
+  // Issue #2: Logic to show "Add ₹X more to avail"
+  const conditionEl = document.getElementById('couponCondition');
+  const bestCoupon = AVAILABLE_COUPONS[0]; // Suggest the first coupon
+  if (subtotal < bestCoupon.minOrder) {
+    conditionEl.textContent = `Add ₹${bestCoupon.minOrder - subtotal} more to use ${bestCoupon.code}`;
+    conditionEl.style.display = 'block';
+  } else {
+    conditionEl.textContent = `You can now apply ${bestCoupon.code}!`;
+    conditionEl.style.color = '#15803d'; // Green when ready
+  }
+
+  let discountAmt = 0;
+  if (appliedCoupon) {
+    if (subtotal >= appliedCoupon.minOrder) {
+      discountAmt = appliedCoupon.discount < 1 
+        ? Math.floor(subtotal * appliedCoupon.discount) 
+        : appliedCoupon.discount;
+    } else {
+      // Auto-remove coupon if subtotal drops below limit
+      appliedCoupon = null;
+      document.getElementById('couponTrigger').style.display = 'flex';
+      document.getElementById('appliedSection').style.display = 'none';
+    }
+  }
+
+  const finalTotal = subtotal - discountAmt;
+
+  // Issue #3: Update DOM
+  document.getElementById('subtotalPrice').textContent = "₹" + subtotal;
+  document.getElementById('totalPrice').textContent = "₹" + finalTotal;
+  
+  const discRow = document.getElementById('discountRow');
+  if (discountAmt > 0) {
+    discRow.style.display = 'flex';
+    document.getElementById('discountPrice').textContent = "- ₹" + discountAmt;
+  } else {
+    discRow.style.display = 'none';
+  }
+}
+
+// Issue #1: Ensure coupons are rendered in the drawer on load
 function init() {
   renderCartItems();
+  updateBill();
   
-  // FIX: Pre-render coupons into the hidden drawer
   const drawerList = document.getElementById('drawerList');
   drawerList.innerHTML = '';
-  
   AVAILABLE_COUPONS.forEach(c => {
     const div = document.createElement('div');
     div.className = 'coupon-card-item';
@@ -116,81 +206,9 @@ function init() {
     `;
     drawerList.appendChild(div);
   });
-
-  updateBill();
 }
 
-// UI: Open the full screen drawer
-function openCouponDrawer() {
-  document.getElementById('couponDrawer').classList.add('open');
-  // Prevent background scrolling
-  document.body.style.overflow = 'hidden'; 
-}
-
-// UI: Close the drawer
-function closeCouponDrawer() {
-  document.getElementById('couponDrawer').classList.remove('open');
-  document.body.style.overflow = ''; 
-}
-
-function applyCoupon(code) {
-  const found = AVAILABLE_COUPONS.find(c => c.code === code);
-  if (found) {
-    appliedCoupon = found;
-    updateBill();
-    
-    // UI Updates
-    closeCouponDrawer();
-    document.getElementById('couponTrigger').style.display = 'none';
-    document.getElementById('appliedSection').style.display = 'flex';
-    document.getElementById('appliedCodeText').textContent = `'${code}' applied`;
-  }
-}
-
-function removeCoupon() {
-  appliedCoupon = null;
-  updateBill();
-  
-  // UI Updates
-  document.getElementById('couponTrigger').style.display = 'flex';
-  document.getElementById('appliedSection').style.display = 'none';
-}
-
-function updateBill() {
-  if (cart.length === 0) {
-    // ... empty cart logic ...
-    return;
-  }
-
-  let subtotal = 0;
-  cart.forEach(item => subtotal += item.price);
-
-  let discountAmt = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.type === 'free_shipping') {
-      // Handle free shipping logic here if you have shipping costs
-    } else {
-      discountAmt = Math.floor(subtotal * appliedCoupon.discount);
-    }
-  }
-
-  const finalTotal = subtotal - discountAmt;
-
-  // Update DOM elements (Ensure these IDs exist in your HTML)
-  document.getElementById('subtotalPrice').textContent = "₹" + subtotal;
-  
-  const discountRow = document.getElementById('discountRow');
-  const discountEl = document.getElementById('discountPrice');
-  
-  if (discountAmt > 0) {
-    discountRow.style.display = 'flex';
-    discountEl.textContent = "- ₹" + discountAmt;
-  } else {
-    discountRow.style.display = 'none';
-  }
-
-  document.getElementById('totalPrice').textContent = "₹" + finalTotal;
-}
+window.onload = init;
 
 const REF_SIZE = 300; 
 const PHYSICS = { 
