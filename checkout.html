@@ -732,7 +732,17 @@
     }
 
     const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
+    
+    // === FINAL REDIRECT LOGIC ===
+    // 1. Clear Data
+    localStorage.removeItem('pyc_cart');
+    sessionStorage.clear();
+    
+    // 2. Open WhatsApp
     window.open(url, '_blank');
+    
+    // 3. Redirect current page to Home (Replace history so Back button goes to previous site or closes)
+    window.location.replace('index.html');
   }
 
   // --- NAVIGATION HIJACK ---
