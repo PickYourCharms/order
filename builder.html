@@ -287,14 +287,24 @@ cta.onclick = function() {
   if (isCombo) {
     const state = { metal, charms };
     sessionStorage.setItem('combo_bracelet_data', JSON.stringify(state));
+    
+    // FIX: Check if we have stashed earring data (from a previous edit/cart flow)
+    // If we do, use it. If not, use the default empty start.
+    let nextEarringState = { metal: 'gold', charms: {left:null,right:null} };
+    const stashedEarrings = sessionStorage.getItem('combo_earring_data');
+    if (stashedEarrings) {
+      nextEarringState = JSON.parse(stashedEarrings);
+    }
+
     const draftData = {
       url: 'earring-builder.html?mode=combo',
-      data: { metal: 'gold', charms: {left:null,right:null} }, 
+      data: nextEarringState, // Use the recovered data here
       comboContext: { bracelet: state }
     };
     sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
     window.location.href = 'earring-builder.html?mode=combo';
   } else {
+    // ... single bracelet logic ...
     const product = {
       id: Date.now(),
       type: 'Bracelet',
