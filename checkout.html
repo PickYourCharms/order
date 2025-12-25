@@ -10,214 +10,118 @@
   <link rel="stylesheet" href="styles.css?v=6.0">
 
   <style>
-    /* === CHECKOUT SPECIFIC PREMIUM STYLES === */
-    /* (These overrides ensure the checkout looks perfect independently) */
-    
+    /* === CHECKOUT SPECIFIC STYLES === */
     body { background-color: #ffffff; }
     
     .checkout-container {
       max-width: 600px;
       margin: 0 auto;
-      padding: 0 16px 120px 16px; /* Bottom padding for sticky footer */
+      padding: 0 16px 120px 16px;
     }
 
-    /* SECTION HEADERS */
     .section-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #111;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      font-size: 15px; font-weight: 700; color: #111;
+      margin-bottom: 12px; margin-top: 30px;
     }
-    .section-desc {
-      font-size: 13px;
-      color: #888;
-      margin-top: -8px;
-      margin-bottom: 16px;
-    }
+    .section-desc { font-size: 13px; color: #888; margin-top: -8px; margin-bottom: 16px; }
 
-    /* PREMIUM INPUTS */
+    /* INPUTS */
     .form-group { margin-bottom: 16px; }
     .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #444;
-      margin-bottom: 6px;
-      margin-left: 4px;
+      display: block; font-size: 13px; font-weight: 600; color: #444;
+      margin-bottom: 6px; margin-left: 4px;
     }
+    .required-star { color: #dc2626; margin-left: 2px; }
+
     .premium-input {
-      width: 100%;
-      padding: 14px 16px;
-      background: #fafafa;
-      border: 1px solid #e5e5e5;
-      border-radius: 12px;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 16px;
-      color: #111;
-      outline: none;
-      transition: all 0.2s ease;
-      appearance: none; /* Removes native iOS styles */
+      width: 100%; padding: 14px 16px;
+      background: #fafafa; border: 1px solid #e5e5e5;
+      border-radius: 12px; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px; color: #111; outline: none;
+      transition: all 0.2s ease; appearance: none;
     }
-    .premium-input:focus {
-      background: #fff;
-      border-color: #000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    .premium-input:focus { background: #fff; border-color: #000; }
+    
+    /* ERROR STATE (Red Highlight) */
+    .premium-input.input-error {
+      border-color: #dc2626;
+      background-color: #fef2f2;
+      animation: shake 0.3s ease;
     }
-    .premium-input::placeholder { color: #aaa; }
+    .premium-input.input-error::placeholder { color: #f87171; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
     
     .form-row { display: flex; gap: 12px; }
     .form-col { flex: 1; }
 
-    /* VIBE SCROLLER (Instagram Style) */
+    /* VIBE SCROLLER */
     .vibe-scroll-container {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 10px;
-      margin: 0 -16px 20px -16px; /* Bleed to edges */
-      padding-left: 16px; /* Restore padding */
-      padding-right: 16px;
+      display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;
+      margin: 0 -16px 20px -16px; padding-left: 16px; padding-right: 16px;
       scrollbar-width: none;
     }
     .vibe-scroll-container::-webkit-scrollbar { display: none; }
     
     .vibe-chip {
-      padding: 10px 20px;
-      background: #fff;
-      border: 1px solid #eee;
-      border-radius: 999px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #555;
-      white-space: nowrap;
-      flex-shrink: 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-      transition: all 0.2s ease;
+      padding: 10px 20px; background: #fff; border: 1px solid #eee;
+      border-radius: 999px; font-size: 14px; font-weight: 600; color: #555;
+      white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     }
     .vibe-chip.selected {
-      background: #000;
-      color: #fff;
-      border-color: #000;
+      background: #000; color: #fff; border-color: #000;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
-    /* IOS TOGGLE SWITCH */
+    /* TOGGLE */
     .toggle-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #f9f9f9;
-      padding: 16px;
-      border-radius: 16px;
-      margin-bottom: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #f9f9f9; padding: 16px; border-radius: 16px; margin-bottom: 24px;
     }
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 50px;
-      height: 28px;
-    }
+    .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider {
-      position: absolute; cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s; border-radius: 34px;
     }
     .slider:before {
-      position: absolute; content: "";
-      height: 24px; width: 24px;
-      left: 2px; bottom: 2px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      position: absolute; content: ""; height: 24px; width: 24px;
+      left: 2px; bottom: 2px; background-color: white; transition: .4s;
+      border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     input:checked + .slider { background-color: #000; }
     input:checked + .slider:before { transform: translateX(22px); }
 
-    /* GIFT SECTION ANIMATION */
-    .hidden-section {
-      display: none;
-      animation: slideDown 0.3s ease forwards;
-    }
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .hidden-section { display: none; animation: slideDown 0.3s ease forwards; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* RECEIPT STYLE SUMMARY */
+    /* CLEAN RECEIPT CARD */
     .receipt-card {
-      background: #fff;
-      border: 1px solid #f0f0f0;
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
-      margin-top: 30px;
+      background: #fff; border: 1px solid #f0f0f0; border-radius: 20px;
+      padding: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); margin-top: 30px;
     }
-    .summary-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #f9f9f9;
-    }
-    .summary-thumb {
-      width: 48px; height: 48px;
-      background: #f9f9f9;
-      border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.05);
-      margin-right: 12px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .summary-thumb img { width: 80%; height: 80%; object-fit: contain; }
-    
-    .summary-info { flex: 1; }
-    .s-title { font-size: 14px; font-weight: 700; color: #111; display: block; }
-    .s-desc { font-size: 12px; color: #888; }
-    .s-price { font-size: 14px; font-weight: 700; color: #333; }
-
-    .bill-row {
-      display: flex; justify-content: space-between;
-      margin-bottom: 10px; font-size: 14px; color: #555;
-    }
+    .bill-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #555; }
     .bill-row.total {
-      margin-top: 16px; padding-top: 16px;
-      border-top: 1px dashed #ddd;
+      margin-top: 16px; padding-top: 16px; border-top: 1px dashed #ddd;
       font-size: 18px; font-weight: 800; color: #000;
     }
     .discount-text { color: #15803d; }
 
-    /* STICKY FOOTER */
+    /* FOOTER */
     .sticky-footer {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: #fff;
-      padding: 16px;
-      border-top: 1px solid #f0f0f0;
-      display: flex; justify-content: center;
-      z-index: 100;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+      position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
+      padding: 16px; border-top: 1px solid #f0f0f0; display: flex; justify-content: center;
+      z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
     }
     .whatsapp-btn {
-      width: 100%; max-width: 500px;
-      background: #25D366;
-      color: #fff;
-      border: none;
-      padding: 16px;
-      border-radius: 999px;
-      font-size: 16px;
-      font-weight: 700;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+      width: 100%; max-width: 500px; background: #25D366; color: #fff;
+      border: none; padding: 16px; border-radius: 999px; font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
     }
-    .whatsapp-btn:active { transform: scale(0.98); }
-
-    /* HELPER TEXT */
     .helper-text { font-size: 12px; color: #666; margin-top: 4px; }
   </style>
 </head>
@@ -249,7 +153,6 @@
     <button class="vibe-chip" onclick="selectVibe(this, 'Minimal')">Minimal ✨</button>
     <button class="vibe-chip" onclick="selectVibe(this, 'Other')">Other ✏️</button>
   </div>
-  
   <div id="otherVibeInput" class="form-group" style="display:none;">
     <input type="text" id="vibeText" class="premium-input" placeholder="Type your vibe here..." oninput="saveDraft()">
   </div>
@@ -257,18 +160,18 @@
   <h3 class="section-title" style="margin-top: 30px;">Contact Info</h3>
   
   <div class="form-group">
-    <label class="form-label">Full Name</label>
-    <input type="text" id="customerName" class="premium-input" placeholder="e.g. Ananya Singh" oninput="saveDraft()">
+    <label class="form-label">Full Name <span class="required-star">*</span></label>
+    <input type="text" id="customerName" class="premium-input" placeholder="e.g. Ananya Singh" oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="form-group">
-    <label class="form-label">Phone Number</label>
-    <input type="tel" id="customerPhone" class="premium-input" placeholder="+91 98765 43210" oninput="saveDraft()">
+    <label class="form-label">Phone Number <span class="required-star">*</span></label>
+    <input type="tel" id="customerPhone" class="premium-input" placeholder="+91 98765 43210" oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="form-group">
-    <label class="form-label">Email Address</label>
-    <input type="email" id="customerEmail" class="premium-input" placeholder="name@example.com" oninput="saveDraft()">
+    <label class="form-label">Email Address <span class="required-star">*</span></label>
+    <input type="email" id="customerEmail" class="premium-input" placeholder="name@example.com" oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="toggle-container" style="margin-top: 30px;">
@@ -290,12 +193,12 @@
 
     <div class="form-row">
       <div class="form-col">
-        <label class="form-label">Receiver Name</label>
-        <input type="text" id="receiverName" class="premium-input" oninput="saveDraft()">
+        <label class="form-label">Receiver Name <span class="required-star">*</span></label>
+        <input type="text" id="receiverName" class="premium-input" oninput="validateInput(this); saveDraft()">
       </div>
       <div class="form-col">
-        <label class="form-label">Receiver Phone</label>
-        <input type="tel" id="receiverPhone" class="premium-input" oninput="saveDraft()">
+        <label class="form-label">Receiver Phone <span class="required-star">*</span></label>
+        <input type="tel" id="receiverPhone" class="premium-input" oninput="validateInput(this); saveDraft()">
       </div>
     </div>
 
@@ -319,27 +222,26 @@
   <h3 class="section-title" style="margin-top: 30px;">Shipping Address</h3>
   
   <div class="form-group">
-    <label class="form-label">Flat / House No / Building</label>
-    <input type="text" id="shippingAddress" class="premium-input" placeholder="e.g. 104, Sunrise Apartments" oninput="saveDraft()">
+    <label class="form-label">Flat / House No / Building <span class="required-star">*</span></label>
+    <input type="text" id="shippingAddress" class="premium-input" placeholder="e.g. 104, Sunrise Apartments" oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="form-row">
     <div class="form-col">
-      <label class="form-label">City</label>
-      <input type="text" id="city" class="premium-input" placeholder="City" oninput="saveDraft()">
+      <label class="form-label">City <span class="required-star">*</span></label>
+      <input type="text" id="city" class="premium-input" placeholder="City" oninput="validateInput(this); saveDraft()">
     </div>
     <div class="form-col">
-      <label class="form-label">Pincode</label>
-      <input type="number" id="pincode" class="premium-input" placeholder="560001" oninput="handlePincode()">
+      <label class="form-label">Pincode <span class="required-star">*</span></label>
+      <input type="number" id="pincode" class="premium-input" placeholder="560001" oninput="validateInput(this); handlePincode()">
     </div>
   </div>
   <div id="pincodeMsg" class="helper-text"></div>
 
   <div class="receipt-card">
-    <h3 class="section-title" style="margin-bottom: 20px;">Receipt</h3>
-    <div id="summaryItems"></div>
+    <h3 class="section-title" style="margin-top:0; margin-bottom: 20px;">Payment Summary</h3>
     
-    <div style="margin-top: 20px;">
+    <div>
       <div class="bill-row"><span>Subtotal</span><span id="subtotalVal">Rs. 0</span></div>
       <div class="bill-row discount-text" id="comboRow" style="display:none;"><span>Combo Savings</span><span id="comboVal">-Rs. 0</span></div>
       <div class="bill-row discount-text" id="couponRow" style="display:none;"><span>Coupon</span><span id="couponVal">-Rs. 0</span></div>
@@ -379,50 +281,11 @@
     const couponData = sessionStorage.getItem('pyc_applied_coupon');
     if (couponData) appliedCoupon = JSON.parse(couponData);
 
-    renderSummary();
     restoreDraft();
     calculateTotals();
   }
 
-  // --- RENDER ITEMS ---
-  function renderSummary() {
-    const container = document.getElementById('summaryItems');
-    let html = '';
-    
-    cart.forEach(item => {
-      let title = item.type;
-      let sub = "";
-      let img = "";
-
-      if(item.type.includes('Combo')) {
-        title = "Combo Set";
-        sub = "Bracelet + Earrings";
-        img = "assets/home/model_combo_mobile.png";
-      } else if (item.type === 'Bracelet') {
-        title = item.metal + " Bracelet";
-        sub = item.charms.length + " Charms";
-        img = "assets/bases/bracelet_base_" + item.metal + ".png";
-      } else {
-        title = item.metal + " Earrings";
-        sub = "Custom Pair";
-        img = "assets/bases/LeftHook_" + item.metal + ".png";
-      }
-
-      html += `
-        <div class="summary-item">
-          <div class="summary-thumb"><img src="${img}"></div>
-          <div class="summary-info">
-            <span class="s-title">${title}</span>
-            <span class="s-desc">${sub}</span>
-          </div>
-          <span class="s-price">Rs. ${item.price}</span>
-        </div>
-      `;
-    });
-    container.innerHTML = html;
-  }
-
-  // --- CALCULATIONS ---
+  // --- CALCULATIONS ONLY (No visual item render) ---
   function calculateTotals() {
     let subtotal = 0;
     let bracelets = [], earrings = [];
@@ -532,6 +395,9 @@
     if(document.getElementById('copyDetails').checked) {
       document.getElementById('receiverName').value = document.getElementById('customerName').value;
       document.getElementById('receiverPhone').value = document.getElementById('customerPhone').value;
+      // Trigger validation removal on copy
+      validateInput(document.getElementById('receiverName'));
+      validateInput(document.getElementById('receiverPhone'));
     } else {
       document.getElementById('receiverName').value = '';
       document.getElementById('receiverPhone').value = '';
@@ -540,8 +406,16 @@
   }
 
   function handlePincode() {
+    validateInput(document.getElementById('pincode'));
     saveDraft();
     calculateTotals();
+  }
+  
+  // Real-time Validation Removal
+  function validateInput(el) {
+    if(el.value.trim() !== "") {
+      el.classList.remove('input-error');
+    }
   }
 
   // --- DRAFT SAVING ---
@@ -595,20 +469,39 @@
     }
   }
 
-  // --- WHATSAPP LOGIC ---
+  // --- WHATSAPP LOGIC WITH VALIDATION HIGHLIGHTING ---
   function proceedToWhatsApp() {
-    // Basic Validation
-    const requiredIds = ['customerName', 'customerPhone', 'shippingAddress', 'city', 'pincode'];
-    for(let id of requiredIds) {
-      const el = document.getElementById(id);
-      if(!el.value.trim()) {
-        alert('Please fill all required fields');
-        el.focus();
-        return;
-      }
+    let isValid = true;
+    let firstError = null;
+
+    // 1. Identify Mandatory Fields
+    const mandatoryIds = ['customerName', 'customerPhone', 'customerEmail', 'shippingAddress', 'city', 'pincode'];
+    
+    // Add Gift Mandatory Fields if Gift is checked
+    if(document.getElementById('isGift').checked) {
+      mandatoryIds.push('receiverName', 'receiverPhone');
     }
 
-    // Build Message
+    // 2. Validate Loop
+    mandatoryIds.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el.value.trim()) {
+        el.classList.add('input-error'); // Add Red Border
+        isValid = false;
+        if(!firstError) firstError = el;
+      } else {
+        el.classList.remove('input-error');
+      }
+    });
+
+    if(!isValid) {
+      // Scroll to the first error
+      firstError.scrollIntoView({behavior: 'smooth', block: 'center'});
+      firstError.focus();
+      return; // STOP
+    }
+
+    // 3. Build Message
     const data = JSON.parse(sessionStorage.getItem('checkout_draft_v2'));
     const total = document.getElementById('finalTotal').textContent;
 
@@ -624,7 +517,7 @@
 
     if(data.vibe) msg += `\n\n*Vibe:* ${data.vibe === 'Other' ? data.vibeText : data.vibe}`;
     if(data.isGift) {
-      msg += `\n\n🎁 *GIFT ORDER*\nTo: ${data.receiverName}\nNote: ${data.giftMessage}`;
+      msg += `\n\n🎁 *GIFT ORDER*\nTo: ${data.receiverName}\nPhone: ${data.receiverPhone}\nRelation: ${data.relation}\nOccasion: ${data.occasion}\nNote: ${data.giftMessage}`;
     }
 
     const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
