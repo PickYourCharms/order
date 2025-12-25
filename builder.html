@@ -145,16 +145,11 @@ function init() {
     window.history.pushState({ page: 'loaded' }, null, window.location.href);
   }, 100);
 
- window.onpopstate = function (event) {
-  // FIX: If the user is in the "Frozen" (Added to Cart) state, 
-  // the device back button must take them to Home, not back to the builder.
-  if (document.body.classList.contains('frozen-state')) {
-    window.location.href = 'index.html';
-    return;
-  }
-  
-  // Default behavior for other states
-  goBack(); 
+window.onpopstate = function (event) {
+  // STRICT PARITY: Delegate ALL logic to goBack().
+  // This ensures the device button does exactly what the in-app button does,
+  // including handling the 'frozen-state' redirect, Combo redirects, etc.
+  goBack();
 };
 }
 
