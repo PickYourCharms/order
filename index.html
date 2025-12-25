@@ -71,34 +71,34 @@ window.addEventListener('pageshow', function(event) { checkState(); });
 
 function checkState() {
   const resumeBar = document.getElementById('resumeBar');
-  const resumeTitle = document.querySelector('.resume-title');
-  const resumeBtn = document.querySelector('.resume-btn');
-  const draftStr = sessionStorage.getItem('pyc_draft');
-  const checkoutStarted = localStorage.getItem('checkout_started'); // New Flag
+  const cartBtn = document.getElementById('navCartBtn');
+  
+  // 1. Get State
+  const draftStr = sessionStorage.getItem('pyc_draft'); // Builder Draft
+  const cartData = localStorage.getItem('pyc_cart');
+  const cart = cartData ? JSON.parse(cartData) : [];
 
-  // PRIORITY 1: Resume Checkout (User was on checkout page)
-  if (checkoutStarted === 'true') {
+  // 2. Logic: Should we show the Resume Bar?
+  if (draftStr) {
+    // Case A: User has an unfinished Builder session
     resumeBar.classList.add('show');
-    resumeTitle.textContent = "You were almost there...";
-    resumeBtn.textContent = "Continue Checkout →";
-    resumeBar.onclick = function() {
-      window.location.href = 'checkout.html?resume=true';
-    };
+    document.querySelector('.resume-title').textContent = "I left something unfinished...";
+    document.querySelector('.resume-btn').textContent = "Let's finish →";
+    resumeBar.onclick = resumeDraft; // Link to builder
   } 
-  // PRIORITY 2: Resume Builder (User was building)
-  else if (draftStr) {
+  else if (cart.length > 0) {
+    // Case B: User has items in Cart (Abandoned Checkout)
     resumeBar.classList.add('show');
-    resumeTitle.textContent = "I left something unfinished...";
-    resumeBtn.textContent = "Let's finish →";
-    resumeBar.onclick = resumeDraft; 
+    document.querySelector('.resume-title').textContent = "You have items in your bag ✨";
+    document.querySelector('.resume-btn').textContent = "Checkout →";
+    resumeBar.onclick = function() { window.location.href = 'cart.html'; }; // Link to cart
   } 
   else {
+    // Case C: Clean Slate (Success or Empty)
     resumeBar.classList.remove('show');
   }
 
-  // Cart Badge Logic
-  const cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
-  const cartBtn = document.getElementById('navCartBtn');
+  // 3. Cart Badge Logic
   if (cart.length > 0) cartBtn.style.display = 'block';
   else cartBtn.style.display = 'none';
 }
@@ -112,7 +112,6 @@ function resumeDraft() {
 }
 
 function startFresh(url) {
-  // CRITICAL FIX: Clear ALL session data to ensure a completely fresh start
   sessionStorage.removeItem('pyc_draft');
   sessionStorage.removeItem('combo_bracelet_data');
   sessionStorage.removeItem('combo_earring_data');
@@ -122,4 +121,5 @@ function startFresh(url) {
 
 </body>
 </html>
+
 
