@@ -350,7 +350,6 @@
   
   function init() {
     const cartData = localStorage.getItem('pyc_cart');
-    // If cart is empty, redirect to cart page immediately
     if (!cartData || JSON.parse(cartData).length === 0) {
       window.location.href = 'cart.html';
       return;
@@ -359,10 +358,13 @@
     const couponData = sessionStorage.getItem('pyc_applied_coupon');
     if (couponData) appliedCoupon = JSON.parse(couponData);
 
+    // 1. Set Flag: User has reached checkout (Enables Bottom Sheet on Home)
+    sessionStorage.setItem('pyc_checkout_visited', 'true');
+
     restoreDraft();
     calculateTotals();
 
-    // === BACK BUTTON HIJACK (TRAP) ===
+    // === BACK BUTTON HIJACK ===
     setTimeout(() => {
       window.history.pushState(null, null, window.location.href);
     }, 100);
@@ -371,14 +373,14 @@
     };
   }
 
-  // ... (Calculations / Interaction / Toggle Logic is identical to previous, kept clean) ...
+  // ... (Keep calculateTotals, selectVibe, toggleGiftSection, copyContactDetails, handlePhoneInput, handlePincodeInput, fetchPincodeDetails, validateInput EXACTLY AS BEFORE) ...
+  // (Paste those functions here if you are replacing the whole block, otherwise just update the ones below)
+
   function calculateTotals() {
     let subtotal = 0;
     let bracelets = [], earrings = [];
-    
     const getBPrice = (b) => BASE_PRICE + (b.charms.length-1)*EXTRA_CHARM_PRICE;
     const getEPrice = () => BASE_PRICE;
-
     cart.forEach(item => {
       if(item.type === 'Bracelet') bracelets.push(getBPrice(item));
       else if(item.type === 'Earrings') earrings.push(getEPrice());
@@ -387,159 +389,92 @@
         earrings.push(getEPrice());
       }
     });
-
     bracelets.forEach(p => subtotal += p);
     earrings.forEach(p => subtotal += p);
-
     bracelets.sort((a,b) => a-b);
     let comboDiscount = 0;
     const pairs = Math.min(bracelets.length, earrings.length);
-    for(let i=0; i<pairs; i++) {
-      comboDiscount += Math.floor((bracelets[i] + earrings[i]) * 0.10);
-    }
-
+    for(let i=0; i<pairs; i++) comboDiscount += Math.floor((bracelets[i] + earrings[i]) * 0.10);
     let discountable = subtotal - comboDiscount;
     let couponDisc = 0;
     let freeShip = false;
-
     if (appliedCoupon) {
       if (appliedCoupon.freeShip) freeShip = true;
-      else if (discountable >= appliedCoupon.minOrder) {
-        couponDisc = Math.floor(discountable * (appliedCoupon.percent / 100));
-      }
+      else if (discountable >= appliedCoupon.minOrder) couponDisc = Math.floor(discountable * (appliedCoupon.percent / 100));
     }
-
     const pincode = document.getElementById('pincode').value;
     let shipping = 80;
     const msg = document.getElementById('pincodeMsg');
-    
     if (freeShip || (discountable - couponDisc >= 399)) {
-      shipping = 0;
-      msg.textContent = "Free shipping applied! ✨";
-      msg.style.color = "#15803d";
+      shipping = 0; msg.textContent = "Free shipping applied! ✨"; msg.style.color = "#15803d";
     } else if (pincode && pincode.startsWith("560")) {
-      shipping = 50;
-      msg.textContent = "Local delivery: Rs. 50 🛵";
-      msg.style.color = "#15803d";
+      shipping = 50; msg.textContent = "Local delivery: Rs. 50 🛵"; msg.style.color = "#15803d";
     } else {
-      msg.textContent = "Standard Shipping: Rs. 80";
-      msg.style.color = "#666";
+      msg.textContent = "Standard Shipping: Rs. 80"; msg.style.color = "#666";
     }
-
     const total = subtotal - comboDiscount - couponDisc + shipping;
-
     document.getElementById('subtotalVal').textContent = `Rs. ${subtotal}`;
-    
     const comboEl = document.getElementById('comboRow');
-    if(comboDiscount > 0) {
-      comboEl.style.display = 'flex';
-      document.getElementById('comboVal').textContent = `-Rs. ${comboDiscount}`;
-    } else comboEl.style.display = 'none';
-
+    if(comboDiscount > 0) { comboEl.style.display = 'flex'; document.getElementById('comboVal').textContent = `-Rs. ${comboDiscount}`; } else comboEl.style.display = 'none';
     const coupEl = document.getElementById('couponRow');
-    if(couponDisc > 0) {
-      coupEl.style.display = 'flex';
-      document.getElementById('couponVal').textContent = `-Rs. ${couponDisc}`;
-    } else coupEl.style.display = 'none';
-
+    if(couponDisc > 0) { coupEl.style.display = 'flex'; document.getElementById('couponVal').textContent = `-Rs. ${couponDisc}`; } else coupEl.style.display = 'none';
     document.getElementById('shippingVal').textContent = shipping === 0 ? "FREE" : `Rs. ${shipping}`;
     document.getElementById('shippingVal').style.color = shipping === 0 ? "#15803d" : "#555";
-    
     document.getElementById('finalTotal').textContent = `Rs. ${total}`;
   }
 
   function selectVibe(btn, vibe) {
     document.querySelectorAll('.vibe-chip').forEach(b => b.classList.remove('selected'));
-    if(currentVibe === vibe) {
-      currentVibe = "";
-      document.getElementById('otherVibeInput').style.display = 'none';
-    } else {
-      btn.classList.add('selected');
-      currentVibe = vibe;
-      document.getElementById('otherVibeInput').style.display = vibe === 'Other' ? 'block' : 'none';
-    }
+    if(currentVibe === vibe) { currentVibe = ""; document.getElementById('otherVibeInput').style.display = 'none'; } 
+    else { btn.classList.add('selected'); currentVibe = vibe; document.getElementById('otherVibeInput').style.display = vibe === 'Other' ? 'block' : 'none'; }
     saveDraft();
   }
-
   function toggleGiftSection() {
     const isGift = document.getElementById('isGift').checked;
     const sec = document.getElementById('giftSection');
-    if(isGift) {
-      sec.style.display = 'block';
-      setTimeout(() => sec.scrollIntoView({behavior:"smooth", block:"center"}), 100);
-    } else {
-      sec.style.display = 'none';
-    }
+    if(isGift) { sec.style.display = 'block'; setTimeout(() => sec.scrollIntoView({behavior:"smooth", block:"center"}), 100); } 
+    else { sec.style.display = 'none'; }
     saveDraft();
   }
-
   function copyContactDetails() {
     if(document.getElementById('copyDetails').checked) {
       document.getElementById('receiverName').value = document.getElementById('customerName').value;
       const phone = document.getElementById('customerPhone').value;
       document.getElementById('receiverPhone').value = phone;
       validateInput(document.getElementById('receiverName'));
-      const e = { inputType: 'insertText' }; 
-      handlePhoneInput(e, document.getElementById('receiverPhone')); 
+      const e = { inputType: 'insertText' }; handlePhoneInput(e, document.getElementById('receiverPhone')); 
     } else {
-      document.getElementById('receiverName').value = '';
-      document.getElementById('receiverPhone').value = '';
+      document.getElementById('receiverName').value = ''; document.getElementById('receiverPhone').value = '';
     }
     saveDraft();
   }
-
   function handlePhoneInput(e, el) {
     let val = el.value.replace(/\D/g, '');
     const isPaste = e.inputType && e.inputType.toLowerCase().includes('paste');
-    if (val.length > 10) {
-        if (isPaste || val.length >= 12) {
-            val = val.slice(-10);
-        } else {
-            val = val.slice(0, 10);
-        }
-    }
-    el.value = val;
-    validateInput(el);
-    saveDraft();
+    if (val.length > 10) { if (isPaste || val.length >= 12) val = val.slice(-10); else val = val.slice(0, 10); }
+    el.value = val; validateInput(el); saveDraft();
   }
-
   function handlePincodeInput(el) {
     let val = el.value.replace(/\D/g, '');
     if (val.length > 6) val = val.slice(0, 6);
     el.value = val;
     if(val.length === 6) fetchPincodeDetails(val);
-    validateInput(el);
-    saveDraft();
-    calculateTotals();
+    validateInput(el); saveDraft(); calculateTotals();
   }
-
   function fetchPincodeDetails(pincode) {
-    const msg = document.getElementById('pincodeMsg');
-    msg.textContent = "Fetching location...";
-    msg.style.color = "#888";
-    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
-      .then(res => res.json())
-      .then(data => {
+    const msg = document.getElementById('pincodeMsg'); msg.textContent = "Fetching location..."; msg.style.color = "#888";
+    fetch(`https://api.postalpincode.in/pincode/${pincode}`).then(res => res.json()).then(data => {
         if(data[0].Status === 'Success') {
           const details = data[0].PostOffice[0];
-          document.getElementById('city').value = details.District;
-          document.getElementById('state').value = details.State;
-          validateInput(document.getElementById('city'));
-          validateInput(document.getElementById('state'));
-          msg.textContent = ""; 
-          saveDraft();
-        } else {
-          msg.textContent = "Invalid Pincode";
-          msg.style.color = "#dc2626";
-        }
-      })
-      .catch(err => { console.error(err); msg.textContent = ""; });
+          document.getElementById('city').value = details.District; document.getElementById('state').value = details.State;
+          validateInput(document.getElementById('city')); validateInput(document.getElementById('state'));
+          msg.textContent = ""; saveDraft();
+        } else { msg.textContent = "Invalid Pincode"; msg.style.color = "#dc2626"; }
+      }).catch(err => { console.error(err); msg.textContent = ""; });
   }
-  
-  function validateInput(el) {
-    if(el.value.trim() !== "") el.classList.remove('input-error');
-  }
+  function validateInput(el) { if(el.value.trim() !== "") el.classList.remove('input-error'); }
 
+  // --- UPDATED STORAGE LOGIC ---
   function saveDraft() {
     const data = {
       name: document.getElementById('customerName').value,
@@ -560,26 +495,23 @@
       occasion: document.getElementById('occasion').value,
       giftMessage: document.getElementById('giftMessage').value
     };
-    sessionStorage.setItem('checkout_draft_v2', JSON.stringify(data));
+    // CHANGED: Use localStorage for persistence across windows
+    localStorage.setItem('checkout_draft_persistent', JSON.stringify(data));
   }
 
   function restoreDraft() {
-    // 1. Try Session (Current Draft)
-    let data = JSON.parse(sessionStorage.getItem('checkout_draft_v2'));
-    
-    // 2. If no Session, Try Local Storage (Saved User Prefs from previous orders)
-    if (!data) {
-        data = JSON.parse(localStorage.getItem('pyc_user_prefs'));
-    }
-
+    // CHANGED: Read from localStorage
+    const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
     if(!data) return;
 
     document.getElementById('customerName').value = data.name || '';
     document.getElementById('customerPhone').value = data.phone || '';
     document.getElementById('customerEmail').value = data.email || '';
+    
     document.getElementById('addressLine1').value = data.addressLine1 || '';
     document.getElementById('addressLine2').value = data.addressLine2 || '';
     document.getElementById('landmark').value = data.landmark || '';
+    
     document.getElementById('city').value = data.city || '';
     document.getElementById('state').value = data.state || '';
     document.getElementById('pincode').value = data.pincode || '';
@@ -591,16 +523,15 @@
       });
       if(data.vibe === 'Other') document.getElementById('vibeText').value = data.vibeText || '';
     }
-    // Note: We deliberately don't restore Gift Details from LocalStorage (User Prefs), only from Session
-    // because Gift info usually changes per order.
-    if(data.isGift && sessionStorage.getItem('checkout_draft_v2')) {
-        document.getElementById('isGift').checked = true;
-        toggleGiftSection();
-        document.getElementById('receiverName').value = data.receiverName || '';
-        document.getElementById('receiverPhone').value = data.receiverPhone || '';
-        document.getElementById('relation').value = data.relation || '';
-        document.getElementById('occasion').value = data.occasion || '';
-        document.getElementById('giftMessage').value = data.giftMessage || '';
+
+    if(data.isGift) {
+      document.getElementById('isGift').checked = true;
+      toggleGiftSection();
+      document.getElementById('receiverName').value = data.receiverName || '';
+      document.getElementById('receiverPhone').value = data.receiverPhone || '';
+      document.getElementById('relation').value = data.relation || '';
+      document.getElementById('occasion').value = data.occasion || '';
+      document.getElementById('giftMessage').value = data.giftMessage || '';
     }
   }
   
@@ -656,11 +587,9 @@
       return; 
     }
 
-    // 1. FORCE SAVE to capture latest keystrokes
     saveDraft(); 
 
-    // 2. Read Data
-    const data = JSON.parse(sessionStorage.getItem('checkout_draft_v2'));
+    const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
     const total = document.getElementById('finalTotal').textContent;
     const orderID = generateOrderID();
 
@@ -685,19 +614,18 @@
 
     const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
     
-    // 3. STORE PREFS (For next visit)
-    const prefs = {
-        name: data.name, phone: data.phone, email: data.email,
-        addressLine1: data.addressLine1, addressLine2: data.addressLine2,
-        landmark: data.landmark, city: data.city, state: data.state, pincode: data.pincode
-    };
-    localStorage.setItem('pyc_user_prefs', JSON.stringify(prefs));
-
-    // 4. CLEANUP (End Session)
+    // === FINAL CLEANUP ===
+    // 1. Remove "Visited" flag so bottom sheet doesn't show next time
+    sessionStorage.removeItem('pyc_checkout_visited');
+    // 2. Clear Cart
     localStorage.removeItem('pyc_cart');
-    sessionStorage.clear();
+    // 3. Clear other Session Data (Drafts/Coupons)
+    sessionStorage.removeItem('pyc_draft');
+    sessionStorage.removeItem('pyc_applied_coupon');
+    
+    // Note: We intentionally DO NOT clear 'checkout_draft_persistent' from localStorage
+    // so it autofills next time.
 
-    // 5. REDIRECT (Home replaces Checkout in history)
     window.open(url, '_blank');
     window.location.replace('index.html');
   }
