@@ -150,7 +150,7 @@
 
 <script>
 // === CONSTANTS ===
-const PHONE_NUMBER = "918910344676"; 
+const PHONE_NUMBER = "918910344676"; // Your WhatsApp Number
 const BASE_PRICE = 249;
 const EXTRA_CHARM_PRICE = 50;
 
@@ -173,19 +173,17 @@ function init() {
   }
   cart = JSON.parse(cartData);
 
-  // 2. Load Coupon Data
+  // 2. Load Coupon Data from Session (Passed from Cart)
   const couponData = sessionStorage.getItem('pyc_applied_coupon');
   if (couponData) appliedCoupon = JSON.parse(couponData);
 
   // 3. Render Summary
   renderOrderSummary();
 
-  // 4. Check for Draft
+  // 4. Check for Draft (Resume)
   const draft = sessionStorage.getItem('checkout_draft');
   if (draft) {
     prefillForm(JSON.parse(draft));
-  } else if (window.location.search.includes('resume=true')) {
-    // If resume flag is present but no draft, we just stay here
   }
 
   // 5. Initial Calculations
@@ -223,15 +221,12 @@ function toggleSummary() {
 
 // === FORM HANDLING ===
 function selectVibe(btn, vibe) {
-  // Reset others
   document.querySelectorAll('.vibe-chip').forEach(c => c.classList.remove('selected'));
   
   if (currentVibe === vibe) {
-    // Deselect if clicking same
     currentVibe = "";
     document.getElementById('otherVibeContainer').style.display = 'none';
   } else {
-    // Select new
     btn.classList.add('selected');
     currentVibe = vibe;
     document.getElementById('otherVibeContainer').style.display = vibe === 'Other' ? 'block' : 'none';
@@ -246,7 +241,6 @@ function toggleGiftSection() {
     details.classList.remove('hidden');
   } else {
     details.classList.add('hidden');
-    // Clear gift fields
     document.getElementById('receiverName').value = '';
     document.getElementById('receiverPhone').value = '';
     document.getElementById('relation').value = '';
@@ -259,17 +253,15 @@ function toggleGiftSection() {
 function handlePincodeChange() {
   const pincode = document.getElementById('pincode').value;
   const helper = document.getElementById('pincodeHelper');
-  
-  saveDraft(); // Save value
+  saveDraft(); 
 
-  // Only run logic if we have 3+ digits to avoid jumping
+  // Only run logic if we have 3+ digits
   if (pincode.length < 3) {
     helper.textContent = "";
-    calculateTotals(); // Revert to default
+    calculateTotals(); 
     return;
   }
-
-  calculateTotals(); // Logic sits inside calc
+  calculateTotals(); 
 }
 
 function saveDraft() {
@@ -310,7 +302,7 @@ function prefillForm(data) {
   }
 
   if (data.isGift) {
-    document.getElementById('isGift').click(); // Trigger change
+    document.getElementById('isGift').click(); 
     document.getElementById('receiverName').value = data.receiverName || '';
     document.getElementById('receiverPhone').value = data.receiverPhone || '';
     document.getElementById('relation').value = data.relation || '';
@@ -318,7 +310,6 @@ function prefillForm(data) {
     document.getElementById('giftMessage').value = data.giftMessage || '';
   }
   
-  // Recalc based on filled data
   calculateTotals();
 }
 
@@ -327,7 +318,6 @@ function calculateTotals() {
   let subtotal = 0;
   let comboDiscount = 0;
 
-  // 1. Calculate Base Prices
   let bracelets = [], earrings = [];
   const getBPrice = (b) => BASE_PRICE + (b.charms.length-1)*EXTRA_CHARM_PRICE;
   
@@ -343,14 +333,12 @@ function calculateTotals() {
   bracelets.forEach(p => subtotal += p);
   earrings.forEach(p => subtotal += p);
 
-  // 2. Combo Discount
   bracelets.sort((a,b) => a-b);
   const pairs = Math.min(bracelets.length, earrings.length);
   for(let i=0; i<pairs; i++) {
     comboDiscount += Math.floor((bracelets[i] + earrings[i]) * 0.10);
   }
 
-  // 3. Coupon Discount
   let discountable = subtotal - comboDiscount;
   let couponDisc = 0;
   let forceFreeShip = false;
@@ -362,7 +350,6 @@ function calculateTotals() {
     }
   }
 
-  // 4. Shipping Logic (THE KEY PART)
   const pin = document.getElementById('pincode').value;
   const helper = document.getElementById('pincodeHelper');
   
@@ -381,12 +368,9 @@ function calculateTotals() {
     helper.style.color = "#15803d";
   }
 
-  // 5. Update UI
   document.getElementById('subtotalVal').textContent = `Rs. ${subtotal}`;
-  
   document.getElementById('comboRow').style.display = comboDiscount > 0 ? 'flex' : 'none';
   document.getElementById('comboVal').textContent = `-Rs. ${comboDiscount}`;
-
   document.getElementById('couponRow').style.display = (couponDisc > 0) ? 'flex' : 'none';
   document.getElementById('couponVal').textContent = `-Rs. ${couponDisc}`;
 
@@ -407,7 +391,7 @@ function handleBackNavigation() {
   }
 }
 function confirmGoBack() {
-  saveDraft(); // Ensure saved
+  saveDraft(); 
   window.location.href = 'cart.html';
 }
 function closeModal() {
@@ -416,7 +400,6 @@ function closeModal() {
 
 // === WHATSAPP GENERATION ===
 function proceedToWhatsApp() {
-  // Validation
   const reqFields = ['customerName', 'customerPhone', 'customerEmail', 'shippingAddress', 'city', 'pincode'];
   for (let id of reqFields) {
     if (!document.getElementById(id).value.trim()) {
@@ -425,17 +408,14 @@ function proceedToWhatsApp() {
     }
   }
 
-  // Prepare Data
   const data = JSON.parse(sessionStorage.getItem('checkout_draft'));
   const total = document.getElementById('finalTotal').textContent;
   
-  // Build Items String
   let itemStr = "";
   cart.forEach((item, i) => {
     itemStr += `\n${i+1}. ${item.type} (Rs. ${item.price})`;
   });
 
-  // Build Message
   let msg = `Hey PickYourCharms ✨ I’ve just placed an order!
 
 *Customer:*
@@ -465,10 +445,6 @@ Shipping: ${document.getElementById('shippingVal').textContent}
 Looking forward to this 💖`;
 
   const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
-  
-  // Optional: Clear cart after successful handoff? 
-  // For now, we keep it as per instruction "Cart remains intact".
-  
   window.open(url, '_blank');
 }
 
