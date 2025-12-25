@@ -154,15 +154,10 @@ function init() {
   }, 100); 
 
 window.onpopstate = function (event) {
-  // FIX: If the user is in the "Frozen" (Added to Cart) state, 
-  // the device back button must take them to Home, not back to the builder.
-  if (document.body.classList.contains('frozen-state')) {
-    window.location.href = 'index.html';
-    return;
-  }
-  
-  // Default behavior for other states
-  goBack(); 
+  // STRICT PARITY: Delegate ALL logic to goBack().
+  // This ensures that saving drafts (in Combo mode) or redirecting (in Frozen mode)
+  // happens regardless of which back button the user pressed.
+  goBack();
 };
 }
 
