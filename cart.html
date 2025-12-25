@@ -687,7 +687,7 @@ function editItem(index, subType) {
 }
 init();
 
-  // === CHECKOUT POPUP LOGIC ===
+ // === CHECKOUT LOGIC ===
 
 function onCheckoutClick() {
   // 1. Check if user has seen this popup in this session
@@ -700,14 +700,34 @@ function onCheckoutClick() {
   } 
   // 3. If ALREADY seen, go straight to checkout
   else {
-    window.location.href = 'checkout.html';
+    performCheckoutRedirect();
   }
 }
 
 // Function called by the "Maybe Later" link
 function forceCheckout() {
+  performCheckoutRedirect();
+}
+
+// Helper to save coupon and go
+function performCheckoutRedirect() {
+  // 1. Save Active Coupon so Checkout.html can read it
+  if (activeCoupon) {
+    sessionStorage.setItem('pyc_applied_coupon', JSON.stringify(activeCoupon));
+  } else {
+    sessionStorage.removeItem('pyc_applied_coupon');
+  }
+
+  // 2. Go to Checkout
   window.location.href = 'checkout.html';
 }
+
+// Close popup if clicking outside
+document.getElementById('checkoutUpsellModal').onclick = function(e) {
+  if (e.target === this) {
+    forceCheckout();
+  }
+};
 
 // Close popup if clicking outside the card (Optional UX improvement)
 document.getElementById('checkoutUpsellModal').onclick = function(e) {
