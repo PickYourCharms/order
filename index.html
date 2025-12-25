@@ -70,12 +70,33 @@
 window.addEventListener('pageshow', function(event) { checkState(); });
 
 function checkState() {
-  const draftStr = sessionStorage.getItem('pyc_draft');
   const resumeBar = document.getElementById('resumeBar');
-  
-  if (draftStr) { resumeBar.classList.add('show'); } 
-  else { resumeBar.classList.remove('show'); }
+  const resumeTitle = document.querySelector('.resume-title');
+  const resumeBtn = document.querySelector('.resume-btn');
+  const draftStr = sessionStorage.getItem('pyc_draft');
+  const checkoutStarted = localStorage.getItem('checkout_started'); // New Flag
 
+  // PRIORITY 1: Resume Checkout (User was on checkout page)
+  if (checkoutStarted === 'true') {
+    resumeBar.classList.add('show');
+    resumeTitle.textContent = "You were almost there...";
+    resumeBtn.textContent = "Continue Checkout →";
+    resumeBar.onclick = function() {
+      window.location.href = 'checkout.html?resume=true';
+    };
+  } 
+  // PRIORITY 2: Resume Builder (User was building)
+  else if (draftStr) {
+    resumeBar.classList.add('show');
+    resumeTitle.textContent = "I left something unfinished...";
+    resumeBtn.textContent = "Let's finish →";
+    resumeBar.onclick = resumeDraft; 
+  } 
+  else {
+    resumeBar.classList.remove('show');
+  }
+
+  // Cart Badge Logic
   const cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
   const cartBtn = document.getElementById('navCartBtn');
   if (cart.length > 0) cartBtn.style.display = 'block';
@@ -101,3 +122,4 @@ function startFresh(url) {
 
 </body>
 </html>
+
