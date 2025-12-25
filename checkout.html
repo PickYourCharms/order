@@ -43,12 +43,12 @@
     }
     .premium-input:focus { background: #fff; border-color: #000; }
     
-    /* READONLY INPUTS (City/State) */
+    /* READONLY INPUTS (Frozen State) */
     .premium-input[readonly] {
-      background-color: #e9ecef;
-      color: #666;
+      background-color: #f3f4f6; /* Greyed out */
+      color: #888;
       border-color: #e5e5e5;
-      pointer-events: none; /* Prevent clicks */
+      pointer-events: none;
     }
 
     /* PHONE INPUT SPECIFIC */
@@ -60,7 +60,7 @@
     }
     input.phone-field { padding-left: 85px; }
 
-    /* ERROR STATE (Red Highlight) */
+    /* ERROR STATE */
     .premium-input.input-error {
       border-color: #dc2626 !important;
       background-color: #fef2f2 !important;
@@ -471,9 +471,8 @@
       document.getElementById('receiverPhone').value = phone;
       // Trigger update
       validateInput(document.getElementById('receiverName'));
-      // Manually trigger input handler to validate copied phone
-      const phoneInput = document.getElementById('receiverPhone');
-      handlePhoneInput(phoneInput);
+      // Manual trigger for validation
+      handlePhoneInput(document.getElementById('receiverPhone')); 
     } else {
       document.getElementById('receiverName').value = '';
       document.getElementById('receiverPhone').value = '';
@@ -481,13 +480,14 @@
     saveDraft();
   }
 
-  // --- STRICT INPUT HANDLERS ---
+  // --- STRICT INPUT HANDLERS (UPDATED) ---
   
   function handlePhoneInput(el) {
     // 1. Remove non-digits
     let val = el.value.replace(/\D/g, '');
     
     // 2. Strict Length Cap (Left to Right) for Manual Typing
+    // If length > 10, keep first 10.
     if (val.length > 10) {
       val = val.slice(0, 10);
     }
@@ -733,7 +733,6 @@
 
   // --- NAVIGATION HIJACK ---
   function handleBackNavigation() {
-    // Consistent behavior: Show modal
     document.getElementById('confirmBackModal').style.display = 'flex';
   }
   function confirmGoBack() { 
