@@ -192,7 +192,9 @@
   
   <div class="form-group">
     <label class="form-label">Full Name <span class="required-star">*</span></label>
-    <input type="text" id="customerName" class="premium-input" placeholder="e.g. Ananya Singh" oninput="validateInput(this); saveDraft()">
+    <input type="text" id="customerName" class="premium-input" placeholder="e.g. Ananya Singh" 
+           autocomplete="name" 
+           oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="form-group">
@@ -200,6 +202,7 @@
     <div class="phone-wrapper">
       <span class="phone-prefix">🇮🇳 +91</span>
       <input type="tel" id="customerPhone" class="premium-input phone-field" placeholder="98765 43210" 
+             autocomplete="tel"
              oninput="handlePhoneInput(event, this)" 
              onblur="saveDraft()">
     </div>
@@ -207,7 +210,9 @@
 
   <div class="form-group">
     <label class="form-label">Email Address <span class="required-star">*</span></label>
-    <input type="email" id="customerEmail" class="premium-input" placeholder="name@example.com" oninput="validateInput(this); saveDraft()">
+    <input type="email" id="customerEmail" class="premium-input" placeholder="name@example.com" 
+           autocomplete="email"
+           oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="toggle-container" style="margin-top: 30px;">
@@ -263,12 +268,16 @@
   
   <div class="form-group">
     <label class="form-label">Flat / House No / Building <span class="required-star">*</span></label>
-    <input type="text" id="addressLine1" class="premium-input" placeholder="e.g. 104, Sunrise Apartments" oninput="validateInput(this); saveDraft()">
+    <input type="text" id="addressLine1" class="premium-input" placeholder="e.g. 104, Sunrise Apartments" 
+           autocomplete="address-line1"
+           oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="form-group">
     <label class="form-label">Road Name / Area / Colony <span class="required-star">*</span></label>
-    <input type="text" id="addressLine2" class="premium-input" placeholder="e.g. MG Road, Indiranagar" oninput="validateInput(this); saveDraft()">
+    <input type="text" id="addressLine2" class="premium-input" placeholder="e.g. MG Road, Indiranagar" 
+           autocomplete="address-line2"
+           oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="form-group">
@@ -278,18 +287,20 @@
 
   <div class="form-group">
     <label class="form-label">Pincode <span class="required-star">*</span></label>
-    <input type="tel" id="pincode" class="premium-input" placeholder="560001" maxlength="6" oninput="handlePincodeInput(this)">
+    <input type="tel" id="pincode" class="premium-input" placeholder="560001" maxlength="6" 
+           autocomplete="postal-code"
+           oninput="handlePincodeInput(this)">
     <div id="pincodeMsg" class="helper-text"></div>
   </div>
 
   <div class="form-row">
     <div class="form-col">
       <label class="form-label">City</label>
-      <input type="text" id="city" class="premium-input" placeholder="City" readonly>
+      <input type="text" id="city" class="premium-input" placeholder="City" readonly autocomplete="address-level2">
     </div>
     <div class="form-col">
       <label class="form-label">State</label>
-      <input type="text" id="state" class="premium-input" placeholder="State" readonly>
+      <input type="text" id="state" class="premium-input" placeholder="State" readonly autocomplete="address-level1">
     </div>
   </div>
 
@@ -486,18 +497,17 @@
     let val = el.value.replace(/\D/g, '');
     
     // 2. Logic to detect Paste vs Type
-    // The "inputType" check tells us if this event came from a paste action
     const isPaste = e.inputType && e.inputType.includes('Paste');
     
     // 3. APPLY RULES
     if (val.length > 10) {
         if (isPaste || val.length >= 12) {
-            // IF PASTE: It's likely +919876543210 (12 digits) or 9198...
-            // User wants the LAST 10 digits in this case.
+            // IF PASTE: User probably pasted +91 9876543210
+            // Take the LAST 10 digits
             val = val.slice(-10);
         } else {
-            // IF TYPING: User already has 10 digits and types 1 more.
-            // User wants to STOP at 10 (keep first 10).
+            // IF TYPING: User just typed the 11th digit.
+            // Block it (Keep first 10)
             val = val.slice(0, 10);
         }
     }
