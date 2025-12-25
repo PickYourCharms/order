@@ -563,65 +563,43 @@
   function proceedToWhatsApp() {
     let isValid = true;
     let firstError = null;
-
-    // 1. Validate Fields
     const mandatoryIds = ['customerName', 'customerPhone', 'customerEmail', 'addressLine1', 'addressLine2', 'city', 'state', 'pincode'];
-    if(document.getElementById('isGift').checked) {
-      mandatoryIds.push('receiverName', 'receiverPhone');
-    }
+    if(document.getElementById('isGift').checked) mandatoryIds.push('receiverName', 'receiverPhone');
 
     mandatoryIds.forEach(id => {
       const el = document.getElementById(id);
-      const val = el ? el.value.trim() : ""; // Added safety check if ID is missing
+      const val = el.value.trim();
       let error = false;
-      
-      // Empty Check
       if(!val) error = true;
-      // Strict Length Check
       if(id.includes('Phone') && val.length !== 10) error = true;
       if(id === 'pincode' && val.length !== 6) error = true;
 
       if(error) {
-        if(el) el.classList.add('input-error');
+        el.classList.add('input-error');
         isValid = false;
         if(!firstError) firstError = el;
-      } else {
-        if(el) el.classList.remove('input-error');
-      }
+      } else el.classList.remove('input-error');
     });
 
     if(!isValid) {
-      if(firstError) {
-          firstError.scrollIntoView({behavior: 'smooth', block: 'center'});
-          firstError.focus();
-      }
+      firstError.scrollIntoView({behavior: 'smooth', block: 'center'});
+      firstError.focus();
       return; 
     }
 
-    // 2. Save Draft
-    if (typeof saveDraft === "function") { saveDraft(); }
+    saveDraft(); 
 
-    // 3. Generate WhatsApp Message
-    const rawData = sessionStorage.getItem('checkout_draft_v2');
-    if (!rawData) { alert("Error: Could not save data."); return; } // Safety Check
-    
-    const data = JSON.parse(rawData);
-    const totalEl = document.getElementById('finalTotal');
-    const total = totalEl ? totalEl.textContent : "0";
-    
-    // Ensure generateOrderID exists or provide fallback
-    const orderID = (typeof generateOrderID === "function") ? generateOrderID() : Date.now();
+    const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
+    const total = document.getElementById('finalTotal').textContent;
+    const orderID = generateOrderID();
 
     let itemsStr = "";
-    // Ensure cart exists
-    if (typeof cart !== 'undefined' && Array.isArray(cart)) {
-        cart.forEach((item, i) => {
-          let desc = item.type || "Item";
-          if(item.type === 'Bracelet' && item.charms) desc += ` (${item.charms.length} charms)`;
-          else if(item.type && item.type.includes('Combo')) desc += ` (Combo)`;
-          itemsStr += `\n${i+1}. ${desc} - Rs. ${item.price}`;
-        });
-    }
+    cart.forEach((item, i) => {
+      let desc = item.type;
+      if(item.type === 'Bracelet') desc += ` (${item.charms.length} charms)`;
+      else if(item.type.includes('Combo')) desc += ` (Combo)`;
+      itemsStr += `\n${i+1}. ${desc} - Rs. ${item.price}`;
+    });
 
     let addressBlock = `${data.addressLine1}\n${data.addressLine2}\n`;
     if(data.landmark) addressBlock += `Landmark: ${data.landmark}\n`;
@@ -634,22 +612,23 @@
       msg += `\n\n🎁 *GIFT ORDER*\nTo: ${data.receiverName}\nPhone: ${data.receiverPhone}\nRelation: ${data.relation}\nOccasion: ${data.occasion}\nNote: ${data.giftMessage}`;
     }
 
-    // Ensure PHONE_NUMBER is defined, otherwise hardcode it here or define it globally
-    // Example fallback: const destPhone = typeof PHONE_NUMBER !== 'undefined' ? PHONE_NUMBER : '91XXXXXXXXXX';
     const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
     
-    // 4. SAVE PREFS FOR NEXT TIME
-    const prefs = {
-        name: data.name, phone: data.phone, email: data.email,
-        addressLine1: data.addressLine1, addressLine2: data.addressLine2,
-        landmark: data.landmark, city: data.city, state: data.state, pincode: data.pincode
-    };
-    localStorage.setItem('pyc_user_prefs', JSON.stringify(prefs));
+    // === FINAL CLEANUP ===
+    // 1. Remove "Visited" flag so bottom sheet doesn't show next time
+    sessionStorage.removeItem('pyc_checkout_visited');
+    // 2. Clear Cart
+    localStorage.removeItem('pyc_cart');
+    // 3. Clear other Session Data (Drafts/Coupons)
+    sessionStorage.removeItem('pyc_draft');
+    sessionStorage.removeItem('pyc_applied_coupon');
+    
+    // Note: We intentionally DO NOT clear 'checkout_draft_persistent' from localStorage
+    // so it autofills next time.
 
-    // 5. OPEN WHATSAPP (FIXED)
-    // We use href to ensure mobile browsers trigger the app intent
-    window.location.href = url;
-}
+    window.open(url, '_blank');
+    window.location.replace('index.html');
+  }
 
   function handleBackNavigation() {
     document.getElementById('confirmBackModal').style.display = 'flex';
