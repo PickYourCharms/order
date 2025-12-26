@@ -1,0 +1,131 @@
+/* === DESKTOP & TABLET ADAPTER === */
+
+/* 1. TABLET/MOBILE LANDSCAPE BLOCKER */
+/* Forces user to rotate device if they are on a touch device in landscape */
+@media only screen and (min-width: 480px) and (max-width: 1100px) and (orientation: landscape) and (pointer: coarse) {
+    body::after {
+        content: "Please rotate your device ↻ \A\A This experience is designed for portrait mode.";
+        white-space: pre-wrap;
+        position: fixed; inset: 0; z-index: 99999;
+        background: #000; color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        text-align: center; font-family: 'Plus Jakarta Sans', sans-serif;
+        font-weight: 700; font-size: 18px; line-height: 1.5;
+    }
+    body > * { opacity: 0; pointer-events: none; } /* Hide underlying content */
+}
+
+/* 2. DESKTOP LAYOUT (Clean Centered Column) */
+@media screen and (min-width: 1025px) {
+    body {
+        background-color: #f4f4f5; /* Subtle premium grey background */
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Constrain the width of the main content wrapper */
+    body > * {
+        width: 100%;
+        max-width: 480px; /* Standard "App" width */
+    }
+
+    /* Ensure the main background of the app strip is white */
+    .navbar, .main-container, .checkout-container, .page-header {
+        background-color: #fff; 
+    }
+
+    /* Fix Sticky Navbar */
+    .navbar {
+        position: sticky; top: 0;
+        margin: 0 auto; /* Center it */
+        border-right: 1px solid #eaeaea;
+        border-left: 1px solid #eaeaea;
+    }
+
+    /* Fix Main Container & Checkout */
+    .main-container, .checkout-container, .page-header {
+        margin: 0 auto;
+        border-right: 1px solid #eaeaea;
+        border-left: 1px solid #eaeaea;
+        min-height: auto; /* Allow natural height */
+    }
+    
+    /* Ensure content fills height visually if page is short */
+    .main-container {
+        min-height: 100vh; 
+    }
+
+    /* === FIXING FLOATING ELEMENTS (Buttons, Pills, Modals) === */
+    
+    /* Center Fixed Buttons (Resume Bar, Checkout Pill, CTA) */
+    .resume-bar, .checkout-pill, .cta, .post-actions-container {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) translateY(150%); /* Start hidden state logic */
+        width: calc(100% - 32px); /* Maintain padding */
+        max-width: 450px;
+        bottom: 24px;
+    }
+    
+    /* Adjust showing states for these animations */
+    .resume-bar.show, .cta.show {
+        transform: translateX(-50%) translateY(0);
+    }
+    .checkout-pill, .post-actions-container {
+        transform: translateX(-50%) !important; /* Always visible elements */
+    }
+
+    /* Sticky Footer (Checkout Page) */
+    .sticky-footer {
+        position: fixed;
+        left: 50%; right: auto;
+        transform: translateX(-50%);
+        width: 100%; max-width: 480px;
+        border-left: 1px solid #eaeaea;
+        border-right: 1px solid #eaeaea;
+    }
+
+    /* Drawers (Cart Coupons, Product Details) */
+    .coupon-drawer, .pdp-drawer {
+        left: 50%; right: auto;
+        transform: translateX(-50%) translateY(100%);
+        width: 100%; max-width: 480px;
+    }
+    .coupon-drawer.active, .pdp-drawer.active {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* Full Screen Modals should remain Full Screen (Dimming the background) */
+    .modal, .upsell-modal-overlay, .coupon-drawer-overlay, .pdp-overlay {
+        position: fixed; inset: 0;
+        width: 100%; max-width: 100%; /* Cover full desktop screen */
+        align-items: center; justify-content: center;
+    }
+}
+
+/* 3. QR CODE MODAL (Desktop Only Visuals) */
+.qr-modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(5px);
+    align-items: center; justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+.qr-card {
+    background: #fff; padding: 32px; border-radius: 24px;
+    text-align: center; max-width: 340px; width: 90%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.qr-image { width: 200px; height: 200px; display: block; margin: 20px auto; border-radius: 8px; border: 1px solid #eee; }
+.qr-title { margin: 0; font-size: 22px; font-weight: 700; color: #111; }
+.qr-desc { font-size: 14px; color: #666; margin-top: 8px; line-height: 1.5; }
+.qr-close-btn { 
+    margin-top: 20px; background: #f3f3f3; border: none; color: #111;
+    padding: 12px 24px; border-radius: 999px; font-weight: 700; cursor: pointer; 
+    transition: background 0.2s;
+}
+.qr-close-btn:hover { background: #e5e5e5; }
