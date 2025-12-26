@@ -1,139 +1,213 @@
-/* === DESKTOP & TABLET ADAPTER === */
+/* === DESKTOP & TABLET EXPERIENCE === */
 
-/* 1. TABLET/MOBILE LANDSCAPE BLOCKER */
+/* 1. TABLET LANDSCAPE GUARD */
 @media only screen and (min-width: 480px) and (max-width: 1100px) and (orientation: landscape) and (pointer: coarse) {
     body::after {
         content: "Please rotate your device ↻ \A\A This experience is designed for portrait mode.";
-        white-space: pre-wrap;
-        position: fixed; inset: 0; z-index: 99999;
-        background: #000; color: #fff;
-        display: flex; align-items: center; justify-content: center;
+        white-space: pre-wrap; position: fixed; inset: 0; z-index: 99999;
+        background: #000; color: #fff; display: flex; align-items: center; justify-content: center;
         text-align: center; font-family: 'Plus Jakarta Sans', sans-serif;
         font-weight: 700; font-size: 18px; line-height: 1.5;
     }
     body > * { opacity: 0; pointer-events: none; }
 }
 
-/* 2. DESKTOP LAYOUT (Clean Centered Column) */
+/* 2. DESKTOP OPTIMIZATIONS */
 @media screen and (min-width: 1025px) {
-    /* === CORE LAYOUT === */
+    
+    /* === GLOBAL LAYOUT RESET === */
     body {
-        background-color: #f4f4f5; /* Premium Light Grey */
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        /* Create a "Track" for the app */
-        background-image: linear-gradient(to bottom, #f4f4f5, #f4f4f5); 
+        background-color: #f9f9f9; /* Light grey background for contrast */
+        display: block; /* Default block flow, not flex center */
+        overflow-x: hidden;
     }
 
-    /* Force the main column to look like an App */
-    .navbar, .main-container, .checkout-container, .page-header {
-        width: 100%;
-        max-width: 480px;
-        background: #fff;
-        border-right: 1px solid #e0e0e0;
-        border-left: 1px solid #e0e0e0;
-        box-sizing: border-box; /* Crucial for padding */
-    }
-
-    /* Ensure the body content fills the screen height visually */
-    .main-container, .checkout-container {
-        min-height: 100vh;
-        box-shadow: 0 0 50px rgba(0,0,0,0.05); /* Soft shadow behind the app */
-    }
-
-    /* === FIXING THE HEADER === */
+    /* Navbar: Full width, sticky, white */
     .navbar {
-        position: sticky; top: 0;
-        margin: 0 auto; /* Center the element itself */
-        left: auto; right: auto;
+        position: sticky; top: 0; width: 100%; z-index: 1000;
+        background: rgba(255,255,255,0.95);
+        border-bottom: 1px solid #eaeaea;
+        padding: 16px 40px; /* Wider padding */
+        display: grid !important; /* Force grid */
+        grid-template-columns: 100px 1fr 100px; /* Wider slots */
+        max-width: 100%;
+        margin: 0;
     }
 
-    /* === CRITICAL FIX: STICKY FOOTERS & BUTTONS === */
-    /* Problem: Fixed elements span full screen width by default. */
-    /* Fix: Force them to center and limit width to 480px. */
+    /* Main Container: Centered, Max-Width for Content */
+    .main-container, .checkout-container, .page-header {
+        max-width: 1100px !important; /* Wide standard desktop width */
+        margin: 0 auto;
+        padding: 40px 20px;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+    }
 
-    .sticky-footer,     /* Checkout WhatsApp Bar */
-    .resume-bar,        /* Resume Draft Pill */
-    .checkout-pill,     /* Cart Checkout Button */
-    .cta,               /* Builder Add to Bag */
-    .post-actions-container {
-        left: 50% !important; 
-        right: auto !important;
-        width: 100%; 
-        max-width: 480px; /* Match App Width */
-        transform: translateX(-50%) !important; /* PERFECT CENTERING */
-        border-left: 1px solid #e0e0e0;
-        border-right: 1px solid #e0e0e0;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    /* === HOME PAGE GRID === */
+    /* Transform vertical list into a horizontal grid */
+    .entry-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr); /* 3 Cards in a row */
+        gap: 30px;
+        padding: 0;
     }
     
-    /* Animation Override for floating elements (Resume Bar / CTA) */
-    /* They use transform for animation, so we must include the X-centering in the Y-animation */
-    .resume-bar, .cta {
-        transform: translate(-50%, 150%) !important; /* Hidden State */
-        bottom: 24px;
-        width: calc(100% - 32px); /* Add padding spacing */
-        max-width: 448px;
+    /* Fix Hero Image aspect ratio for desktop */
+    .hero {
+        height: 60vh; /* Taller on desktop */
+        border-radius: 24px;
+        margin-bottom: 40px;
+        max-width: 1100px;
+        margin-left: auto;
+        margin-right: auto;
+        overflow: hidden;
     }
-    .resume-bar.show, .cta.show {
-        transform: translate(-50%, 0) !important; /* Visible State */
+    
+    /* === CART PAGE: SPLIT LAYOUT === */
+    /* Hide the mobile empty state to avoid layout shift initially */
+    #cartContent {
+        display: grid;
+        grid-template-columns: 1.8fr 1fr; /* Left (Items) : Right (Summary) */
+        gap: 40px;
+        align-items: start;
     }
 
-    /* === CRITICAL FIX: DRAWERS (Coupons / PDP) === */
-    .coupon-drawer, .pdp-drawer {
-        left: 50% !important;
-        right: auto !important;
+    /* Left Column: Cart List */
+    .cart-list {
+        margin-bottom: 0;
+    }
+
+    /* Right Column: Sticky Summary */
+    .bill-summary {
+        position: sticky;
+        top: 100px; /* Stick below navbar */
+        border: 1px solid #eaeaea;
+        border-radius: 24px;
+        padding: 32px;
+        height: fit-content;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    /* Hide the mobile "Checkout Pill" and use a desktop button inside summary */
+    .checkout-pill {
+        position: static !important; /* Reset fixed positioning */
+        transform: none !important;
         width: 100%;
-        max-width: 480px;
-        /* Start Hidden (Below Screen) + Centered horizontally */
-        transform: translate(-50%, 100%) !important; 
-        border-radius: 24px 24px 0 0;
-        border-left: 1px solid #e0e0e0;
-        border-right: 1px solid #e0e0e0;
+        margin-top: 20px;
+        border-radius: 12px;
+    }
+    /* Add spacer hiding since we don't need it */
+    .cart-footer-spacer { display: none; }
+
+    /* === CHECKOUT PAGE: CENTERED FORM === */
+    .checkout-container {
+        max-width: 800px !important; /* Readable width for forms */
+        background: #fff;
+        padding: 60px;
+        border-radius: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        margin-top: 40px;
+        margin-bottom: 40px;
+    }
+    
+    /* Sticky Footer (WhatsApp Button) - Make it float bottom right or inline */
+    .sticky-footer {
+        position: static; /* Put it in flow */
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 20px 0 0 0;
+        transform: none !important;
+        max-width: 100%;
+        width: 100%;
+    }
+    .whatsapp-btn {
+        width: 100%;
+        max-width: 100%;
+        font-size: 18px;
+        padding: 18px;
     }
 
-    /* When Active (Slide Up) */
+    /* === DRAWERS & MODALS === */
+    /* Turn bottom-slide drawers into centered modals */
+    .coupon-drawer, .pdp-drawer {
+        position: fixed;
+        top: 50% !important;
+        left: 50% !important;
+        bottom: auto;
+        transform: translate(-50%, -50%) scale(0.95) !important;
+        width: 500px;
+        max-width: 90%;
+        height: auto;
+        max-height: 85vh;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        opacity: 0;
+        transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        pointer-events: none;
+        border: none;
+    }
+
     .coupon-drawer.active, .pdp-drawer.active {
-        /* Keep it centered (-50% X) and bring it up (0% Y) */
-        transform: translate(-50%, 0) !important; 
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, -50%) scale(1) !important;
     }
 
-    /* === FIX: MODAL OVERLAYS === */
-    /* These should remain full screen to dim the background properly */
-    .modal, .upsell-modal-overlay, .coupon-drawer-overlay, .pdp-overlay, .qr-modal-overlay {
-        align-items: center; 
-        justify-content: center;
-        background: rgba(0,0,0,0.7); /* Slightly darker for desktop focus */
+    /* Fix image height in PDP drawer */
+    .pdp-image-container {
+        height: 300px;
     }
-}
 
-/* 3. QR CODE MODAL (Desktop Specific Visuals) */
-.qr-modal-overlay {
-    display: none;
-    position: fixed; inset: 0; z-index: 10000;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(5px);
-    align-items: center; justify-content: center;
-    animation: fadeIn 0.3s ease;
+    /* === BUILDER PAGE === */
+    /* Keep builder focused but centered */
+    .builder-surface {
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+    /* Move CTA from fixed bottom to below builder */
+    .cta {
+        position: static;
+        transform: none !important;
+        opacity: 1 !important;
+        pointer-events: auto;
+        width: 100%;
+        max-width: 420px;
+        margin: 40px auto 0;
+        display: block;
+    }
+    
+    /* === QR CODE MODAL STYLES === */
+    .qr-modal-overlay {
+        display: none;
+        position: fixed; inset: 0; z-index: 10000;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(8px);
+        align-items: center; justify-content: center;
+        animation: fadeIn 0.3s ease;
+    }
+    .qr-card {
+        background: #fff; padding: 40px; border-radius: 32px;
+        text-align: center; max-width: 400px; width: 90%;
+        position: relative;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+        animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    .qr-close-icon {
+        position: absolute; top: 20px; right: 20px;
+        width: 36px; height: 36px;
+        border-radius: 50%; background: #f0f0f0;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: background 0.2s;
+        font-size: 20px; color: #555; border: none;
+    }
+    .qr-close-icon:hover { background: #e0e0e0; color: #000; }
+    
+    .qr-image { width: 240px; height: 240px; display: block; margin: 24px auto; border-radius: 12px; border: 1px solid #eee; }
+    .qr-title { margin: 0; font-size: 24px; font-weight: 800; color: #111; }
+    .qr-desc { font-size: 15px; color: #666; margin-top: 12px; line-height: 1.6; }
+    
+    /* Animation Keyframes */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 }
-.qr-card {
-    background: #fff; padding: 32px; border-radius: 24px;
-    text-align: center; max-width: 340px; width: 90%;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-.qr-image { width: 200px; height: 200px; display: block; margin: 20px auto; border-radius: 8px; border: 1px solid #eee; }
-.qr-title { margin: 0; font-size: 22px; font-weight: 700; color: #111; }
-.qr-desc { font-size: 14px; color: #666; margin-top: 8px; line-height: 1.5; }
-.qr-close-btn { 
-    margin-top: 20px; background: #f3f3f3; border: none; color: #111;
-    padding: 12px 24px; border-radius: 999px; font-weight: 700; cursor: pointer; 
-    transition: background 0.2s;
-}
-.qr-close-btn:hover { background: #e5e5e5; }
-
-/* Keyframe fixes */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
