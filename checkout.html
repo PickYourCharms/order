@@ -11,47 +11,15 @@
 
   <style>
     /* === INTERNAL OVERRIDES FOR CHECKOUT === */
+    /* Note: .navbar, .premium-input, and .page-header styles removed 
+       to rely on the standardized styles.css */
+
     body { background-color: #ffffff; }
     
     .checkout-container {
       max-width: 600px;
       margin: 0 auto;
       padding: 0 16px 120px 16px;
-    }
-
-    /* === 1. NAVBAR (Matches Home/Cart) === */
-    /* This is the sticky top bar with the Logo */
-    .navbar {
-      position: sticky; top: 0; z-index: 50; 
-      padding: 12px 16px;
-      backdrop-filter: blur(14px) saturate(160%); 
-      background: rgba(255,255,255,0.85);
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-      display: flex; justify-content: center; align-items: center;
-    }
-    .logo-img { height: 24px; display: block; } /* Consistent sizing */
-
-    /* === 2. PAGE HEADER (Matches Cart "My Bag" Header) === */
-    /* This contains the Back Button and Page Title */
-    .page-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 8px 16px 0; /* Aligning with container */
-      background: #fff;
-    }
-    .page-header button {
-      width: 44px; height: 44px;
-      background: none; border: none; 
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; color: #111; padding: 0;
-      border-radius: 50%;
-      transition: background 0.2s;
-    }
-    .page-header button:active { background: #f5f5f5; }
-    
-    .page-header h1 {
-      font-size: 20px; font-weight: 800; color: #111;
-      margin: 0; flex: 1; text-align: left; /* Or center if you prefer */
-      padding-left: 4px;
     }
 
     /* === FORM STYLES === */
@@ -69,16 +37,6 @@
     .required-star { color: #dc2626; margin-left: 2px; }
     .optional-tag { color: #999; font-weight: 400; font-size: 12px; margin-left: 4px; }
 
-    .premium-input {
-      width: 100%; padding: 14px 16px;
-      background: #fafafa; border: 1px solid #e5e5e5;
-      border-radius: 12px; font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 16px; color: #111; outline: none;
-      transition: all 0.2s ease; appearance: none;
-    }
-    .premium-input:focus { background: #fff; border-color: #000; box-shadow: 0 0 0 1px #000; }
-    .premium-input[readonly] { background-color: #f3f4f6; color: #888; border-color: #e5e5e5; pointer-events: none; }
-
     /* Phone & Errors */
     .phone-wrapper { position: relative; }
     .phone-prefix {
@@ -87,10 +45,10 @@
       display: flex; align-items: center; gap: 6px;
     }
     input.phone-field { padding-left: 85px; }
-    .premium-input.input-error { border-color: #dc2626 !important; background-color: #fef2f2 !important; animation: shake 0.3s ease; }
-    .premium-input.input-error::placeholder { color: #f87171; }
-    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-
+    
+    /* Error animation for premium-input is now in styles.css, 
+       but we keep specific shake keyframes here if needed or rely on global */
+    
     .form-row { display: flex; gap: 12px; }
     .form-col { flex: 1; }
 
@@ -170,21 +128,27 @@
 <body>
 
 <header class="navbar">
-  <a href="index.html" class="logo-link">
-    <img src="assets/home/PYC_LOGO_TEXT.png" class="logo-img" alt="PickYourCharms">
-  </a>
+  <div class="nav-left">
+    <button class="nav-btn" onclick="handleBackNavigation()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="nav-center">
+    <a href="index.html" class="logo-link">
+      <img src="assets/home/PYC_LOGO_TEXT.png" class="logo-img" alt="PickYourCharms">
+    </a>
+  </div>
+
+  <div class="nav-right">
+  </div>
 </header>
 
 <div class="checkout-container">
   
-  <div class="page-header">
-    <button onclick="handleBackNavigation()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-      </svg>
-    </button>
-    <h1>Checkout</h1>
-  </div>
+  <h1 style="font-size: 20px; font-weight: 800; color: #111; margin-top: 20px; margin-bottom: 8px;">Checkout</h1>
 
   <h3 class="section-title">What's the vibe? ☁️</h3>
   <p class="section-desc">Helps us pack it right (Optional)</p>
