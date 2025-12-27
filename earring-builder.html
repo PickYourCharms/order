@@ -102,17 +102,37 @@ h2 { margin: 8px 0 10px; text-align: center; }
     </div>
   </div>
 </div>
-
+<div id="premiumToast" class="premium-toast">💎 Premium Charm Added (+Rs. 100)</div>
+<style>
+  .premium-toast {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: #000; color: #fff; padding: 10px 20px; border-radius: 999px;
+    font-size: 13px; font-weight: 700; opacity: 0; transition: all 0.3s ease; pointer-events: none; z-index: 200;
+  }
+  .premium-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
 <script>
-const BASE_PRICE = 249;
-const EXTRA_CHARM_PRICE = 50; // Needed for Bracelet Price Calculation
+const BASE_PRICE = 249; 
+
+// Using same metadata as Builder
+const CHARM_METADATA = {
+  '3DBowRibbon_Charm_Gold.png': { price: 100, isPremium: true },
+  'EvilEye_Charm_Gold.png': { price: 50, isPremium: false },
+  'LetterA_Charm_Gold.png': { price: 50, isPremium: false },
+  'NorthStar_Charm_Gold.png': { price: 100, isPremium: true },
+  'RedCherry_Charm_Gold.png': { price: 50, isPremium: false },
+  '3DBowRibbon_Charm_Silver.png': { price: 100, isPremium: true },
+  'EvilEye_Charm_Silver.png': { price: 50, isPremium: false },
+  'LetterA_Charm_Silver.png': { price: 50, isPremium: false },
+  'NorthStar_Charm_Silver.png': { price: 100, isPremium: true },
+  'RedCherry_Charm_Silver.png': { price: 50, isPremium: false }
+};
+
 const CHARMS = {
   gold: [ '3DBowRibbon_Charm_Gold.png', 'EvilEye_Charm_Gold.png', 'LetterA_Charm_Gold.png', 'NorthStar_Charm_Gold.png', 'RedCherry_Charm_Gold.png' ],
   silver: [ '3DBowRibbon_Charm_Silver.png', 'EvilEye_Charm_Silver.png', 'LetterA_Charm_Silver.png', 'NorthStar_Charm_Silver.png', 'RedCherry_Charm_Silver.png' ]
 };
 const PHYSICS = { charmSize: 64, left: { x: 20, y: 100 }, right: { x: 80, y: 100 } };
-
-// --- BRACELET CONSTANTS FOR COMBO PREVIEW RENDER ---
 const B_PHYSICS = { size:46, anchorX:23, anchorY:6, attachOffset:2 };
 const B_ANGLES = { 1:[90], 2:[70,110], 3:[60,90,120], 4:[45,75,105,135], 5:[40,65,90,115,140] };
 
@@ -128,6 +148,8 @@ const modalConfirm = document.getElementById('modalConfirm');
 const cta = document.getElementById('cta');
 const navCartBtn = document.getElementById('navCartBtn');
 const pageTitle = document.getElementById('pageTitle');
+const pricePill = document.getElementById('pricePill');
+const premiumToast = document.getElementById('premiumToast');
 
 const urlParams = new URLSearchParams(window.location.search);
 const isCombo = urlParams.get('mode') === 'combo';
@@ -135,100 +157,49 @@ const isResume = urlParams.get('resume') === 'true';
 
 function init() {
   const cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
-  
-  // FIX: Strictly show/hide based on cart content on load
-  if (cart.length > 0) {
-    navCartBtn.style.display = 'block';
-  } else {
-    navCartBtn.style.display = 'none';
-  }
+  navCartBtn.style.display = cart.length > 0 ? 'block' : 'none';
 
   if (isResume) {
     const draft = JSON.parse(sessionStorage.getItem('pyc_draft'));
     if (draft && draft.data) {
-      metal = draft.data.metal;
-      charms = draft.data.charms;
-      if(isCombo && draft.comboContext) {
-        sessionStorage.setItem('combo_bracelet_data', JSON.stringify(draft.comboContext.bracelet));
-      }
+      metal = draft.data.metal; charms = draft.data.charms;
+      if(isCombo && draft.comboContext) sessionStorage.setItem('combo_bracelet_data', JSON.stringify(draft.comboContext.bracelet));
     }
-    if (isCombo) cta.textContent = "Love it · Add Bundle to Bag";
-  }
-  else if (isCombo) {
+  } else if (isCombo) {
     const savedData = sessionStorage.getItem('combo_earring_data');
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      metal = data.metal;
-      charms = data.charms;
-    }
+    if (savedData) { const data = JSON.parse(savedData); metal = data.metal; charms = data.charms; }
     cta.textContent = "Love it · Add Bundle to Bag";
   }
   updateMetal();
-  
-  setTimeout(() => {
-    window.history.pushState({ page: 'loaded' }, null, window.location.href);
-  }, 100); 
-
-window.onpopstate = function (event) {
-  // FIX: If the user is in the "Frozen" (Added to Cart) state, 
-  // the device back button must take them to Home, not back to the builder.
-  if (document.body.classList.contains('frozen-state')) {
-    window.location.href = 'index.html';
-    return;
-  }
-  
-  // Default behavior for other states
-  goBack(); 
-};
+  setTimeout(() => { window.history.pushState({ page: 'loaded' }, null, window.location.href); }, 100); 
+  window.onpopstate = function (event) {
+    if (document.body.classList.contains('frozen-state')) { window.location.href = 'index.html'; return; }
+    goBack(); 
+  };
 }
 
 function saveDraft() {
-  // LOGIC: If earring empty but bracelet exists, Keep Draft.
   const isEarringsEmpty = !charms.left && !charms.right;
   let comboCtx = null;
-  
   if(isCombo) {
     const braceletData = sessionStorage.getItem('combo_bracelet_data');
     if(braceletData) comboCtx = { bracelet: JSON.parse(braceletData) };
   }
+  if (isEarringsEmpty && (!isCombo || !comboCtx)) { sessionStorage.removeItem('pyc_draft'); return; }
 
-  if (isEarringsEmpty) {
-    if (isCombo && comboCtx) {
-      // Keep draft alive
-    } else {
-      sessionStorage.removeItem('pyc_draft');
-      return;
-    }
-  }
-
-  const draftData = {
-    url: 'earring-builder.html' + window.location.search,
-    data: { metal, charms },
-    comboContext: comboCtx,
-    timestamp: Date.now()
-  };
+  const draftData = { url: 'earring-builder.html' + window.location.search, data: { metal, charms }, comboContext: comboCtx, timestamp: Date.now() };
   sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
 }
 
 function goBack() {
-  if (document.body.classList.contains('frozen-state')) {
-    window.location.href = 'index.html';
-    return;
-  }
+  if (document.body.classList.contains('frozen-state')) { window.location.href = 'index.html'; return; }
   if (isCombo) {
-    const state = { metal, charms };
-    sessionStorage.setItem('combo_earring_data', JSON.stringify(state));
+    sessionStorage.setItem('combo_earring_data', JSON.stringify({ metal, charms }));
     const braceletData = JSON.parse(sessionStorage.getItem('combo_bracelet_data'));
-    const draftData = {
-      url: 'builder.html?mode=combo',
-      data: braceletData, 
-      timestamp: Date.now()
-    };
+    const draftData = { url: 'builder.html?mode=combo', data: braceletData, timestamp: Date.now() };
     sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
     window.location.href = 'builder.html?mode=combo';
-  } else {
-    history.back();
-  }
+  } else { history.back(); }
 }
 
 function loadTray(){
@@ -244,8 +215,23 @@ function loadTray(){
 function addCharm(file){
   if(!charms.left) charms.left=file;
   else if(!charms.right) charms.right=file;
-  render();
-  saveDraft(); 
+  
+  const meta = CHARM_METADATA[file];
+  if(meta && meta.isPremium) showPremiumToast();
+
+  render(); saveDraft(); 
+}
+
+function showPremiumToast() {
+  premiumToast.classList.add('show');
+  setTimeout(() => premiumToast.classList.remove('show'), 2000);
+}
+
+function calculateCurrentPrice() {
+  let total = BASE_PRICE;
+  if (charms.left) total += (CHARM_METADATA[charms.left]?.price || 50);
+  if (charms.right) total += (CHARM_METADATA[charms.right]?.price || 50);
+  return total;
 }
 
 function render(){
@@ -254,9 +240,10 @@ function render(){
   const hasRight = !!charms.right;
   if (hasLeft) drawCharm('left');
   if (hasRight) drawCharm('right');
-  cta.classList.toggle('show', hasLeft && hasRight);
-  if (hasLeft && hasRight) {
-    pricePill.textContent = 'Rs. ' + BASE_PRICE;
+  cta.classList.toggle('show', hasLeft || hasRight);
+  
+  if (hasLeft || hasRight) {
+    pricePill.textContent = 'Rs. ' + calculateCurrentPrice();
     pricePill.classList.add('show');
   } else {
     pricePill.classList.remove('show');
@@ -285,23 +272,15 @@ function drawCharm(side){
 function onMetalClick(next){
   if(next===metal) return;
   if(charms.left||charms.right){
-    showModal('Switching metal will reset your design.',()=>{
-      charms={left:null,right:null};
-      metal=next;updateMetal();
-      saveDraft(); 
-    });
+    showModal('Switching metal will reset your design.',()=>{ charms={left:null,right:null}; metal=next;updateMetal(); saveDraft(); });
   } else { metal=next;updateMetal(); saveDraft(); }
 }
 
 function updateMetal(){
-  const leftHook = document.getElementById('leftHook');
-  const rightHook = document.getElementById('rightHook');
-  const goldBtn = document.getElementById('goldBtn');
-  const silverBtn = document.getElementById('silverBtn');
-  leftHook.src='assets/bases/LeftHook_'+metal+'.png';
-  rightHook.src='assets/bases/RightHook_'+metal+'.png';
-  goldBtn.classList.toggle('active',metal==='gold');
-  silverBtn.classList.toggle('active',metal==='silver');
+  document.getElementById('leftHook').src='assets/bases/LeftHook_'+metal+'.png';
+  document.getElementById('rightHook').src='assets/bases/RightHook_'+metal+'.png';
+  document.getElementById('goldBtn').classList.toggle('active',metal==='gold');
+  document.getElementById('silverBtn').classList.toggle('active',metal==='silver');
   loadTray();render();
 }
 
@@ -314,22 +293,21 @@ cta.onclick = function() {
   if(!cta.classList.contains('show')) return;
   
   if (isCombo) {
-    // 1. Get Bracelet Data
     const braceletData = JSON.parse(sessionStorage.getItem('combo_bracelet_data'));
     const earringData = { metal: metal, charms: charms };
-    
-    // 2. Clear Session
     sessionStorage.removeItem('combo_bracelet_data');
     sessionStorage.removeItem('combo_earring_data');
     sessionStorage.removeItem('pyc_draft');
 
-    // 3. Add to Cart
+    const bPrice = calculateBraceletPrice(braceletData.charms); 
+    const ePrice = calculateCurrentPrice();
+
     const product = {
       id: Date.now(),
       type: 'Combo (Bracelet + Earrings)',
-      bracelet: braceletData,
-      earrings: earringData,
-      price: calculateComboPrice(braceletData, earringData),
+      bracelet: { ...braceletData, price: bPrice },
+      earrings: { ...earringData, price: ePrice },
+      price: Math.floor((bPrice + ePrice) * 0.9), 
       image: 'assets/home/model_combo_mobile.png'
     };
     
@@ -337,95 +315,54 @@ cta.onclick = function() {
     cart.push(product);
     localStorage.setItem('pyc_cart', JSON.stringify(cart));
     
-    // 4. Freeze & UI Update
     document.body.classList.add('frozen-state');
     navCartBtn.style.display = 'block';
-    
-    // === COMBO UI TRANSFORMATION ===
     pageTitle.textContent = "The Perfect Duo ✨";
     
     const comboStack = document.createElement('div');
     comboStack.className = 'combo-stack';
-    
-    // A. Create Bracelet Preview Canvas
     const bCanvas = document.createElement('div');
     bCanvas.className = 'canvas bracelet-preview';
-    
     const bImg = document.createElement('img');
     bImg.className = 'bracelet-base-img';
     bImg.src = 'assets/bases/bracelet_base_' + braceletData.metal + '.png';
     bCanvas.appendChild(bImg);
-
-    // --- NEW: Add Price Pill to Bracelet ---
-    const bCharmCount = braceletData.charms.length;
-    const bPriceText = BASE_PRICE + (bCharmCount - 1) * EXTRA_CHARM_PRICE;
-    const bPricePill = document.createElement('div');
-    bPricePill.className = 'price-pill show';
-    bPricePill.textContent = 'Rs. ' + bPriceText;
-    bCanvas.appendChild(bPricePill);
-    // ---------------------------------------
-    
-    const bRect = { width: 300, height: 300 };
-    const cx = bRect.width/2, cy = bRect.height/2;
-    const radius = bRect.width * 0.36;
-    const angles = B_ANGLES[braceletData.charms.length];
-    
-    braceletData.charms.forEach((file, i) => {
-       const a = angles[angles.length-1-i];
-       const rad = a * Math.PI / 180;
-       const x = cx + radius * Math.cos(rad);
-       const y = cy + radius * Math.sin(rad) + B_PHYSICS.attachOffset;
-       
-       const w = document.createElement('div');
-       w.className = 'bracelet-charm';
-       w.style.left = (x - B_PHYSICS.anchorX) + 'px';
-       w.style.top = (y - B_PHYSICS.anchorY) + 'px';
-       w.style.transform = 'rotate(' + (a - 90) + 'deg)';
-       
-       const img = document.createElement('img');
-       img.src = 'assets/charms/' + file;
-       img.style.width = '100%';
-       w.appendChild(img);
-       bCanvas.appendChild(w);
-    });
-    
     comboStack.appendChild(bCanvas);
     comboStack.appendChild(canvas);
     builderSurface.insertBefore(comboStack, builderSurface.firstChild);
 
   } else {
-    // SINGLE FLOW
     const product = {
       id: Date.now(),
       type: 'Earrings',
       metal: metal,
       charms: charms,
-      price: BASE_PRICE,
+      price: calculateCurrentPrice(),
       image: 'assets/bases/LeftHook_'+metal+'.png' 
     };
     addToCart(product);
   }
 };
 
-function calculateComboPrice(b, e) {
-  const bPrice = BASE_PRICE + (b.charms.length-1)*EXTRA_CHARM_PRICE;
-  const ePrice = BASE_PRICE;
-  return Math.floor((bPrice + ePrice) * 0.9); 
+function calculateBraceletPrice(bCharms) {
+  let total = BASE_PRICE; 
+  const ALLOWANCE_B = 50;
+  bCharms.forEach((file, index) => {
+    const meta = CHARM_METADATA[file] || { price: 50 };
+    if (index === 0) total += Math.max(0, meta.price - ALLOWANCE_B);
+    else total += meta.price;
+  });
+  return total;
 }
 
 function addToCart(item) {
-  // === FORCE HISTORY ENTRY ON USER CLICK (Reliable on all phones) ===
   window.history.pushState({ page: 'frozen' }, null, window.location.href);
   let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
   cart.push(item);
   localStorage.setItem('pyc_cart', JSON.stringify(cart));
-  
   sessionStorage.removeItem('pyc_draft');
-
   document.body.classList.add('frozen-state');
   navCartBtn.style.display = 'block';
-  
-  // Single Flow Title
   pageTitle.textContent = "Added to Bag ✨";
 }
 
