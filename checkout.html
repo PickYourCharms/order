@@ -335,9 +335,11 @@
 
 <script>
   // === CONFIG ===
-  const PHONE_NUMBER = "918910344676"; 
-  const BASE_PRICE = 249;
-  const EXTRA_CHARM_PRICE = 50;
+  // --- UPDATED CONFIG ---
+const API_URL = "https://script.google.com/macros/s/AKfycbwdvv7OsOR7zlwkQSCEpvm2o6m0IpDXmUuHI9wLmf6SzXQl9kwBv1HlIyBwYNmU4pEq/exec"; // <--- IMPORTANT: Paste the URL you got in Step 2 here!
+const CONFIG = JSON.parse(localStorage.getItem('pyc_config') || "{}");
+const PHONE_NUMBER = "918910344676"; // Your WhatsApp Number
+const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 249;
 
   let cart = [];
   let appliedCoupon = null;
@@ -385,9 +387,10 @@ function calculateTotals() {
     singleEarrings.sort((a,b) => a-b);
     
     let comboSavings = 0;
+    const comboPercent = Number(CONFIG.combo_discount_percent) || 10;
     const pairs = Math.min(singleBracelets.length, singleEarrings.length);
     for(let i=0; i<pairs; i++) {
-      comboSavings += Math.floor((singleBracelets[i] + singleEarrings[i]) * 0.10);
+      comboSavings += Math.floor((singleBracelets[i] + singleEarrings[i]) * (comboPercent / 100));
     }
 
     const displayCartValue = totalRaw + comboSavings;
@@ -403,17 +406,28 @@ function calculateTotals() {
     
     let subtotalPostDiscount = subtotalAfterCombo - couponDisc;
 
-    // Shipping
+    // --- SHEET SHIPPING LOGIC ---
     const pincode = document.getElementById('pincode').value;
-    let shipping = 80;
     const msg = document.getElementById('pincodeMsg');
     
-    if (freeShip || (subtotalPostDiscount >= 399)) {
-      shipping = 0; msg.textContent = "Free shipping applied! ✨"; msg.style.color = "#15803d";
-    } else if (pincode && pincode.startsWith("560")) {
-      shipping = 50; msg.textContent = "Local delivery: Rs. 50 🛵"; msg.style.color = "#15803d";
+    const defaultFee = Number(CONFIG.shipping_fee_default) || 80;
+    const localFee = Number(CONFIG.shipping_fee_local) || 50;
+    const freeThreshold = Number(CONFIG.free_shipping_above) || 399;
+    const localPrefix = String(CONFIG.local_pincode_prefix || "560");
+
+    let shipping = defaultFee;
+    
+    if (freeShip || (subtotalPostDiscount >= freeThreshold)) {
+      shipping = 0; 
+      msg.textContent = "Free shipping applied! ✨"; 
+      msg.style.color = "#15803d";
+    } else if (pincode && pincode.startsWith(localPrefix)) {
+      shipping = localFee; 
+      msg.textContent = `Local delivery: Rs. ${localFee} 🛵`; 
+      msg.style.color = "#15803d";
     } else {
-      msg.textContent = "Standard Shipping: Rs. 80"; msg.style.color = "#666";
+      msg.textContent = `Standard Shipping: Rs. ${defaultFee}`; 
+      msg.style.color = "#666";
     }
     
     const finalTotal = subtotalPostDiscount + shipping;
@@ -433,7 +447,7 @@ function calculateTotals() {
     document.getElementById('shippingVal').textContent = shipping === 0 ? "FREE" : `Rs. ${shipping}`;
     document.getElementById('shippingVal').style.color = shipping === 0 ? "#15803d" : "#555";
     document.getElementById('finalTotal').textContent = `Rs. ${finalTotal}`;
-  }
+}
 
   function selectVibe(btn, vibe) {
     document.querySelectorAll('.vibe-chip').forEach(b => b.classList.remove('selected'));
@@ -562,27 +576,88 @@ function calculateTotals() {
   }
 
   function proceedToWhatsApp() {
-    let isValid = true;
-    let firstError = null;
-    const mandatoryIds = ['customerName', 'customerPhone', 'customerEmail', 'addressLine1', 'addressLine2', 'city', 'state', 'pincode'];
-    if(document.getElementById('isGift').checked) mandatoryIds.push('receiverName', 'receiverPhone');
-    mandatoryIds.forEach(id => {
-      const el = document.getElementById(id);
-      const val = el.value.trim();
-      let error = false;
-      if(!val) error = true;
-      if(id.includes('Phone') && val.length !== 10) error = true;
-      if(id === 'pincode' && val.length !== 6) error = true;
-      if(error) { el.classList.add('input-error'); isValid = false; if(!firstError) firstError = el; } 
-      else el.classList.remove('input-error');
-    });
-    if(!isValid) { firstError.scrollIntoView({behavior: 'smooth', block: 'center'}); firstError.focus(); return; }
+  // 1. Validation 
+  let isValid = true;
+  let firstError = null;
+  const mandatoryIds = ['customerName', 'customerPhone', 'customerEmail', 'addressLine1', 'addressLine2', 'city', 'state', 'pincode'];
+  if(document.getElementById('isGift').checked) mandatoryIds.push('receiverName', 'receiverPhone');
+  
+  mandatoryIds.forEach(id => {
+    const el = document.getElementById(id);
+    const val = el.value.trim();
+    let error = false;
+    if(!val) error = true;
+    if(id.includes('Phone') && val.length !== 10) error = true;
+    if(id === 'pincode' && val.length !== 6) error = true;
+    if(error) { el.classList.add('input-error'); isValid = false; if(!firstError) firstError = el; } 
+    else el.classList.remove('input-error');
+  });
 
-    saveDraft(); 
+  if(!isValid) { firstError.scrollIntoView({behavior: 'smooth', block: 'center'}); firstError.focus(); return; }
 
-    const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
-    const total = document.getElementById('finalTotal').textContent;
-    const orderID = generateOrderID();
+  saveDraft(); 
+  
+  // Show Loading State
+  const btn = document.querySelector('.whatsapp-btn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = "Processing Order... ↻";
+  btn.disabled = true;
+
+  // 2. Prepare Data
+  const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
+  const orderID = generateOrderID(); 
+  
+  // Clean up Cart Items for Sheet
+  const itemsClean = cart.map(item => {
+    return {
+      type: item.type,
+      metal: item.metal || (item.bracelet ? item.bracelet.metal : ''),
+      price: item.price,
+      charms: item.charms || [], 
+      title: item.title || ''
+    };
+  });
+
+  const payload = {
+    order_id: orderID,
+    order_type: "WhatsApp Checkout",
+    customer_name: data.name,
+    customer_phone: data.phone,
+    customer_email: data.email,
+    shipping_address: data.addressLine1 + ", " + data.addressLine2 + (data.landmark ? ", " + data.landmark : ""),
+    city: data.city,
+    pincode: data.pincode,
+    vibe: data.vibe,
+    vibe_custom_text: data.vibeText,
+    is_gift: data.isGift,
+    receiver_name: data.receiverName,
+    receiver_phone: data.receiverPhone,
+    relation: data.relation,
+    occasion: data.occasion,
+    gift_message: data.giftMessage,
+    items_json: itemsClean,
+    combo_applied: document.getElementById('comboRow').style.display !== 'none',
+    subtotal: document.getElementById('subtotalVal').textContent,
+    combo_discount: document.getElementById('comboVal').textContent,
+    coupon_code: appliedCoupon ? appliedCoupon.code : "",
+    coupon_discount: document.getElementById('couponVal').textContent,
+    shipping_fee: document.getElementById('shippingVal').textContent,
+    final_amount: document.getElementById('finalTotal').textContent,
+    device_type: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
+    utm_source: "direct", 
+    utm_campaign: ""
+  };
+
+  // 3. Send to Google Sheet
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+  .then(response => response.json())
+  .then(result => {
+    console.log("Order Saved:", result);
+    
+    // Construct WhatsApp Message
     let itemsStr = "";
     cart.forEach((item, i) => {
       let desc = item.type;
@@ -590,17 +665,26 @@ function calculateTotals() {
       else if(item.type.includes('Combo')) desc += ` (Combo)`;
       itemsStr += `\n${i+1}. ${desc} - Rs. ${item.price}`;
     });
-    let addressBlock = `${data.addressLine1}\n${data.addressLine2}\n`;
-    if(data.landmark) addressBlock += `Landmark: ${data.landmark}\n`;
-    addressBlock += `${data.city}, ${data.state} - ${data.pincode}`;
-    let msg = `Hey PickYourCharms!✨\nI’ve just placed an order and here are the details 💌\n\n*Order ID:* ${orderID} ✨\n\n*Customer:* ${data.name}\nPhone: ${data.phone}\nEmail: ${data.email}\n\n*Address:*\n${addressBlock}\n\n*Order Details:*${itemsStr}\n\n*Total Payable: ${total}*`;
-    if(data.vibe) msg += `\n\n*Vibe:* ${data.vibe === 'Other' ? data.vibeText : data.vibe}`;
-    if(data.isGift) { msg += `\n\n🎁 *GIFT ORDER*\nTo: ${data.receiverName}\nPhone: ${data.receiverPhone}\nRelation: ${data.relation}\nOccasion: ${data.occasion}\nNote: ${data.giftMessage}`; }
-
+    
+    let msg = `Hey PickYourCharms!✨\nI’ve just placed an order! 💌\n\n*Order ID:* ${orderID}\n*Name:* ${data.name}\n\n*Items:*${itemsStr}\n\n*Total:* ${payload.final_amount}`;
+    
     const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
+    
     document.getElementById('orderConfirmationModal').style.display = 'flex';
-  }
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  })
+  .catch(error => {
+    console.error('Error saving order:', error);
+    alert("Network error. Opening WhatsApp anyway...");
+    const url = `https://wa.me/${PHONE_NUMBER}?text=Order%20${orderID}%20(Error%20Saving%20Data)`;
+    window.open(url, '_blank');
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  });
+}
 
   // === NAVIGATION LOGIC (Device + In-App Back) ===
   
