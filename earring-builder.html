@@ -232,8 +232,10 @@ function loadTray(){
 }
 
 function addCharm(file){
-  if(charms.length>=5) return;
-  charms.push(file);
+  // Logic: Fill Left first, then Right
+  if(!charms.left) charms.left = file;
+  else if(!charms.right) charms.right = file;
+  else return; // Both full
   
   // Render first
   render();
