@@ -145,12 +145,23 @@
   <h1 style="font-size:22px; margin-top:10px;">Curated Pieces ✨</h1>
 </div>
 <div class="filter-bar">
-  <button class="filter-chip active" onclick="applyFilter('all', this)">All</button>
-  <button class="filter-chip" onclick="applyFilter('Gold', this)">Gold</button>
-  <button class="filter-chip" onclick="applyFilter('Silver', this)">Silver</button>
-  <button class="filter-chip" onclick="applyFilter('Bracelet', this)">Bracelets</button>
-  <button class="filter-chip" onclick="applyFilter('Earring', this)">Earrings</button>
+  <button class="filter-chip active" id="filterAll" onclick="resetFilters()">All</button>
+  
+  <div class="filter-divider"></div>
+  
+  <button class="filter-chip" id="btnGold" onclick="toggleFilter('metal', 'Gold')">Gold</button>
+  <button class="filter-chip" id="btnSilver" onclick="toggleFilter('metal', 'Silver')">Silver</button>
+  
+  <div class="filter-divider"></div>
+
+  <button class="filter-chip" id="btnBracelet" onclick="toggleFilter('type', 'Bracelet')">Bracelets</button>
+  <button class="filter-chip" id="btnEarring" onclick="toggleFilter('type', 'Earring')">Earrings</button>
 </div>
+
+<style>
+  /* Add this to your styles or inside <style> tag */
+  .filter-divider { width: 1px; height: 20px; background: #eee; margin: 0 4px; flex-shrink: 0; }
+</style>
 <div id="productGrid" class="product-grid"></div>
 
 <div id="pdpOverlay" class="pdp-overlay" onclick="closeDrawer()"></div>
@@ -200,7 +211,7 @@
   </div>
 </div>
 <script>
-  // === DATA with Type property added ===
+  // === DATA ===
   const PRODUCTS = [
     { id: "curated_b_1", src: "TestReadyMadeBracelet1.png", price: 249, metal: "Gold", title: "Gold Butterfly Bracelet", type: "Bracelet" },
     { id: "curated_b_2", src: "TestReadyMadeBracelet2.png", price: 249, metal: "Gold", title: "Royal Gold Motif", type: "Bracelet" },
@@ -210,31 +221,66 @@
 
   const IMG_PATH = "assets/readymade/"; 
   let activeProduct = null;
-  let currentFilter = 'all';
+  
+  // State for filters
+  let activeFilters = {
+    metal: null, // 'Gold' or 'Silver'
+    type: null   // 'Bracelet' or 'Earring'
+  };
 
   function init() {
     renderGrid();
     updateCartIcon();
   }
 
-  function applyFilter(filter, btn) {
-    currentFilter = filter;
-    document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+  function toggleFilter(category, value) {
+    // Toggle logic: if clicking active, turn off. If clicking new, switch.
+    if (activeFilters[category] === value) {
+      activeFilters[category] = null;
+    } else {
+      activeFilters[category] = value;
+    }
+    updateFilterUI();
     renderGrid();
+  }
+
+  function resetFilters() {
+    activeFilters = { metal: null, type: null };
+    updateFilterUI();
+    renderGrid();
+  }
+
+  function updateFilterUI() {
+    // Reset all
+    document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+    
+    // Check if everything is null (All active)
+    if (!activeFilters.metal && !activeFilters.type) {
+      document.getElementById('filterAll').classList.add('active');
+    } else {
+      // Highlight active buttons
+      if (activeFilters.metal === 'Gold') document.getElementById('btnGold').classList.add('active');
+      if (activeFilters.metal === 'Silver') document.getElementById('btnSilver').classList.add('active');
+      if (activeFilters.type === 'Bracelet') document.getElementById('btnBracelet').classList.add('active');
+      if (activeFilters.type === 'Earring') document.getElementById('btnEarring').classList.add('active');
+    }
   }
 
   function renderGrid() {
     const grid = document.getElementById('productGrid');
     grid.innerHTML = '';
     
-    // Filter Logic
+    // Filter Logic: AND condition
     const filtered = PRODUCTS.filter(p => {
-      if (currentFilter === 'all') return true;
-      if (currentFilter === 'Gold' || currentFilter === 'Silver') return p.metal === currentFilter;
-      if (currentFilter === 'Bracelet' || currentFilter === 'Earring') return p.type === currentFilter;
-      return true;
+      const matchMetal = activeFilters.metal ? p.metal === activeFilters.metal : true;
+      const matchType = activeFilters.type ? p.type === activeFilters.type : true;
+      return matchMetal && matchType;
     });
+
+    if(filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#888;">No matches found.</div>';
+        return;
+    }
 
     filtered.forEach(p => {
       const card = document.createElement('div');
@@ -254,83 +300,49 @@
     });
   }
 
+  // ... (Keep existing openDrawer, closeDrawer, addToBag, updateCartIcon functions EXACTLY as they were) ...
   function openDrawer(product) {
     activeProduct = product;
     document.getElementById('addToBagBtn').classList.remove('btn-hidden');
     document.getElementById('addToBagBtn').textContent = "Add to Bag";
     document.getElementById('shopMoreBtn').classList.add('btn-hidden');
     document.getElementById('viewCartBtn').classList.add('btn-hidden');
-
     document.getElementById('drawerTitle').textContent = product.title;
     document.getElementById('drawerPrice').textContent = `Rs. ${product.price}`;
     document.getElementById('drawerMetal').textContent = `${product.metal} Base`;
     document.getElementById('drawerImg').src = `${IMG_PATH}${product.src}`; 
-    
     document.getElementById('pdpOverlay').classList.add('active');
     document.getElementById('pdpDrawer').classList.add('active');
     window.history.pushState({ drawer: true }, null, "");
   }
-
   function closeDrawer() {
-    if(window.history.state && window.history.state.drawer) {
-      window.history.back();
-    } else {
-      document.getElementById('pdpOverlay').classList.remove('active');
-      document.getElementById('pdpDrawer').classList.remove('active');
-      activeProduct = null;
-    }
+    if(window.history.state && window.history.state.drawer) window.history.back();
+    else { document.getElementById('pdpOverlay').classList.remove('active'); document.getElementById('pdpDrawer').classList.remove('active'); activeProduct = null; }
   }
-  
   window.onpopstate = function(event) {
     if (document.getElementById('pdpDrawer').classList.contains('active')) {
-      document.getElementById('pdpOverlay').classList.remove('active');
-      document.getElementById('pdpDrawer').classList.remove('active');
-      activeProduct = null;
-    } else {
-      window.location.href = 'index.html';
-    }
+      document.getElementById('pdpOverlay').classList.remove('active'); document.getElementById('pdpDrawer').classList.remove('active'); activeProduct = null;
+    } else { window.location.href = 'index.html'; }
   };
-
   function addToBag() {
     if(!activeProduct) return;
-    
-    const cartItem = {
-      id: Date.now(),
-      type: "Ready-Made", 
-      metal: activeProduct.metal,
-      price: activeProduct.price,
-      image: `${IMG_PATH}${activeProduct.src}`, 
-      title: activeProduct.title,
-      charms: [], 
-      isReadyMade: true
-    };
-
+    const cartItem = { id: Date.now(), type: "Ready-Made", metal: activeProduct.metal, price: activeProduct.price, image: `${IMG_PATH}${activeProduct.src}`, title: activeProduct.title, charms: [], isReadyMade: true };
     let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
     cart.push(cartItem);
     localStorage.setItem('pyc_cart', JSON.stringify(cart));
-    
     updateCartIcon();
-
     const addBtn = document.getElementById('addToBagBtn');
     addBtn.textContent = "Added! ✨";
     addBtn.style.background = "#15803d"; 
-
     setTimeout(() => {
-      addBtn.classList.add('btn-hidden');
-      document.getElementById('shopMoreBtn').classList.remove('btn-hidden');
-      document.getElementById('viewCartBtn').classList.remove('btn-hidden');
+      addBtn.classList.add('btn-hidden'); document.getElementById('shopMoreBtn').classList.remove('btn-hidden'); document.getElementById('viewCartBtn').classList.remove('btn-hidden');
     }, 600);
   }
-
   function updateCartIcon() {
     const cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
     const btn = document.getElementById('navCartBtn');
-    if(cart.length > 0) {
-      btn.style.opacity = '1';
-      btn.style.pointerEvents = 'auto';
-    }
+    if(cart.length > 0) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
   }
-
   init();
 </script>
 </body>
