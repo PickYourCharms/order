@@ -134,30 +134,19 @@ h2 { margin: 8px 0 10px; text-align: center; }
 </style>  
 
 <script>
-const BASE_PRICE = 249;
-const ALLOWANCE = 50; // The price "credit" included in base price
+// --- UPDATED: Load from Google Sheet Data ---
+const CONFIG = JSON.parse(localStorage.getItem('pyc_config') || "{}");
+const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 249; 
+const ALLOWANCE = Number(CONFIG.bracelet_base_charm_allowance) || 50;
 
 // Metadata: Define prices and premium status here
-const CHARM_METADATA = {
-  // Gold
-  '3DBowRibbon_Charm_Gold.png': { price: 100, isPremium: true },
-  'EvilEye_Charm_Gold.png': { price: 50, isPremium: false },
-  'LetterA_Charm_Gold.png': { price: 50, isPremium: false },
-  'NorthStar_Charm_Gold.png': { price: 100, isPremium: true },
-  'RedCherry_Charm_Gold.png': { price: 50, isPremium: false },
-  // Silver
-  '3DBowRibbon_Charm_Silver.png': { price: 100, isPremium: true },
-  'EvilEye_Charm_Silver.png': { price: 50, isPremium: false },
-  'LetterA_Charm_Silver.png': { price: 50, isPremium: false },
-  'NorthStar_Charm_Silver.png': { price: 100, isPremium: true },
-  'RedCherry_Charm_Silver.png': { price: 50, isPremium: false }
-};
+const CHARM_METADATA = JSON.parse(localStorage.getItem('pyc_charm_metadata') || "{}");
 
 const PHYSICS = { size:46, anchorX:23, anchorY:6, attachOffset:2 };
 const SLOT_ANGLES = { 1:[90], 2:[70,110], 3:[60,90,120], 4:[45,75,105,135], 5:[40,65,90,115,140] };
 const CHARMS = {
-  gold: [ '3DBowRibbon_Charm_Gold.png', 'EvilEye_Charm_Gold.png', 'LetterA_Charm_Gold.png', 'NorthStar_Charm_Gold.png', 'RedCherry_Charm_Gold.png' ],
-  silver: [ '3DBowRibbon_Charm_Silver.png', 'EvilEye_Charm_Silver.png', 'LetterA_Charm_Silver.png', 'NorthStar_Charm_Silver.png', 'RedCherry_Charm_Silver.png' ]
+  gold: JSON.parse(localStorage.getItem('pyc_charms_gold') || "[]"),
+  silver: JSON.parse(localStorage.getItem('pyc_charms_silver') || "[]")
 };
 
 let metal = 'gold';
