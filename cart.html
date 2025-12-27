@@ -640,9 +640,20 @@ function calculateTotals() {
   }
 
   document.getElementById('subtotalVal').textContent = `Rs. ${subtotalPostDiscount}`;
-  const shipEl = document.getElementById('shippingVal');
-  shipEl.textContent = shipping === 0 ? 'FREE' : `Rs. ${shipping}`;
-  shipEl.style.color = shipping === 0 ? '#15803d' : '#111';
+ const shipEl = document.getElementById('shippingVal');
+  const shipLabel = document.querySelector('.math-row:nth-last-child(3) span:first-child'); // Target "Shipping" label
+  
+  if (shipping === 0) {
+    shipEl.textContent = 'FREE';
+    shipEl.style.color = '#15803d';
+    // Optional: You can hide the help text if it's free, or keep it.
+    // Let's add the help text to the label dynamically
+    if(shipLabel) shipLabel.innerHTML = 'Shipping <span style="font-size:10px; color:#888; font-weight:400;">(Free above ₹399)</span>';
+  } else {
+    shipEl.textContent = `Rs. ${shipping}`;
+    shipEl.style.color = '#111';
+    if(shipLabel) shipLabel.innerHTML = 'Shipping <span style="font-size:10px; color:#888; font-weight:400;">(Free above ₹399)</span>';
+  }
 
   document.getElementById('finalTotal').textContent = `Rs. ${finalTotal}`;
 }
