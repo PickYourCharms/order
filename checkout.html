@@ -284,13 +284,18 @@
   </div>
 
   <div class="receipt-card">
-    <h3 class="section-title" style="margin-top:0; margin-bottom: 20px;">Payment Summary</h3>
+<h3 class="section-title" style="margin-top:0; margin-bottom: 20px;">Payment Summary</h3>
     
     <div>
-      <div class="bill-row"><span>Subtotal</span><span id="subtotalVal">Rs. 0</span></div>
+      <div class="bill-row"><span>Cart Value</span><span id="cartValueVal">Rs. 0</span></div>
       <div class="bill-row discount-text" id="comboRow" style="display:none;"><span>Combo Savings</span><span id="comboVal">-Rs. 0</span></div>
       <div class="bill-row discount-text" id="couponRow" style="display:none;"><span>Coupon</span><span id="couponVal">-Rs. 0</span></div>
+      
+      <div style="border-top: 1px dashed #eee; margin: 8px 0;"></div>
+      
+      <div class="bill-row"><span style="font-weight:600;">Subtotal</span><span id="subtotalVal" style="font-weight:600;">Rs. 0</span></div>
       <div class="bill-row"><span>Shipping</span><span id="shippingVal">Rs. 80</span></div>
+      
       <div class="bill-row total"><span>Total Payable</span><span id="finalTotal">Rs. 0</span></div>
     </div>
   </div>
@@ -370,52 +375,40 @@
 
   // ... (Keep existing Logic Functions: calculateTotals, selectVibe, etc.) ...
 function calculateTotals() {
-    let subtotal = 0;
-    let readyMadeTotal = 0; // 1. NEW: Track ready-made total
+    let totalRaw = 0;
+    cart.forEach(i => totalRaw += i.price);
 
-    let bracelets = [], earrings = [];
-    const getBPrice = (b) => BASE_PRICE + (b.charms.length-1)*EXTRA_CHARM_PRICE;
-    const getEPrice = () => BASE_PRICE;
-
-    cart.forEach(item => {
-      // 2. NEW: Check for Ready-Made/Curated items first
-      if (item.isReadyMade) {
-         readyMadeTotal += item.price;
-      }
-      else if(item.type === 'Bracelet') bracelets.push(getBPrice(item));
-      else if(item.type === 'Earrings') earrings.push(getEPrice());
-      else if(item.type.includes('Combo')) {
-        bracelets.push(getBPrice(item.bracelet));
-        earrings.push(getEPrice());
-      }
-    });
-
-    bracelets.forEach(p => subtotal += p);
-    earrings.forEach(p => subtotal += p);
+    // Recalculate dynamic combo savings
+    let singleBracelets = cart.filter(i => i.type === 'Bracelet').map(i => i.price);
+    let singleEarrings = cart.filter(i => i.type === 'Earrings').map(i => i.price);
+    singleBracelets.sort((a,b) => a-b);
+    singleEarrings.sort((a,b) => a-b);
     
-    subtotal += readyMadeTotal; // 3. NEW: Add to final subtotal
+    let comboSavings = 0;
+    const pairs = Math.min(singleBracelets.length, singleEarrings.length);
+    for(let i=0; i<pairs; i++) {
+      comboSavings += Math.floor((singleBracelets[i] + singleEarrings[i]) * 0.10);
+    }
 
-    // ... The rest of the logic remains exactly the same ...
-bracelets.sort((a,b) => a-b);
-    earrings.sort((a,b) => a-b); // <--- ADD THIS LINE
-    let comboDiscount = 0;
-    const pairs = Math.min(bracelets.length, earrings.length);
-    for(let i=0; i<pairs; i++) comboDiscount += Math.floor((bracelets[i] + earrings[i]) * 0.10);
+    const displayCartValue = totalRaw + comboSavings;
+    let subtotalAfterCombo = displayCartValue - comboSavings;
     
-    let discountable = subtotal - comboDiscount;
     let couponDisc = 0;
     let freeShip = false;
     
     if (appliedCoupon) {
       if (appliedCoupon.freeShip) freeShip = true;
-      else if (discountable >= appliedCoupon.minOrder) couponDisc = Math.floor(discountable * (appliedCoupon.percent / 100));
+      else if (subtotalAfterCombo >= appliedCoupon.minOrder) couponDisc = Math.floor(subtotalAfterCombo * (appliedCoupon.percent / 100));
     }
     
+    let subtotalPostDiscount = subtotalAfterCombo - couponDisc;
+
+    // Shipping
     const pincode = document.getElementById('pincode').value;
     let shipping = 80;
     const msg = document.getElementById('pincodeMsg');
     
-    if (freeShip || (discountable - couponDisc >= 399)) {
+    if (freeShip || (subtotalPostDiscount >= 399)) {
       shipping = 0; msg.textContent = "Free shipping applied! ✨"; msg.style.color = "#15803d";
     } else if (pincode && pincode.startsWith("560")) {
       shipping = 50; msg.textContent = "Local delivery: Rs. 50 🛵"; msg.style.color = "#15803d";
@@ -423,16 +416,23 @@ bracelets.sort((a,b) => a-b);
       msg.textContent = "Standard Shipping: Rs. 80"; msg.style.color = "#666";
     }
     
-    const total = subtotal - comboDiscount - couponDisc + shipping;
+    const finalTotal = subtotalPostDiscount + shipping;
     
-    document.getElementById('subtotalVal').textContent = `Rs. ${subtotal}`;
+    // Render
+    document.getElementById('cartValueVal').textContent = `Rs. ${displayCartValue}`;
+    
     const comboEl = document.getElementById('comboRow');
-    if(comboDiscount > 0) { comboEl.style.display = 'flex'; document.getElementById('comboVal').textContent = `-Rs. ${comboDiscount}`; } else comboEl.style.display = 'none';
+    if(comboSavings > 0) { comboEl.style.display = 'flex'; document.getElementById('comboVal').textContent = `-Rs. ${comboSavings}`; } 
+    else comboEl.style.display = 'none';
+
     const coupEl = document.getElementById('couponRow');
-    if(couponDisc > 0) { coupEl.style.display = 'flex'; document.getElementById('couponVal').textContent = `-Rs. ${couponDisc}`; } else coupEl.style.display = 'none';
+    if(couponDisc > 0) { coupEl.style.display = 'flex'; document.getElementById('couponVal').textContent = `-Rs. ${couponDisc}`; } 
+    else coupEl.style.display = 'none';
+
+    document.getElementById('subtotalVal').textContent = `Rs. ${subtotalPostDiscount}`;
     document.getElementById('shippingVal').textContent = shipping === 0 ? "FREE" : `Rs. ${shipping}`;
     document.getElementById('shippingVal').style.color = shipping === 0 ? "#15803d" : "#555";
-    document.getElementById('finalTotal').textContent = `Rs. ${total}`;
+    document.getElementById('finalTotal').textContent = `Rs. ${finalTotal}`;
   }
 
   function selectVibe(btn, vibe) {
