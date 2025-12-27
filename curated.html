@@ -9,7 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=2.4">
    <link rel="stylesheet" href="desktop.css">
-<script src="desktop.js"></script>
+<script src="config.js"></script>
+  <script src="desktop.js"></script>
   <script src="navigation.js"></script>
   <style>
     /* === INTERNAL STYLES FOR BROWSE PAGE === */
@@ -135,7 +136,21 @@
   <h1 style="font-size:22px; margin-top:10px;">Curated Pieces ✨</h1>
 </div>
 
-<div id="productGrid" class="product-grid"></div>
+  <div class="filter-bar">
+  <select id="metalFilter" onchange="applyFilters()">
+    <option value="All">All Metals</option>
+    <option value="Gold">Gold</option>
+    <option value="Silver">Silver</option>
+  </select>
+  <select id="catFilter" onchange="applyFilters()">
+    <option value="All">All Categories</option>
+    <option value="Earrings">Earrings</option>
+    <option value="Bracelet">Bracelet</option>
+    <option value="Set">Sets</option>
+  </select>
+</div>
+
+  <div id="productGrid" class="product-grid"></div>
 
 <div id="pdpOverlay" class="pdp-overlay" onclick="closeDrawer()"></div>
 <div id="pdpDrawer" class="pdp-drawer">
