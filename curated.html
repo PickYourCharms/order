@@ -268,11 +268,13 @@ const PRODUCTS = JSON.parse(localStorage.getItem('pyc_products') || "[]");
     const grid = document.getElementById('productGrid');
     grid.innerHTML = '';
     
-    // Filter Logic: AND condition
+    // Filter Logic
     const filtered = PRODUCTS.filter(p => {
       const matchMetal = activeFilters.metal ? p.metal === activeFilters.metal : true;
       const matchType = activeFilters.type ? p.type === activeFilters.type : true;
-      return matchMetal && matchType;
+      // Only show active products
+      const isActive = String(p.active).toLowerCase() === 'true'; 
+      return matchMetal && matchType && isActive;
     });
 
     if(filtered.length === 0) {
@@ -281,12 +283,19 @@ const PRODUCTS = JSON.parse(localStorage.getItem('pyc_products') || "[]");
     }
 
     filtered.forEach(p => {
+      // ✅ FIX: Handle Image Path Smartly
+      // If sheet has "assets/readymade/img.png", use it. If just "img.png", prepend folder.
+      let rawImg = p.image || p.src || ""; // Check both keys
+      let finalImg = rawImg.startsWith('assets') ? rawImg : (IMG_PATH + rawImg);
+
       const card = document.createElement('div');
       card.className = 'prod-card';
-      card.onclick = () => openDrawer(p);
+      // Pass finalImg to openDrawer so it matches
+      card.onclick = () => openDrawer({...p, finalImg: finalImg});
+      
       card.innerHTML = `
         <div class="prod-img-wrapper">
-          <img src="${IMG_PATH}${p.src}" class="prod-img" onerror="this.src='assets/home/curated_teaser.png'"> 
+          <img src="${finalImg}" class="prod-img" onerror="this.src='assets/home/curated_teaser.png'"> 
         </div>
         <div class="prod-info">
           <h3 class="prod-title">${p.title}</h3>
@@ -299,16 +308,21 @@ const PRODUCTS = JSON.parse(localStorage.getItem('pyc_products') || "[]");
   }
 
   // ... (Keep existing openDrawer, closeDrawer, addToBag, updateCartIcon functions EXACTLY as they were) ...
+  // --- UPDATE openDrawer TO USE THE FIXED IMAGE ---
   function openDrawer(product) {
     activeProduct = product;
     document.getElementById('addToBagBtn').classList.remove('btn-hidden');
     document.getElementById('addToBagBtn').textContent = "Add to Bag";
     document.getElementById('shopMoreBtn').classList.add('btn-hidden');
     document.getElementById('viewCartBtn').classList.add('btn-hidden');
+    
     document.getElementById('drawerTitle').textContent = product.title;
     document.getElementById('drawerPrice').textContent = `Rs. ${product.price}`;
     document.getElementById('drawerMetal').textContent = `${product.metal} Base`;
-    document.getElementById('drawerImg').src = `${IMG_PATH}${product.src}`; 
+    
+    // Use the fixed image path we calculated in renderGrid
+    document.getElementById('drawerImg').src = product.finalImg || product.image; 
+    
     document.getElementById('pdpOverlay').classList.add('active');
     document.getElementById('pdpDrawer').classList.add('active');
     window.history.pushState({ drawer: true }, null, "");
@@ -324,16 +338,33 @@ const PRODUCTS = JSON.parse(localStorage.getItem('pyc_products') || "[]");
   };
   function addToBag() {
     if(!activeProduct) return;
-    const cartItem = { id: Date.now(), type: "Ready-Made", metal: activeProduct.metal, price: activeProduct.price, image: `${IMG_PATH}${activeProduct.src}`, title: activeProduct.title, charms: [], isReadyMade: true };
+    
+    // Use the fixed image path
+    const imgUrl = activeProduct.finalImg || activeProduct.image;
+    
+    const cartItem = { 
+      id: Date.now(), 
+      type: "Ready-Made", 
+      metal: activeProduct.metal, 
+      price: Number(activeProduct.price), 
+      image: imgUrl, 
+      title: activeProduct.title, 
+      charms: [], 
+      isReadyMade: true 
+    };
+    
     let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
     cart.push(cartItem);
     localStorage.setItem('pyc_cart', JSON.stringify(cart));
     updateCartIcon();
+    
     const addBtn = document.getElementById('addToBagBtn');
     addBtn.textContent = "Added! ✨";
     addBtn.style.background = "#15803d"; 
     setTimeout(() => {
-      addBtn.classList.add('btn-hidden'); document.getElementById('shopMoreBtn').classList.remove('btn-hidden'); document.getElementById('viewCartBtn').classList.remove('btn-hidden');
+      addBtn.classList.add('btn-hidden'); 
+      document.getElementById('shopMoreBtn').classList.remove('btn-hidden'); 
+      document.getElementById('viewCartBtn').classList.remove('btn-hidden');
     }, 600);
   }
   function updateCartIcon() {
