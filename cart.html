@@ -437,7 +437,8 @@ function getDiscountableAmount() {
   earrings.forEach(p => subtotal += p);
 
   // Recalculate Combo Savings locally just for this check
-  bracelets.sort((a,b) => a-b);
+bracelets.sort((a,b) => a-b);
+  earrings.sort((a,b) => a-b); // <--- ADD THIS LINE
   let comboDiscount = 0;
   const pairs = Math.min(bracelets.length, earrings.length);
   for(let i=0; i<pairs; i++) {
