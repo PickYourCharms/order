@@ -113,7 +113,9 @@
 // --- UPDATED: Load Config & Coupons from Sheet ---
 const CONFIG = JSON.parse(localStorage.getItem('pyc_config') || "{}");
 const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 249;
-const EXTRA_CHARM_PRICE = 50; // Keep this fixed or add to config if you want
+// ✅ NEW: Add Earring Base Price
+const EARRING_BASE_PRICE = Number(CONFIG.earring_base_price) || 199; 
+const EXTRA_CHARM_PRICE = 50;
 
 const COUPONS_DB = JSON.parse(localStorage.getItem('pyc_coupons') || "[]");
 
@@ -666,19 +668,22 @@ function deleteItem(index, subType = null) {
     cart.splice(index, 1);
   } else {
     const combo = cart[index];
+    
+    // CASE 1: User deletes Bracelet from Combo -> Keep Earrings
     if (subType === 'bracelet') {
       const newEarring = {
         id: Date.now(),
         type: 'Earrings',
         metal: combo.earrings.metal,
         charms: combo.earrings.charms,
-        price: BASE_PRICE,
+        price: EARRING_BASE_PRICE, // ✅ FIX: Use Earring Price (199), not Base/Bracelet Price (249)
         image: `assets/bases/LeftHook_${combo.earrings.metal}.png`
       };
       cart[index] = newEarring;
     } 
+    // CASE 2: User deletes Earrings from Combo -> Keep Bracelet
     else if (subType === 'earrings') {
-      const bPrice = BASE_PRICE + (combo.bracelet.charms.length - 1) * EXTRA_CHARM_PRICE;
+      const bPrice = BASE_PRICE + (combo.bracelet.charms.length > 1 ? (combo.bracelet.charms.length - 1) * EXTRA_CHARM_PRICE : 0);
       const newBracelet = {
         id: Date.now(),
         type: 'Bracelet',
