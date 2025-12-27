@@ -100,9 +100,36 @@ h2 { margin: 8px 0 10px; text-align: center; }
   </div>
 </div>
 
+<div id="premiumToast" class="premium-toast">💎 Premium Charm Added (+Rs. 100)</div>
+<style>
+  .premium-toast {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: #000; color: #fff; padding: 10px 20px; border-radius: 999px;
+    font-size: 13px; font-weight: 700; opacity: 0; transition: all 0.3s ease; pointer-events: none; z-index: 200;
+  }
+  .premium-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>  
+
 <script>
 const BASE_PRICE = 249;
-const EXTRA_CHARM_PRICE = 50;
+const ALLOWANCE = 50; // The price "credit" included in base price
+
+// Metadata: Define prices and premium status here
+const CHARM_METADATA = {
+  // Gold
+  '3DBowRibbon_Charm_Gold.png': { price: 100, isPremium: true },
+  'EvilEye_Charm_Gold.png': { price: 50, isPremium: false },
+  'LetterA_Charm_Gold.png': { price: 50, isPremium: false },
+  'NorthStar_Charm_Gold.png': { price: 100, isPremium: true },
+  'RedCherry_Charm_Gold.png': { price: 50, isPremium: false },
+  // Silver
+  '3DBowRibbon_Charm_Silver.png': { price: 100, isPremium: true },
+  'EvilEye_Charm_Silver.png': { price: 50, isPremium: false },
+  'LetterA_Charm_Silver.png': { price: 50, isPremium: false },
+  'NorthStar_Charm_Silver.png': { price: 100, isPremium: true },
+  'RedCherry_Charm_Silver.png': { price: 50, isPremium: false }
+};
+
 const PHYSICS = { size:46, anchorX:23, anchorY:6, attachOffset:2 };
 const SLOT_ANGLES = { 1:[90], 2:[70,110], 3:[60,90,120], 4:[45,75,105,135], 5:[40,65,90,115,140] };
 const CHARMS = {
@@ -123,6 +150,7 @@ const modalText = document.getElementById('modalText');
 const modalConfirm = document.getElementById('modalConfirm');
 const navCartBtn = document.getElementById('navCartBtn');
 const pageTitle = document.getElementById('pageTitle');
+const premiumToast = document.getElementById('premiumToast');
 
 const urlParams = new URLSearchParams(window.location.search);
 const isCombo = urlParams.get('mode') === 'combo';
@@ -130,72 +158,34 @@ const isResume = urlParams.get('resume') === 'true';
 
 function init() {
   const cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
-  
-  // FIX: Strictly show/hide based on cart content on load
-  if (cart.length > 0) {
-    navCartBtn.style.display = 'block';
-  } else {
-    navCartBtn.style.display = 'none';
-  }
+  navCartBtn.style.display = cart.length > 0 ? 'block' : 'none';
 
   if (isResume) {
     const draft = JSON.parse(sessionStorage.getItem('pyc_draft'));
-    if (draft && draft.data) {
-      metal = draft.data.metal;
-      charms = draft.data.charms;
-    }
-  } 
-  else if (isCombo) {
+    if (draft && draft.data) { metal = draft.data.metal; charms = draft.data.charms; }
+  } else if (isCombo) {
     const savedData = sessionStorage.getItem('combo_bracelet_data');
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      metal = data.metal;
-      charms = data.charms;
-    }
+    if (savedData) { const data = JSON.parse(savedData); metal = data.metal; charms = data.charms; }
     cta.textContent = "Continue to Earrings →";
   }
   updateMetal(); 
   
-  setTimeout(() => {
-    window.history.pushState({ page: 'loaded' }, null, window.location.href);
-  }, 100);
-
-window.onpopstate = function (event) {
-  // FIX: If the user is in the "Frozen" (Added to Cart) state, 
-  // the device back button must take them to Home, not back to the builder.
-  if (document.body.classList.contains('frozen-state')) {
-    window.location.href = 'index.html';
-    return;
-  }
-  
-  // Default behavior for other states
-  goBack(); 
-};
+  setTimeout(() => { window.history.pushState({ page: 'loaded' }, null, window.location.href); }, 100);
+  window.onpopstate = function (event) {
+    if (document.body.classList.contains('frozen-state')) { window.location.href = 'index.html'; return; }
+    goBack(); 
+  };
 }
 
 function saveDraft() {
-  if (charms.length === 0) {
-    sessionStorage.removeItem('pyc_draft');
-    return;
-  }
-  const draftData = {
-    url: 'builder.html' + window.location.search,
-    data: { metal, charms },
-    timestamp: Date.now()
-  };
+  if (charms.length === 0) { sessionStorage.removeItem('pyc_draft'); return; }
+  const draftData = { url: 'builder.html' + window.location.search, data: { metal, charms }, timestamp: Date.now() };
   sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
 }
 
 function goBack() {
-  if (document.body.classList.contains('frozen-state')) {
-    window.location.href = 'index.html';
-    return;
-  }
-  if (isCombo) {
-    window.location.href = 'index.html'; 
-  } else {
-    history.back();
-  }
+  if (document.body.classList.contains('frozen-state')) { window.location.href = 'index.html'; return; }
+  if (isCombo) { window.location.href = 'index.html'; } else { history.back(); }
 }
 
 function loadTray(){
@@ -211,8 +201,34 @@ function loadTray(){
 function addCharm(file){
   if(charms.length>=5) return;
   charms.push(file);
+  
+  const meta = CHARM_METADATA[file];
+  if(meta && meta.isPremium) showPremiumToast();
+  
   render();
   saveDraft(); 
+}
+
+function showPremiumToast() {
+  premiumToast.classList.add('show');
+  setTimeout(() => premiumToast.classList.remove('show'), 2000);
+}
+
+function calculateCurrentPrice() {
+  if (charms.length === 0) return 0;
+  let total = BASE_PRICE;
+  
+  charms.forEach((file, index) => {
+    const meta = CHARM_METADATA[file] || { price: 50 }; 
+    if (index === 0) {
+      // First charm logic
+      total += Math.max(0, meta.price - ALLOWANCE);
+    } else {
+      // Subsequent charms full price
+      total += meta.price;
+    }
+  });
+  return total;
 }
 
 function render(){
@@ -224,16 +240,13 @@ function render(){
     return;
   }
 
-  const totalPrice = BASE_PRICE + (charms.length-1)*EXTRA_CHARM_PRICE;
+  const totalPrice = calculateCurrentPrice();
   pricePill.textContent='Rs. '+ totalPrice;
   pricePill.classList.add('show');
   cta.classList.add('show');
 
-  if (isCombo) {
-    cta.textContent = "Continue to Earrings →";
-  } else {
-    cta.textContent = "Love it · Add to Bag";
-  }
+  if (isCombo) cta.textContent = "Continue to Earrings →";
+  else cta.textContent = "Love it · Add to Bag";
 
   const rect=canvas.getBoundingClientRect();
   const cx=rect.width/2, cy=rect.height/2;
@@ -266,22 +279,13 @@ function render(){
 function onMetalClick(next){
   if(next===metal) return;
   if(charms.length>0){
-    showModal('Switching metal will reset your design.',()=>{
-      charms=[];
-      metal=next;
-      updateMetal();
-      saveDraft(); 
-    });
+    showModal('Switching metal will reset your design.',()=>{ charms=[]; metal=next; updateMetal(); saveDraft(); });
   } else { metal=next;updateMetal(); saveDraft(); }
 }
 
 function onResetClick(){
   if(charms.length===0) return;
-  showModal('Reset bracelet design?',()=>{
-    charms=[];
-    render();
-    saveDraft(); 
-  });
+  showModal('Reset bracelet design?',()=>{ charms=[]; render(); saveDraft(); });
 }
 
 function updateMetal(){
@@ -298,30 +302,24 @@ cta.onclick = function() {
   if (isCombo) {
     const state = { metal, charms };
     sessionStorage.setItem('combo_bracelet_data', JSON.stringify(state));
-    
-    // FIX: Check if we have stashed earring data (from a previous edit/cart flow)
-    // If we do, use it. If not, use the default empty start.
     let nextEarringState = { metal: 'gold', charms: {left:null,right:null} };
     const stashedEarrings = sessionStorage.getItem('combo_earring_data');
-    if (stashedEarrings) {
-      nextEarringState = JSON.parse(stashedEarrings);
-    }
+    if (stashedEarrings) nextEarringState = JSON.parse(stashedEarrings);
 
     const draftData = {
       url: 'earring-builder.html?mode=combo',
-      data: nextEarringState, // Use the recovered data here
+      data: nextEarringState,
       comboContext: { bracelet: state }
     };
     sessionStorage.setItem('pyc_draft', JSON.stringify(draftData));
     window.location.href = 'earring-builder.html?mode=combo';
   } else {
-    // ... single bracelet logic ...
     const product = {
       id: Date.now(),
       type: 'Bracelet',
       metal: metal,
       charms: charms,
-      price: BASE_PRICE + (charms.length-1)*EXTRA_CHARM_PRICE,
+      price: calculateCurrentPrice(),
       image: 'assets/bases/bracelet_base_'+metal+'.png'
     };
     addToCart(product);
@@ -329,7 +327,6 @@ cta.onclick = function() {
 };
 
 function addToCart(item) {
-  // === FORCE HISTORY ENTRY ON USER CLICK (Reliable on all phones) ===
   window.history.pushState({ page: 'frozen' }, null, window.location.href);
   let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
   cart.push(item);
@@ -337,8 +334,6 @@ function addToCart(item) {
   sessionStorage.removeItem('pyc_draft');
   document.body.classList.add('frozen-state');
   navCartBtn.style.display = 'block';
-
-  // FIX: Update Copy for Single Flow
   pageTitle.textContent = "Added to Bag ✨";
 }
 
@@ -350,6 +345,7 @@ function showModal(text,confirmFn){
 function closeModal(){ modal.style.display='none'; }
 
 init();
-</script>
+</script>  
+  
 </body>
 </html>
