@@ -36,6 +36,18 @@
     .required-star { color: #dc2626; margin-left: 2px; }
     .optional-tag { color: #999; font-weight: 400; font-size: 12px; margin-left: 4px; }
 
+    .premium-input {
+      width: 100%; padding: 14px 16px;
+      background: #fafafa; border: 1px solid #e5e5e5;
+      border-radius: 12px; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px; color: #111; outline: none;
+      transition: all 0.2s ease; appearance: none;
+    }
+    .premium-input:focus { background: #fff; border-color: #000; box-shadow: 0 0 0 1px #000; }
+    .premium-input[readonly] { background-color: #f3f4f6; color: #888; border-color: #e5e5e5; pointer-events: none; }
+    .premium-input.input-error { border-color: #dc2626 !important; background-color: #fef2f2 !important; animation: shake 0.3s ease; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
     /* Phone & Errors */
     .phone-wrapper { position: relative; }
     .phone-prefix {
@@ -91,7 +103,7 @@
       z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
     }
     
-    /* === UPDATED WHATSAPP BUTTON === */
+    /* === WHATSAPP BUTTON === */
     .whatsapp-btn {
       width: 100%; max-width: 500px; 
       background: #25D366; 
@@ -369,33 +381,49 @@
   // ... (Keep existing Logic Functions: calculateTotals, selectVibe, etc.) ...
   function calculateTotals() {
     let subtotal = 0;
+    let readyMadeTotal = 0; // NEW: Track curated items
     let bracelets = [], earrings = [];
+
     const getBPrice = (b) => BASE_PRICE + (b.charms.length-1)*EXTRA_CHARM_PRICE;
     const getEPrice = () => BASE_PRICE;
+    
     cart.forEach(item => {
-      if(item.type === 'Bracelet') bracelets.push(getBPrice(item));
+      // 1. ADDED LOGIC FOR CURATED ITEMS
+      if (item.isReadyMade) {
+        readyMadeTotal += item.price;
+      }
+      else if(item.type === 'Bracelet') bracelets.push(getBPrice(item));
       else if(item.type === 'Earrings') earrings.push(getEPrice());
       else if(item.type.includes('Combo')) {
         bracelets.push(getBPrice(item.bracelet));
         earrings.push(getEPrice());
       }
     });
+
+    // 2. Add curated items to subtotal start
+    subtotal += readyMadeTotal;
+
     bracelets.forEach(p => subtotal += p);
     earrings.forEach(p => subtotal += p);
+    
     bracelets.sort((a,b) => a-b);
     let comboDiscount = 0;
     const pairs = Math.min(bracelets.length, earrings.length);
     for(let i=0; i<pairs; i++) comboDiscount += Math.floor((bracelets[i] + earrings[i]) * 0.10);
+    
     let discountable = subtotal - comboDiscount;
     let couponDisc = 0;
     let freeShip = false;
+    
     if (appliedCoupon) {
       if (appliedCoupon.freeShip) freeShip = true;
       else if (discountable >= appliedCoupon.minOrder) couponDisc = Math.floor(discountable * (appliedCoupon.percent / 100));
     }
+    
     const pincode = document.getElementById('pincode').value;
     let shipping = 80;
     const msg = document.getElementById('pincodeMsg');
+    
     if (freeShip || (discountable - couponDisc >= 399)) {
       shipping = 0; msg.textContent = "Free shipping applied! ✨"; msg.style.color = "#15803d";
     } else if (pincode && pincode.startsWith("560")) {
@@ -403,12 +431,17 @@
     } else {
       msg.textContent = "Standard Shipping: Rs. 80"; msg.style.color = "#666";
     }
+    
     const total = subtotal - comboDiscount - couponDisc + shipping;
+    
     document.getElementById('subtotalVal').textContent = `Rs. ${subtotal}`;
+    
     const comboEl = document.getElementById('comboRow');
     if(comboDiscount > 0) { comboEl.style.display = 'flex'; document.getElementById('comboVal').textContent = `-Rs. ${comboDiscount}`; } else comboEl.style.display = 'none';
+    
     const coupEl = document.getElementById('couponRow');
     if(couponDisc > 0) { coupEl.style.display = 'flex'; document.getElementById('couponVal').textContent = `-Rs. ${couponDisc}`; } else coupEl.style.display = 'none';
+    
     document.getElementById('shippingVal').textContent = shipping === 0 ? "FREE" : `Rs. ${shipping}`;
     document.getElementById('shippingVal').style.color = shipping === 0 ? "#15803d" : "#555";
     document.getElementById('finalTotal').textContent = `Rs. ${total}`;
@@ -467,26 +500,37 @@
 
   // --- STORAGE ---
   function saveDraft() {
-    const data = {
-      name: document.getElementById('customerName').value,
-      phone: document.getElementById('customerPhone').value,
-      email: document.getElementById('customerEmail').value,
-      addressLine1: document.getElementById('addressLine1').value,
-      addressLine2: document.getElementById('addressLine2').value,
-      landmark: document.getElementById('landmark').value,
-      city: document.getElementById('city').value,
-      state: document.getElementById('state').value,
-      pincode: document.getElementById('pincode').value,
-      vibe: currentVibe,
-      vibeText: document.getElementById('vibeText').value,
-      isGift: document.getElementById('isGift').checked,
-      receiverName: document.getElementById('receiverName').value,
-      receiverPhone: document.getElementById('receiverPhone').value,
-      relation: document.getElementById('relation').value,
-      occasion: document.getElementById('occasion').value,
-      giftMessage: document.getElementById('giftMessage').value
+    // Safe helper to get value without crashing
+    const getVal = (id) => {
+      const el = document.getElementById(id);
+      return el ? el.value : '';
     };
-    localStorage.setItem('checkout_draft_persistent', JSON.stringify(data));
+
+    const data = {
+      name: getVal('customerName'),
+      phone: getVal('customerPhone'),
+      email: getVal('customerEmail'),
+      addressLine1: getVal('addressLine1'),
+      addressLine2: getVal('addressLine2'),
+      landmark: getVal('landmark'),
+      city: getVal('city'),
+      state: getVal('state'),
+      pincode: getVal('pincode'),
+      vibe: currentVibe || "",
+      vibeText: getVal('vibeText'),
+      isGift: document.getElementById('isGift') ? document.getElementById('isGift').checked : false,
+      receiverName: getVal('receiverName'),
+      receiverPhone: getVal('receiverPhone'),
+      relation: getVal('relation'),
+      occasion: getVal('occasion'),
+      giftMessage: getVal('giftMessage')
+    };
+
+    try {
+      localStorage.setItem('checkout_draft_persistent', JSON.stringify(data));
+    } catch (e) {
+      console.warn("Local Storage full or disabled", e);
+    }
   }
 
   function restoreDraft() {
@@ -530,9 +574,15 @@
     for(let i=0; i<5; i++) rand += chars.charAt(Math.floor(Math.random() * chars.length));
     let hasCustom = false; let hasReady = false;
     cart.forEach(item => {
-        const t = item.type.toLowerCase();
-        if(t.includes('bracelet') || t.includes('earring') || t.includes('combo')) hasCustom = true;
-        else hasReady = true; 
+        // Handle Curated logic
+        if (item.isReadyMade) {
+          hasReady = true;
+        } else {
+          // Standard logic for builder items
+          const t = item.type.toLowerCase();
+          if(t.includes('bracelet') || t.includes('earring') || t.includes('combo')) hasCustom = true;
+          else hasReady = true; 
+        }
     });
     let typeCode = 'CM'; 
     if(hasCustom && hasReady) typeCode = 'MX';
@@ -563,12 +613,22 @@
     const total = document.getElementById('finalTotal').textContent;
     const orderID = generateOrderID();
     let itemsStr = "";
+    
+    // GENERATE MESSAGE
     cart.forEach((item, i) => {
-      let desc = item.type;
-      if(item.type === 'Bracelet') desc += ` (${item.charms.length} charms)`;
-      else if(item.type.includes('Combo')) desc += ` (Combo)`;
+      let desc = "";
+      
+      // 1. Check for Curated
+      if(item.isReadyMade) {
+        desc = item.title || "Ready-Made Piece"; 
+      }
+      else if(item.type === 'Bracelet') desc = `Bracelet (${item.charms.length} charms)`;
+      else if(item.type.includes('Combo')) desc = `Combo Set`;
+      else desc = item.type;
+      
       itemsStr += `\n${i+1}. ${desc} - Rs. ${item.price}`;
     });
+
     let addressBlock = `${data.addressLine1}\n${data.addressLine2}\n`;
     if(data.landmark) addressBlock += `Landmark: ${data.landmark}\n`;
     addressBlock += `${data.city}, ${data.state} - ${data.pincode}`;
