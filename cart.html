@@ -54,10 +54,8 @@
     <div id="cartItemsList" class="cart-list"></div>
 
     <div class="bill-summary">
-  
-  <div id="couponSectionRaw" class="coupon-section-container">
-    <div class="featured-coupon-card" id="featuredCouponCard">
-      </div>
+<div id="couponSectionRaw" class="coupon-section-container">
+    <div class="featured-coupon-card" id="featuredCouponCard"></div>
     <div class="view-more-coupons" onclick="openCouponDrawer()">
       View more coupons
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -87,16 +85,21 @@
         <button disabled>CHECK</button>
       </div>
     </div>
-
-    <div id="drawerList" class="drawer-content">
-      </div>
+    <div id="drawerList" class="drawer-content"></div>
   </div>
-  <div class="math-row"> <span>Subtotal</span> <span id="subtotalVal">Rs. 0</span> </div>
+
+  <div class="math-row"> <span>Cart Value</span> <span id="cartValueVal">Rs. 0</span> </div>
+  
   <div class="math-row discount-row" id="comboRow" style="display: none;"> <span>Combo Savings</span> <span id="comboVal">-Rs. 0</span> </div>
   <div class="math-row discount-row" id="couponRow" style="display: none;"> <span id="couponCodeLabel">Coupon</span> <span id="couponVal">-Rs. 0</span> </div>
-  <div class="math-row"> <span>Shipping</span> <span id="shippingVal">Rs. 80</span> </div>
+  
   <div class="divider"></div>
-  <div class="math-row total-row"> <span>Total</span> <span id="finalTotal">Rs. 0</span> </div>
+  
+  <div class="math-row"> <span style="font-weight:600;">Subtotal</span> <span id="subtotalVal" style="font-weight:600;">Rs. 0</span> </div>
+  <div class="math-row"> <span>Shipping</span> <span id="shippingVal">Rs. 80</span> </div>
+  
+  <div class="divider"></div>
+  <div class="math-row total-row"> <span>Total</span> <span id="finalTotal">Rs. 0</span> </div>      
 </div>
     
     <div class="cart-footer-spacer"></div>
@@ -586,70 +589,48 @@ deleteItem = function(index, subType) {
 
 // --- MATH & ACTIONS ---
 function calculateTotals() {
-  let bracelets = [];
-  let earrings = [];
-  let readyMadeTotal = 0; // New tracker for curated items
-
-  const getBPrice = (b) => BASE_PRICE + (b.charms.length-1)*EXTRA_CHARM_PRICE;
-  const getEPrice = () => BASE_PRICE;
-
-  cart.forEach(item => {
-    // === CHANGE STARTS HERE ===
-    if (item.isReadyMade) {
-      // Add directly to total, do NOT add to arrays for combo calculation
-      readyMadeTotal += item.price;
-    }
-    else if (item.type === 'Bracelet') {
-      bracelets.push(getBPrice(item));
-    }
-    else if (item.type === 'Earrings') {
-      earrings.push(getEPrice());
-    }
-    else if (item.type.includes('Combo')) {
-      bracelets.push(getBPrice(item.bracelet));
-      earrings.push(getEPrice());
-    }
-    // === CHANGE ENDS HERE ===
-  });
-
-  let subtotal = readyMadeTotal; // Start with curated total
-  bracelets.forEach(p => subtotal += p);
-  earrings.forEach(p => subtotal += p);
-
-  bracelets.sort((a,b) => a-b);
-  let comboDiscount = 0;
-  const pairs = Math.min(bracelets.length, earrings.length);
+  let totalRaw = 0;
+  cart.forEach(i => totalRaw += i.price);
+  
+  // Recalculate combo savings for display
+  let singleBracelets = cart.filter(i => i.type === 'Bracelet').map(i => i.price);
+  let singleEarrings = cart.filter(i => i.type === 'Earrings').map(i => i.price);
+  singleBracelets.sort((a,b) => a-b);
+  singleEarrings.sort((a,b) => a-b);
+  
+  let comboSavings = 0;
+  const pairs = Math.min(singleBracelets.length, singleEarrings.length);
   for(let i=0; i<pairs; i++) {
-    comboDiscount += Math.floor((bracelets[i] + earrings[i]) * 0.10);
+    comboSavings += Math.floor((singleBracelets[i] + singleEarrings[i]) * 0.10);
   }
 
-  let discountable = subtotal - comboDiscount;
+  // Display Cart Value = Raw + what was saved
+  const displayCartValue = totalRaw + comboSavings;
+  let subtotalAfterCombo = displayCartValue - comboSavings;
+  
   let couponDisc = 0;
   let forceFreeShip = false;
-
+  
   if (activeCoupon) {
-    if (activeCoupon.freeShip) {
-      forceFreeShip = true;
-    } else if (discountable >= activeCoupon.minOrder) {
-      couponDisc = Math.floor(discountable * (activeCoupon.percent / 100));
-    } else {
-      // Coupon invalid for amount
-      // Ideally show toast, but for now just don't apply discount
+    if (activeCoupon.freeShip) forceFreeShip = true;
+    else if (subtotalAfterCombo >= activeCoupon.minOrder) {
+      couponDisc = Math.floor(subtotalAfterCombo * (activeCoupon.percent / 100));
     }
   }
 
+  let subtotalPostDiscount = subtotalAfterCombo - couponDisc;
   let shipping = 80;
-  if (forceFreeShip || (discountable - couponDisc >= 399)) {
+  if (forceFreeShip || (subtotalPostDiscount >= 399)) {
     shipping = 0;
   }
+  let finalTotal = subtotalPostDiscount + shipping;
 
-  let total = subtotal - comboDiscount - couponDisc + shipping;
-
-  document.getElementById('subtotalVal').textContent = `Rs. ${subtotal}`;
+  // Render to new IDs
+  document.getElementById('cartValueVal').textContent = `Rs. ${displayCartValue}`;
   
   const comboRow = document.getElementById('comboRow');
-  comboRow.style.display = comboDiscount > 0 ? 'flex' : 'none';
-  document.getElementById('comboVal').textContent = `-Rs. ${comboDiscount}`;
+  comboRow.style.display = comboSavings > 0 ? 'flex' : 'none';
+  document.getElementById('comboVal').textContent = `-Rs. ${comboSavings}`;
 
   const couponRow = document.getElementById('couponRow');
   couponRow.style.display = (couponDisc > 0 || forceFreeShip) ? 'flex' : 'none';
@@ -658,11 +639,12 @@ function calculateTotals() {
     document.getElementById('couponVal').textContent = couponDisc > 0 ? `-Rs. ${couponDisc}` : 'Applied';
   }
 
+  document.getElementById('subtotalVal').textContent = `Rs. ${subtotalPostDiscount}`;
   const shipEl = document.getElementById('shippingVal');
   shipEl.textContent = shipping === 0 ? 'FREE' : `Rs. ${shipping}`;
   shipEl.style.color = shipping === 0 ? '#15803d' : '#111';
 
-  document.getElementById('finalTotal').textContent = `Rs. ${total}`;
+  document.getElementById('finalTotal').textContent = `Rs. ${finalTotal}`;
 }
 
 function deleteItem(index, subType = null) {
