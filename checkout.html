@@ -337,10 +337,10 @@
 <script>
   // === CONFIG ===
   // --- UPDATED CONFIG ---
-const API_URL = "https://script.google.com/macros/s/AKfycbwdvv7OsOR7zlwkQSCEpvm2o6m0IpDXmUuHI9wLmf6SzXQl9kwBv1HlIyBwYNmU4pEq/exec"; // <--- IMPORTANT: Paste the URL you got in Step 2 here!
+const API_URL = window.SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwdvv7OsOR7zlwkQSCEpvm2o6m0IpDXmUuHI9wLmf6SzXQl9kwBv1HlIyBwYNmU4pEq/exec"; // <--- IMPORTANT: Paste the URL you got in Step 2 here!
 const CONFIG = JSON.parse(localStorage.getItem('pyc_config') || "{}");
 const PHONE_NUMBER = "918910344676"; // Your WhatsApp Number
-const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 249;
+const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 0;
 
   let cart = [];
   let appliedCoupon = null;
