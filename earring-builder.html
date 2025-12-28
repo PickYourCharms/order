@@ -362,7 +362,7 @@ cta.onclick = function() {
       type: 'Combo (Bracelet + Earrings)',
       bracelet: { ...braceletData, price: bPrice },
       earrings: { ...earringData, price: ePrice },
-      price: Math.floor((bPrice + ePrice) * 0.9), 
+      price: Math.floor((bPrice + ePrice) * (1 - (Number(CONFIG.combo_discount_percent) || 0) / 100)),
       image: 'assets/home/model_combo_mobile.png'
     };
     
