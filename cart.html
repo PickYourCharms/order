@@ -82,8 +82,8 @@
         
         <div class="coupon-input-container">
           <div class="coupon-input-wrapper">
-            <input type="text" placeholder="Enter Coupon Code">
-            <button disabled>CHECK</button>
+            <input type="text" id="manualInput" placeholder="Enter Coupon Code">
+            <button onclick="checkManualCode()">CHECK</button>
           </div>
         </div>
         <div id="drawerList" class="drawer-content"></div>
@@ -130,8 +130,6 @@ const COUPONS_DB = JSON.parse(localStorage.getItem('pyc_coupons') || "[]");
 // ✅ NO FALLBACK VALUES - EVERYTHING FROM SHEET
 const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 0;
 const EARRING_BASE_PRICE = Number(CONFIG.earring_base_price) || 0;
-
-// ✅ REMOVED: const EXTRA_CHARM_PRICE = 50;
 
 const REF_SIZE = 300; 
 const PHYSICS = { 
@@ -254,7 +252,7 @@ function getComboTitle(bMetal, eMetal) {
 }
 
 // ===================================
-// ✅ FIXED: PRICING FUNCTIONS USE SHEET DATA
+// ✅ PRICING FUNCTIONS
 // ===================================
 
 function getBPrice(b) {
@@ -264,10 +262,8 @@ function getBPrice(b) {
   b.charms.forEach((file, index) => {
     const meta = CHARM_METADATA[file] || { price: 0 };
     if (index === 0) {
-      // First charm: only pay difference above allowance
       total += Math.max(0, meta.price - ALLOWANCE);
     } else {
-      // Subsequent charms: full price from sheet
       total += meta.price;
     }
   });
@@ -278,18 +274,14 @@ function getEPrice(e) {
   let total = EARRING_BASE_PRICE;
   const ALLOWANCE = Number(CONFIG.earring_base_charm_allowance) || 0;
   
-  // Left charm
   if (e.charms.left) {
     const meta = CHARM_METADATA[e.charms.left] || { price: 0 };
     total += Math.max(0, meta.price - ALLOWANCE);
   }
-  
-  // Right charm
   if (e.charms.right) {
     const meta = CHARM_METADATA[e.charms.right] || { price: 0 };
     total += Math.max(0, meta.price - ALLOWANCE);
   }
-  
   return total;
 }
 
@@ -298,9 +290,7 @@ function renderItems() {
   listContainer.innerHTML = '';
 
   cart.forEach((item, index) => {
-    
     if (item.type.includes('Combo')) {
-      // === COMBO CARD ===
       const comboCard = document.createElement('div');
       comboCard.className = 'combo-card-group';
 
@@ -388,7 +378,6 @@ function renderItems() {
       listContainer.appendChild(comboCard);
 
     } else {
-      // === SINGLE CARD ===
       const card = document.createElement('div');
       card.className = 'cart-item-card';
       const wrapper = document.createElement('div');
@@ -493,6 +482,7 @@ function getDiscountableAmount() {
   return subtotal - comboDiscount;
 }
 
+// ✅ NEW: Added public_listing check
 function renderCoupons() {
   const currentTotal = getDiscountableAmount();
   const drawerList = document.getElementById('drawerList');
@@ -501,30 +491,33 @@ function renderCoupons() {
 
   drawerList.innerHTML = '';
   
-  // 1. Get Config Values
   const shipFee = Number(CONFIG.shipping_fee_default) || 0;
   const freeShipThreshold = Number(CONFIG.free_shipping_above) || 0;
   const alreadyHasFreeShipping = currentTotal >= freeShipThreshold;
 
-  // 2. Filter & Sort Coupons
+  // Filter: Must be Active AND Public
   const sortedCoupons = COUPONS_DB.filter(c => {
+    // 1. Must be Active
+    if(String(c.active).toUpperCase() !== 'TRUE') return false;
+    
+    // 2. ✅ NEW: Check if 'public_listing' is TRUE
+    if(String(c.public_listing).toUpperCase() !== 'TRUE') return false;
+
+    // 3. Free ship check
     if (alreadyHasFreeShipping && c.freeShip) return false;
+    
     return true;
   }).map(c => {
     let savings = 0;
     
-    // PRIORITY 1: Free Shipping
     if (c.freeShip) {
       savings = shipFee;
     } 
-    // PRIORITY 2: Flat Amount (NEW)
     else if (c.flatAmount && Number(c.flatAmount) > 0) {
       savings = Number(c.flatAmount);
     }
-    // PRIORITY 3: Percentage
     else {
       let calculatedRaw = Math.floor(currentTotal * (c.percent / 100));
-      // Apply Max Cap
       if (c.maxDiscount && Number(c.maxDiscount) > 0) {
         calculatedRaw = Math.min(calculatedRaw, Number(c.maxDiscount));
       }
@@ -542,7 +535,7 @@ function renderCoupons() {
     return b.currentSavings - a.currentSavings;
   });
 
-  // 3. Featured Coupon
+  // Featured Coupon
   let bestCoupon = sortedCoupons[0];
   
   if (bestCoupon) {
@@ -578,19 +571,16 @@ function renderCoupons() {
       ${actionBtn}
     `;
   } else {
-    featuredCard.innerHTML = `<div style="padding:10px; color:#888; font-size:13px;">No coupons available for this order.</div>`;
+    featuredCard.innerHTML = `<div style="padding:10px; color:#888; font-size:13px;">No public coupons available for this order.</div>`;
   }
 
-  // 4. Render List
+  // Render List
   sortedCoupons.forEach(coupon => {
-    if(String(coupon.active).toUpperCase() !== 'TRUE') return;
-
     const isLocked = coupon.isLocked;
     const diff = coupon.missingAmount;
     
     let benefitText = "";
     if (isLocked) {
-       // Display what they WILL get if they unlock it
        if (coupon.freeShip) benefitText = 'Free Shipping';
        else if (coupon.flatAmount) benefitText = `Save ₹${coupon.flatAmount}`;
        else benefitText = `Save ${coupon.percent}%`;
@@ -619,6 +609,35 @@ function renderCoupons() {
     `;
     drawerList.appendChild(card);
   });
+}
+
+// ✅ NEW: Logic for Manual "Exclusive" Code Entry
+function checkManualCode() {
+  const input = document.getElementById('manualInput');
+  const code = input.value.trim();
+  if(!code) return;
+
+  // Search entire DB (ignoring public_listing)
+  const coupon = COUPONS_DB.find(c => 
+    c.code.toLowerCase() === code.toLowerCase() && 
+    String(c.active).toUpperCase() === 'TRUE'
+  );
+
+  if(!coupon) {
+    alert('Invalid or expired coupon code.');
+    return;
+  }
+
+  // Check validation manually since it's not in the sorted list
+  const currentTotal = getDiscountableAmount();
+  if(currentTotal < coupon.minOrder) {
+    alert(`This coupon requires a minimum order of Rs. ${coupon.minOrder}. Please add more items.`);
+    return;
+  }
+
+  // If valid, apply it
+  selectCoupon(coupon.code);
+  input.value = ''; // clear input
 }
 
 function openCouponDrawer() {
@@ -681,11 +700,9 @@ function calculateTotals() {
     if (activeCoupon.freeShip) forceFreeShip = true;
     else if (subtotalAfterCombo >= activeCoupon.minOrder) {
       
-      // ✅ NEW: Flat Amount Logic
       if (activeCoupon.flatAmount && Number(activeCoupon.flatAmount) > 0) {
          couponDisc = Number(activeCoupon.flatAmount);
       } else {
-         // Standard % Logic
          let rawDisc = Math.floor(subtotalAfterCombo * (activeCoupon.percent / 100));
          if (activeCoupon.maxDiscount && Number(activeCoupon.maxDiscount) > 0) {
            rawDisc = Math.min(rawDisc, Number(activeCoupon.maxDiscount));
@@ -739,7 +756,7 @@ function calculateTotals() {
 }
 
 // ===================================
-// ✅ FIXED: DELETE ITEM - PRESERVES CORRECT PRICING
+// ✅ DELETE & EDIT
 // ===================================
 
 function deleteItem(index, subType = null) {
