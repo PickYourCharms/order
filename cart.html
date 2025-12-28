@@ -117,6 +117,17 @@
   </div>
 </div> 
 
+<div id="deleteModal" class="delete-modal-overlay">
+  <div class="delete-modal-card">
+    <h3>Remove Item?</h3>
+    <p>Are you sure you want to remove this from your bag? This action cannot be undone.</p>
+    <div class="delete-actions">
+      <button class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
+      <button class="confirm-btn" onclick="confirmDelete()">Yes, Remove</button>
+    </div>
+  </div>
+</div>
+  
 <script>
 // ===================================
 // ✅ FULLY FIXED: ALL GOOGLE SHEET DRIVEN
@@ -759,13 +770,36 @@ function calculateTotals() {
 // ✅ DELETE & EDIT
 // ===================================
 
+// --- DELETE LOGIC WITH CONFIRMATION ---
+
+let pendingDeleteIndex = null;
+let pendingDeleteSubType = null;
+
+// 1. Triggered when user clicks the Red Cross
 function deleteItem(index, subType = null) {
+  pendingDeleteIndex = index;
+  pendingDeleteSubType = subType;
+  
+  // Show the modal
+  document.getElementById('deleteModal').style.display = 'flex';
+}
+
+// 2. Triggered when user clicks "Yes, Remove" in modal
+function confirmDelete() {
+  if (pendingDeleteIndex === null) return;
+
+  const index = pendingDeleteIndex;
+  const subType = pendingDeleteSubType;
+
   if (subType === null) {
+    // Standard delete
     cart.splice(index, 1);
   } else {
+    // Combo split logic
     const combo = cart[index];
     
     if (subType === 'bracelet') {
+      // User deleted bracelet, keep earring
       const newEarring = {
         id: Date.now(),
         type: 'Earrings',
@@ -777,6 +811,7 @@ function deleteItem(index, subType = null) {
       cart[index] = newEarring;
     } 
     else if (subType === 'earrings') {
+      // User deleted earring, keep bracelet
       const newBracelet = {
         id: Date.now(),
         type: 'Bracelet',
@@ -788,9 +823,27 @@ function deleteItem(index, subType = null) {
       cart[index] = newBracelet;
     }
   }
+
+  // Save and Refresh
   localStorage.setItem('pyc_cart', JSON.stringify(cart));
   init();
+  
+  // Close modal
+  closeDeleteModal();
 }
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'none';
+  pendingDeleteIndex = null;
+  pendingDeleteSubType = null;
+}
+
+// Close modal if clicking outside the card
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeDeleteModal();
+  }
+});
 
 function editItem(index, subType) {
   const item = cart[index];
