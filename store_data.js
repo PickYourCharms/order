@@ -1,4 +1,4 @@
-// ✅ URL IS FIXED BELOW
+// ✅ URL UPDATED
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwdvv7OsOR7zlwkQSCEpvm2o6m0IpDXmUuHI9wLmf6SzXQl9kwBv1HlIyBwYNmU4pEq/exec"; 
 
 async function fetchStoreData() {
@@ -13,7 +13,7 @@ async function fetchStoreData() {
     const data = await response.json();
 
     if (data.status === "success") {
-      // Process Charms: Normalize to lowercase for safer matching
+      // 1. Process Charms (Normalize metal to lowercase)
       const charmsGold = data.charms.filter(c => {
         const m = String(c.metal || "").toLowerCase().trim();
         return m === 'gold' || m === 'both';
@@ -24,23 +24,28 @@ async function fetchStoreData() {
         return m === 'silver' || m === 'both';
       }).map(c => c.id);
 
-      // Metadata Map
+      // 2. Process Metadata (Prices & Premium)
       const charmMeta = {};
       data.charms.forEach(c => {
         charmMeta[c.id] = { price: c.price, isPremium: c.is_premium };
       });
 
-      // Save everything to browser memory
+      // 3. Save ALL Levers to Storage
       localStorage.setItem('pyc_charms_gold', JSON.stringify(charmsGold));
       localStorage.setItem('pyc_charms_silver', JSON.stringify(charmsSilver));
       localStorage.setItem('pyc_charm_metadata', JSON.stringify(charmMeta));
-      localStorage.setItem('pyc_products', JSON.stringify(data.products)); // Curated products
+      localStorage.setItem('pyc_products', JSON.stringify(data.products));
       localStorage.setItem('pyc_coupons', JSON.stringify(data.coupons));
       localStorage.setItem('pyc_config', JSON.stringify(data.config));
       
-      console.log("Store data updated successfully.");
+      console.log("Store data & Pricing Config updated.");
 
-      // Refresh Tray if Builder is open
+      // 4. Update UI immediately if on Index Page
+      if (typeof updateHomePagePrices === 'function') {
+        updateHomePagePrices();
+      }
+
+      // 5. Refresh Tray if on Builder Page
       if (typeof loadTray === 'function') {
         if(window.CHARMS) {
             window.CHARMS.gold = charmsGold;
