@@ -508,23 +508,26 @@ function renderCoupons() {
 
   // 2. Filter & Sort Coupons
   const sortedCoupons = COUPONS_DB.filter(c => {
-    // Hide "Free Ship" coupons if user already has automatic free shipping
     if (alreadyHasFreeShipping && c.freeShip) return false;
     return true;
   }).map(c => {
     let savings = 0;
     
+    // PRIORITY 1: Free Shipping
     if (c.freeShip) {
       savings = shipFee;
-    } else {
-      // Standard Percentage Calculation
+    } 
+    // PRIORITY 2: Flat Amount (NEW)
+    else if (c.flatAmount && Number(c.flatAmount) > 0) {
+      savings = Number(c.flatAmount);
+    }
+    // PRIORITY 3: Percentage
+    else {
       let calculatedRaw = Math.floor(currentTotal * (c.percent / 100));
-      
-      // Apply Max Discount Cap (if defined in sheet)
+      // Apply Max Cap
       if (c.maxDiscount && Number(c.maxDiscount) > 0) {
         calculatedRaw = Math.min(calculatedRaw, Number(c.maxDiscount));
       }
-      
       savings = calculatedRaw;
     }
     
@@ -535,28 +538,24 @@ function renderCoupons() {
       missingAmount: c.minOrder - currentTotal
     };
   }).sort((a, b) => {
-    // Sort: Unlocked first, then by highest savings
     if (a.isLocked !== b.isLocked) return a.isLocked ? 1 : -1;
     return b.currentSavings - a.currentSavings;
   });
 
-  // 3. Featured Coupon (Top 1)
+  // 3. Featured Coupon
   let bestCoupon = sortedCoupons[0];
   
   if (bestCoupon) {
     const isLocked = bestCoupon.isLocked;
     const diff = bestCoupon.missingAmount;
     
-    // --- NEW UI LOGIC FOR FEATURED CARD ---
     let titleHTML = "";
     let subHTML = "";
 
     if (isLocked) {
-      // If Locked: Show Code + Description (Standard)
       titleHTML = `<span class="featured-code">${bestCoupon.code}</span>`;
       subHTML = `<div class="featured-desc">${bestCoupon.desc}</div>`;
     } else {
-      // If Unlocked: Show "Save ₹X" + "with code Y" (User Request)
       titleHTML = `<span class="featured-code">Save ₹${bestCoupon.currentSavings}</span>`;
       subHTML = `<div class="featured-desc">with code <b>${bestCoupon.code}</b></div>`;
     }
@@ -565,9 +564,7 @@ function renderCoupons() {
       ? `<div style="font-size:12px; color:#7D5C29; font-weight:600; margin-top:4px;">Add items worth ₹${diff} to avail</div>` 
       : ``;
 
-    const actionBtn = isLocked 
-      ? `` 
-      : `<button class="featured-apply-btn" onclick="selectCoupon('${bestCoupon.code}')">APPLY</button>`;
+    const actionBtn = isLocked ? `` : `<button class="featured-apply-btn" onclick="selectCoupon('${bestCoupon.code}')">APPLY</button>`;
 
     featuredCard.innerHTML = `
       <div class="featured-icon">
@@ -584,17 +581,19 @@ function renderCoupons() {
     featuredCard.innerHTML = `<div style="padding:10px; color:#888; font-size:13px;">No coupons available for this order.</div>`;
   }
 
-  // 4. Render the rest of the list
+  // 4. Render List
   sortedCoupons.forEach(coupon => {
     if(String(coupon.active).toUpperCase() !== 'TRUE') return;
 
     const isLocked = coupon.isLocked;
     const diff = coupon.missingAmount;
     
-    // List Item Text
     let benefitText = "";
     if (isLocked) {
-       benefitText = coupon.freeShip ? 'Free Shipping' : `Save ${coupon.percent}%`;
+       // Display what they WILL get if they unlock it
+       if (coupon.freeShip) benefitText = 'Free Shipping';
+       else if (coupon.flatAmount) benefitText = `Save ₹${coupon.flatAmount}`;
+       else benefitText = `Save ${coupon.percent}%`;
     } else {
        benefitText = `Save ₹${coupon.currentSavings} with this code`;
     }
@@ -603,28 +602,16 @@ function renderCoupons() {
       ? `<button class="c-apply-btn" disabled>APPLY</button>` 
       : `<button class="c-apply-btn" onclick="selectCoupon('${coupon.code}')">APPLY</button>`;
       
-    let footerHtml = '';
-    if (isLocked) {
-      const percent = Math.min(100, (currentTotal / coupon.minOrder) * 100);
-      footerHtml = `
-        <div class="c-progress-bar"><div class="c-progress-fill" style="width:${percent}%"></div></div>
-        <div class="c-progress-text">Add ₹${diff} more to unlock</div>
-      `;
-    } else {
-       footerHtml = `<div style="font-size:11px; color:#15803d; margin-top:8px;">You are eligible for this offer!</div>`;
-    }
+    let footerHtml = isLocked 
+      ? `<div class="c-progress-bar"><div class="c-progress-fill" style="width:${Math.min(100, (currentTotal / coupon.minOrder) * 100)}%"></div></div><div class="c-progress-text">Add ₹${diff} more to unlock</div>`
+      : `<div style="font-size:11px; color:#15803d; margin-top:8px;">You are eligible for this offer!</div>`;
 
     const card = document.createElement('div');
     card.className = 'swiss-coupon-card';
     card.innerHTML = `
-      <div class="coupon-strip">
-        <span class="strip-text">${coupon.type}</span>
-      </div>
+      <div class="coupon-strip"><span class="strip-text">${coupon.type}</span></div>
       <div class="coupon-main">
-        <div class="coupon-top-row">
-          <span class="c-code">${coupon.code}</span>
-          ${actionBtn}
-        </div>
+        <div class="coupon-top-row"><span class="c-code">${coupon.code}</span>${actionBtn}</div>
         <div class="c-benefit">${benefitText}</div>
         <div class="c-desc">${coupon.desc}</div>
         ${footerHtml}
@@ -693,15 +680,18 @@ function calculateTotals() {
   if (activeCoupon) {
     if (activeCoupon.freeShip) forceFreeShip = true;
     else if (subtotalAfterCombo >= activeCoupon.minOrder) {
-      // Calculate Percent Discount
-      let rawDisc = Math.floor(subtotalAfterCombo * (activeCoupon.percent / 100));
       
-      // ✅ NEW: Apply Max Discount Cap
-      if (activeCoupon.maxDiscount && Number(activeCoupon.maxDiscount) > 0) {
-        rawDisc = Math.min(rawDisc, Number(activeCoupon.maxDiscount));
+      // ✅ NEW: Flat Amount Logic
+      if (activeCoupon.flatAmount && Number(activeCoupon.flatAmount) > 0) {
+         couponDisc = Number(activeCoupon.flatAmount);
+      } else {
+         // Standard % Logic
+         let rawDisc = Math.floor(subtotalAfterCombo * (activeCoupon.percent / 100));
+         if (activeCoupon.maxDiscount && Number(activeCoupon.maxDiscount) > 0) {
+           rawDisc = Math.min(rawDisc, Number(activeCoupon.maxDiscount));
+         }
+         couponDisc = rawDisc;
       }
-      
-      couponDisc = rawDisc;
     }
   }
 
