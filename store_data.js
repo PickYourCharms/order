@@ -61,3 +61,34 @@ async function fetchStoreData() {
 }
 
 fetchStoreData();
+
+// ==========================================
+// ✅ FIRST-TOUCH UTM TRACKING (Paste at bottom of store_data.js)
+// ==========================================
+(function captureFirstTouchUTMs() {
+  // 1. GUARD CLAUSE: If we already have a First Source, STOP.
+  // This ensures we never overwrite the original source, even if they click a new ad.
+  if (localStorage.getItem('pyc_first_touch_utm')) {
+    // console.log("First Touch already active. Ignoring new UTMs.");
+    return; 
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  
+  // 2. Only capture if actual parameters exist
+  if (params.has('utm_source') || params.has('utm_campaign') || params.has('utm_medium')) {
+    
+    const utmData = {
+      source: params.get('utm_source') || '',
+      medium: params.get('utm_medium') || '',
+      campaign: params.get('utm_campaign') || '',
+      term: params.get('utm_term') || '',
+      content: params.get('utm_content') || '',
+      first_visit_date: new Date().toISOString() // Useful for your analytics
+    };
+    
+    // 3. Save to Local Storage (Persists forever, even after browser restart)
+    localStorage.setItem('pyc_first_touch_utm', JSON.stringify(utmData));
+    console.log("First Touch Captured:", utmData);
+  }
+})();
