@@ -403,8 +403,20 @@ function calculateTotals() {
     let freeShip = false;
     
     if (appliedCoupon) {
-      if (appliedCoupon.freeShip) freeShip = true;
-      else if (subtotalAfterCombo >= appliedCoupon.minOrder) couponDisc = Math.floor(subtotalAfterCombo * (appliedCoupon.percent / 100));
+      if (appliedCoupon.freeShip) {
+        freeShip = true;
+      } 
+      else if (subtotalAfterCombo >= appliedCoupon.minOrder) {
+        // 1. Calculate Standard % Discount
+        let rawDisc = Math.floor(subtotalAfterCombo * (appliedCoupon.percent / 100));
+        
+        // 2. ✅ NEW: Apply Max Cap (Zomato Style)
+        if (appliedCoupon.maxDiscount && Number(appliedCoupon.maxDiscount) > 0) {
+           rawDisc = Math.min(rawDisc, Number(appliedCoupon.maxDiscount));
+        }
+        
+        couponDisc = rawDisc;
+      }
     }
     
     let subtotalPostDiscount = subtotalAfterCombo - couponDisc;
@@ -420,6 +432,7 @@ function calculateTotals() {
 
     let shipping = defaultFee;
     
+    // Logic: Free shipping if coupon says so OR cart value is high enough
     if (freeShip || (subtotalPostDiscount >= freeThreshold)) {
       shipping = 0; 
       msg.textContent = "Free shipping applied! ✨"; 
