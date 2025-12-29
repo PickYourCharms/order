@@ -295,7 +295,7 @@ function render(){
   const hasRight = !!charms.right;
   if (hasLeft) drawCharm('left');
   if (hasRight) drawCharm('right');
-  cta.classList.toggle('show', hasLeft || hasRight);
+  cta.classList.toggle('show', hasLeft && hasRight);
   
   if (hasLeft || hasRight) {
     pricePill.textContent = 'Rs. ' + calculateCurrentPrice();
