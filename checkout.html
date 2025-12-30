@@ -763,7 +763,8 @@ function proceedToWhatsApp() {
     const payload = {
       order_id: orderID,
       order_type: "WhatsApp Checkout",
-      customer_name: data.name,
+      customer_first_name: data.firstName,
+      customer_last_name: data.lastName,
       customer_phone: data.phone,
       customer_email: data.email,
       shipping_address: data.addressLine1 + ", " + data.addressLine2 + (data.landmark ? ", " + data.landmark : ""),
