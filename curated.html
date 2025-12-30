@@ -318,49 +318,46 @@
     return cleanStr.startsWith('assets') ? cleanStr : (IMG_PATH + cleanStr);
   }
 
-function renderGrid() {
-  const grid = document.getElementById('productGrid');
-  grid.innerHTML = '';
-  
-  const filtered = PRODUCTS.filter(p => {
-    const matchMetal = activeFilters.metal ? p.metal === activeFilters.metal : true;
-    const matchType = activeFilters.type ? p.type === activeFilters.type : true;
-    const isActive = String(p.active).toLowerCase() === 'true'; 
-    return matchMetal && matchType && isActive;
-  });
+  function renderGrid() {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = '';
+    
+    const filtered = PRODUCTS.filter(p => {
+      const matchMetal = activeFilters.metal ? p.metal === activeFilters.metal : true;
+      const matchType = activeFilters.type ? p.type === activeFilters.type : true;
+      const isActive = String(p.active).toLowerCase() === 'true'; 
+      return matchMetal && matchType && isActive;
+    });
 
-  if(filtered.length === 0) {
-      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#888;">No matches found.</div>';
-      return;
+    if(filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#888;">No matches found.</div>';
+        return;
+    }
+
+    filtered.forEach(p => {
+      const rawImageString = p.image || p.src || "";
+      const imageArray = rawImageString.split(','); 
+      
+      const heroImg = getFullImgPath(imageArray[0]);
+
+      const card = document.createElement('div');
+      card.className = 'prod-card';
+      
+      card.onclick = () => openDrawer({...p, imageArray: imageArray});
+      
+      card.innerHTML = `
+        <div class="prod-img-wrapper">
+          <img src="${heroImg}" class="prod-img" onerror="this.src='assets/home/curated_teaser.png'"> 
+        </div>
+        <div class="prod-info">
+          <h3 class="prod-title">${p.title}</h3>
+          <div class="prod-meta">${p.metal} Base</div>
+          <div class="prod-price">Rs. ${p.price}</div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
   }
-
-  filtered.forEach(p => {
-    // ✅ FIXED: Use 'image' column directly
-    const rawImageString = p.image || "";
-    const imageArray = rawImageString.split(',').map(s => s.trim()).filter(Boolean);
-    
-    // Extract filename from path if needed
-    const heroImgPath = imageArray[0] || "";
-    const heroImg = heroImgPath.startsWith('assets') ? heroImgPath : `assets/readymade/${heroImgPath}`;
-
-    const card = document.createElement('div');
-    card.className = 'prod-card';
-    
-    card.onclick = () => openDrawer({...p, imageArray: imageArray});
-    
-    card.innerHTML = `
-      <div class="prod-img-wrapper">
-        <img src="${heroImg}" class="prod-img" onerror="this.src='assets/home/curated_teaser.png'"> 
-      </div>
-      <div class="prod-info">
-        <h3 class="prod-title">${p.title}</h3>
-        <div class="prod-meta">${p.metal} Base</div>
-        <div class="prod-price">Rs. ${p.price}</div>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-}
 
   function openDrawer(product) {
     activeProduct = product;
