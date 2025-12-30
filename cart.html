@@ -766,12 +766,10 @@ function calculateTotals() {
   let couponDisc = 0;
   
   if (activeCoupon) {
-    if (activeCoupon.freeShip) {
-      // ✅ LOGIC UPDATE: 
-      // Coupon Value = The Shipping Cost (e.g. 80)
-      // We deduct this from the subtotal
-      couponDisc = naturalShipping; 
-    } 
+if (activeCoupon.freeShip) {
+  couponDisc = 0; // Do not deduct from subtotal
+  finalShipping = 0; // Just remove shipping cost
+}
     else if (subtotalAfterCombo >= activeCoupon.minOrder) {
        if (activeCoupon.flatAmount && Number(activeCoupon.flatAmount) > 0) {
          couponDisc = Number(activeCoupon.flatAmount);
