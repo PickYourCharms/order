@@ -348,6 +348,8 @@
   const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 0;
   const EARRING_BASE_PRICE = Number(CONFIG.earring_base_price) || 0;
 
+  let currentOrderID = null;
+
   let cart = [];
   let appliedCoupon = null;
   let currentVibe = "";
@@ -719,6 +721,8 @@
     const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
     const orderID = generateOrderID(); 
     
+    currentOrderID = orderID;
+    
     // Clean up Cart Items for Sheet
     const itemsClean = cart.map(item => {
       // Basic fields
@@ -836,8 +840,38 @@
     window.location.replace('index.html');
   }
 
-  function dismissOrderConfirmation() {
-    document.getElementById('orderConfirmationModal').style.display = 'none';
+function dismissOrderConfirmation() {
+    const btn = document.querySelector('#orderConfirmationModal .secondary');
+    const originalText = btn.textContent;
+    btn.textContent = "Cancelling...";
+    btn.disabled = true;
+
+    // Send delete signal to Google Sheet
+    if (currentOrderID) {
+      fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          action: 'delete_order', 
+          order_id: currentOrderID 
+        })
+      })
+      .then(() => {
+        console.log("Order cancelled in sheet");
+        // Reset UI
+        document.getElementById('orderConfirmationModal').style.display = 'none';
+        btn.textContent = originalText;
+        btn.disabled = false;
+      })
+      .catch(err => {
+        console.error("Failed to cancel order", err);
+        // Close anyway so user isn't stuck
+        document.getElementById('orderConfirmationModal').style.display = 'none';
+        btn.textContent = originalText;
+        btn.disabled = false;
+      });
+    } else {
+      document.getElementById('orderConfirmationModal').style.display = 'none';
+    }
   }
 
   init();
