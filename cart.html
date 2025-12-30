@@ -315,7 +315,6 @@ function getEPrice(e) {
   return total;
 }
 
-// --- RENDERER ---
 function renderItems() {
   listContainer.innerHTML = '';
 
@@ -324,6 +323,11 @@ function renderItems() {
       const comboCard = document.createElement('div');
       comboCard.className = 'combo-card-group';
 
+      // ✅ FIX: Calculate Gross Price dynamically to match Bill Summary
+      const bGross = getBPrice(item.bracelet);
+      const eGross = getEPrice(item.earrings);
+      const grossPrice = bGross + eGross;
+
       const header = document.createElement('div');
       header.className = 'combo-group-header';
       const title = getComboTitle(item.bracelet.metal, item.earrings.metal);
@@ -331,7 +335,7 @@ function renderItems() {
       header.innerHTML = `
         <div class="combo-header-info">
           <span class="combo-header-title">${title}</span>
-          <span class="combo-header-price">Rs. ${item.price}</span>
+          <span class="combo-header-price">Rs. ${grossPrice}</span>
         </div>
       `;
       comboCard.appendChild(header);
@@ -419,6 +423,9 @@ function renderItems() {
       let charmCount = 0;
       let displayTitle = '';
       
+      // ✅ FIX: Calculate Single Item Gross Price dynamically for safety
+      let displayPrice = 0;
+
       if (item.isReadyMade) {
         const img = document.createElement('img');
         img.src = item.image;
@@ -432,16 +439,19 @@ function renderItems() {
         
         thumbBox.appendChild(img);
         displayTitle = item.title;
+        displayPrice = item.price; // Readymade price is fixed
       } 
       else {
         if (item.type === 'Bracelet') {
           thumbBox.appendChild(buildMiniBracelet(item.metal, item.charms));
           charmCount = item.charms.length;
           displayTitle = `${item.metal} Bracelet`;
+          displayPrice = getBPrice(item); // Recalculate based on current config
         } else {
           thumbBox.appendChild(buildMiniEarrings(item.metal, item.charms));
           charmCount = (item.charms.left?1:0) + (item.charms.right?1:0);
           displayTitle = `${item.metal} Earrings`;
+          displayPrice = getEPrice(item); // Recalculate based on current config
         }
   
         const badge = document.createElement('div');
@@ -454,7 +464,7 @@ function renderItems() {
       details.className = 'item-details';
       details.innerHTML = `
         <div class="item-title">${displayTitle}</div>
-        <div class="item-price">Rs. ${item.price}</div>
+        <div class="item-price">Rs. ${displayPrice}</div>
       `;
 
       const actions = document.createElement('div');
@@ -472,8 +482,6 @@ function renderItems() {
     }
   });
 }
-
-// ===================================
 // ✅ FIXED: COUPON & CALCULATION LOGIC
 // ===================================
 
