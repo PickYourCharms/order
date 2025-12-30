@@ -485,8 +485,8 @@ function calculateTotals() {
   
   if (appliedCoupon) {
     if (appliedCoupon.freeShip) {
-      // ✅ Coupon deducts the cost of shipping from Subtotal
-      couponDisc = naturalShipping; 
+      // ✅ FIX: Set discount to 0. Benefit is handled in step 5.
+      couponDisc = 0; 
     } 
     else if (subtotalAfterCombo >= appliedCoupon.minOrder) {
        if (appliedCoupon.flatAmount && Number(appliedCoupon.flatAmount) > 0) {
@@ -502,7 +502,6 @@ function calculateTotals() {
   }
 
   // 5. FINAL SHIPPING LOGIC
-  // If Free Ship Coupon is active, user pays 0 for shipping
   let finalShipping = naturalShipping;
   if (appliedCoupon && appliedCoupon.freeShip) {
     finalShipping = 0;
@@ -532,8 +531,11 @@ function calculateTotals() {
   const coupEl = document.getElementById('couponRow');
   if(appliedCoupon) { 
     coupEl.style.display = 'flex'; 
-    // ✅ SHOWS "- Rs. 80" INSTEAD OF TEXT
-    document.getElementById('couponVal').textContent = `- Rs. ${couponDisc}`; 
+    if (appliedCoupon.freeShip) {
+        document.getElementById('couponVal').textContent = "Free Shipping";
+    } else {
+        document.getElementById('couponVal').textContent = `- Rs. ${couponDisc}`; 
+    }
   } else {
     coupEl.style.display = 'none';
   }
