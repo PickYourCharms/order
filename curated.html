@@ -306,6 +306,8 @@
       if (activeFilters.metal === 'Silver') document.getElementById('btnSilver').classList.add('active');
       if (activeFilters.type === 'Bracelet') document.getElementById('btnBracelet').classList.add('active');
       if (activeFilters.type === 'Earring') document.getElementById('btnEarring').classList.add('active');
+      // ✅ ADDED THIS LINE FOR SET
+      if (activeFilters.type === 'Set') document.getElementById('btnSet').classList.add('active');
     }
   }
 
@@ -333,17 +335,14 @@
     }
 
     filtered.forEach(p => {
-      // 1. SPLIT IMAGES: Handle comma separated lists
       const rawImageString = p.image || p.src || "";
       const imageArray = rawImageString.split(','); 
       
-      // 2. HERO IMAGE: Take the first one for the grid
       const heroImg = getFullImgPath(imageArray[0]);
 
       const card = document.createElement('div');
       card.className = 'prod-card';
       
-      // Pass the FULL ARRAY string to openDrawer
       card.onclick = () => openDrawer({...p, imageArray: imageArray});
       
       card.innerHTML = `
@@ -440,7 +439,6 @@
   function addToBag() {
     if(!activeProduct) return;
     
-    // Use the first image for the cart thumbnail
     const heroImg = getFullImgPath(activeProduct.imageArray[0]);
     
     const cartItem = { 
