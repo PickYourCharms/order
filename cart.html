@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,9 +25,11 @@
       </svg>
     </button>
   </div>
+
   <div class="nav-center">
     <span style="font-weight: 700; font-size: 16px;">My Bag</span>
   </div>
+
   <div class="nav-right">
     <button id="navCartBtn" class="nav-btn" onclick="window.location.reload()">
       <div class="cart-badge-wrapper">
@@ -40,14 +43,16 @@
 </header>
 
 <div class="main-container cart-page">
-  <div id="emptyState" class="empty-state">
-    <img src="assets/home/curated_teaser.png" class="empty-img" style="filter:grayscale(1);">
+  
+<div id="emptyState" class="empty-state">
+  <img src="assets/home/curated_teaser.png" class="empty-img" style="filter:grayscale(1);">
     <h3>Nothing to see here yet!</h3>
     <p>Your bag is feeling lonely...</p>
     <button class="primary-btn" onclick="window.location.href='index.html'">Start Building</button>
   </div>
 
   <div id="cartContent" style="display: none;">
+    
     <div id="cartItemsList" class="cart-list"></div>
 
     <div class="bill-summary">
@@ -75,6 +80,7 @@
           <h3>Apply Coupon</h3>
           <button class="close-drawer-btn" onclick="closeCouponDrawer()">✕</button>
         </div>
+        
         <div class="coupon-input-container">
           <div class="coupon-input-wrapper">
             <input type="text" id="manualInput" placeholder="Enter Coupon Code">
@@ -85,11 +91,15 @@
       </div>
 
       <div class="math-row"> <span>Cart Value</span> <span id="cartValueVal">Rs. 0</span> </div>
+      
       <div class="math-row discount-row" id="comboRow" style="display: none;"> <span>Combo Savings</span> <span id="comboVal">-Rs. 0</span> </div>
       <div class="math-row discount-row" id="couponRow" style="display: none;"> <span id="couponCodeLabel">Coupon</span> <span id="couponVal">-Rs. 0</span> </div>
+      
       <div class="divider"></div>
+      
       <div class="math-row"> <span style="font-weight:600;">Subtotal</span> <span id="subtotalVal" style="font-weight:600;">Rs. 0</span> </div>
       <div class="math-row"> <span>Shipping</span> <span id="shippingVal">Rs. 80</span> </div>
+      
       <div class="divider"></div>
       <div class="math-row total-row"> <span>Total</span> <span id="finalTotal">Rs. 0</span> </div>      
     </div>
@@ -120,15 +130,24 @@
 </div>
   
 <script>
-// --- LOAD CONFIG ---
+// ===================================
+// ✅ FULLY FIXED: PERSISTENT COUPONS & SHEET DRIVEN
+// ===================================
+
+// --- LOAD CONFIGURATION FROM GOOGLE SHEET ---
 const CONFIG = JSON.parse(localStorage.getItem('pyc_config') || "{}");
 const CHARM_METADATA = JSON.parse(localStorage.getItem('pyc_charm_metadata') || "{}");
 const COUPONS_DB = JSON.parse(localStorage.getItem('pyc_coupons') || "[]");
 
+// ✅ NO FALLBACK VALUES - EVERYTHING FROM SHEET
 const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 0;
 const EARRING_BASE_PRICE = Number(CONFIG.earring_base_price) || 0;
+
 const REF_SIZE = 300; 
-const PHYSICS = { bracelet: { anchorX:23, anchorY:6, attachOffset:2 }, earrings: { leftX: 42, rightX: 257, y: 153 } };
+const PHYSICS = { 
+  bracelet: { anchorX:23, anchorY:6, attachOffset:2 },
+  earrings: { leftX: 42, rightX: 257, y: 153 } 
+};
 const B_ANGLES = { 1:[90], 2:[70,110], 3:[60,90,120], 4:[45,75,105,135], 5:[40,65,90,115,140] };
 
 let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
@@ -138,12 +157,6 @@ const listContainer = document.getElementById('cartItemsList');
 const cartCountBadge = document.getElementById('cartCountBadge');
 const emptyState = document.getElementById('emptyState');
 const cartContent = document.getElementById('cartContent');
-
-// ✅ HELPER: Get Image
-function getCharmImg(id) {
-  if (CHARM_METADATA[id] && CHARM_METADATA[id].image) return CHARM_METADATA[id].image;
-  return id;
-}
 
 function init() {
   cartCountBadge.textContent = cart.length;
@@ -157,33 +170,48 @@ function init() {
   } else {
     emptyState.style.display = 'none';
     cartContent.style.display = 'block';
+    
+    // ✅ 1. RESTORE COUPON FROM SESSION STORAGE
     const savedCoupon = sessionStorage.getItem('pyc_applied_coupon');
     if (savedCoupon) {
       try {
         activeCoupon = JSON.parse(savedCoupon);
+        // Restore UI State
         document.getElementById('couponSectionRaw').style.display = 'none';
         document.getElementById('appliedCouponView').style.display = 'flex';
         document.getElementById('appliedCouponText').textContent = `'${activeCoupon.code}' applied`;
       } catch (e) {
+        console.error("Error restoring coupon", e);
         sessionStorage.removeItem('pyc_applied_coupon');
       }
     }
+
     renderItems();
     renderCoupons();
     calculateTotals();
   }
-  setTimeout(() => { window.history.pushState(null, null, window.location.href); }, 100);
-  window.onpopstate = function () { window.location.href = 'index.html'; };
+
+  setTimeout(() => {
+    window.history.pushState(null, null, window.location.href);
+  }, 100);
+  
+  window.onpopstate = function () {
+    window.location.href = 'index.html';
+  };
 }
 
 window.addEventListener('pageshow', function(event) {
-  if (event.persisted) { document.getElementById('checkoutUpsellModal').style.display = 'none'; init(); }
+  if (event.persisted) {
+    document.getElementById('checkoutUpsellModal').style.display = 'none';
+    init();
+  }
 });
 
-// --- MINI BUILDERS (Fixed for Images) ---
+// --- MINI BUILDERS ---
 function buildMiniBracelet(metal, charms) {
   const container = document.createElement('div');
   container.className = 'mini-canvas-scaler';
+  
   const base = document.createElement('img');
   base.className = 'mini-base';
   base.src = `assets/bases/bracelet_base_${metal}.png`;
@@ -195,7 +223,7 @@ function buildMiniBracelet(metal, charms) {
   const radius = REF_SIZE * 0.36;
   const angles = B_ANGLES[charms.length] || [];
 
-  charms.forEach((id, i) => {
+  charms.forEach((file, i) => {
     const a = angles[angles.length - 1 - i];
     const rad = a * Math.PI / 180;
     const x = cx + radius * Math.cos(rad);
@@ -203,8 +231,7 @@ function buildMiniBracelet(metal, charms) {
     
     const img = document.createElement('img');
     img.className = 'mini-charm';
-    // ✅ FIX: Use lookup
-    img.src = `assets/charms/${getCharmImg(id)}`;
+    img.src = `assets/charms/${file}`;
     img.style.left = (x - PHYSICS.bracelet.anchorX) + 'px';
     img.style.top = (y - PHYSICS.bracelet.anchorY) + 'px';
     img.style.transform = `rotate(${a - 90}deg)`;
@@ -216,10 +243,12 @@ function buildMiniBracelet(metal, charms) {
 function buildMiniEarrings(metal, charms) {
   const container = document.createElement('div');
   container.className = 'mini-canvas-scaler';
+
   const lHook = document.createElement('img');
   lHook.src = `assets/bases/LeftHook_${metal}.png`;
   lHook.className = 'mini-hook left';
   container.appendChild(lHook);
+
   const rHook = document.createElement('img');
   rHook.src = `assets/bases/RightHook_${metal}.png`;
   rHook.className = 'mini-hook right';
@@ -228,8 +257,7 @@ function buildMiniEarrings(metal, charms) {
   if (charms.left) {
     const c = document.createElement('img');
     c.className = 'mini-charm';
-    // ✅ FIX: Use lookup
-    c.src = `assets/charms/${getCharmImg(charms.left)}`;
+    c.src = `assets/charms/${charms.left}`;
     c.style.left = (PHYSICS.earrings.leftX - 23) + 'px';
     c.style.top = PHYSICS.earrings.y + 'px';
     container.appendChild(c);
@@ -237,8 +265,7 @@ function buildMiniEarrings(metal, charms) {
   if (charms.right) {
     const c = document.createElement('img');
     c.className = 'mini-charm';
-    // ✅ FIX: Use lookup
-    c.src = `assets/charms/${getCharmImg(charms.right)}`;
+    c.src = `assets/charms/${charms.right}`;
     c.style.left = (PHYSICS.earrings.rightX - 23) + 'px';
     c.style.top = PHYSICS.earrings.y + 'px';
     container.appendChild(c);
@@ -247,17 +274,28 @@ function buildMiniEarrings(metal, charms) {
 }
 
 function getComboTitle(bMetal, eMetal) {
-  if (bMetal === eMetal) return `${bMetal.charAt(0).toUpperCase() + bMetal.slice(1)} Combo Set`;
-  else return `Mixed Metal Combo`;
+  if (bMetal === eMetal) {
+    return `${bMetal.charAt(0).toUpperCase() + bMetal.slice(1)} Combo Set`;
+  } else {
+    return `Mixed Metal Combo`;
+  }
 }
+
+// ===================================
+// ✅ PRICING FUNCTIONS
+// ===================================
 
 function getBPrice(b) {
   let total = BASE_PRICE;
   const ALLOWANCE = Number(CONFIG.bracelet_base_charm_allowance) || 0;
-  b.charms.forEach((id, index) => {
-    const meta = CHARM_METADATA[id] || { price: 0 };
-    if (index === 0) total += Math.max(0, meta.price - ALLOWANCE);
-    else total += meta.price;
+  
+  b.charms.forEach((file, index) => {
+    const meta = CHARM_METADATA[file] || { price: 0 };
+    if (index === 0) {
+      total += Math.max(0, meta.price - ALLOWANCE);
+    } else {
+      total += meta.price;
+    }
   });
   return total;
 }
@@ -265,6 +303,7 @@ function getBPrice(b) {
 function getEPrice(e) {
   let total = EARRING_BASE_PRICE;
   const ALLOWANCE = Number(CONFIG.earring_base_charm_allowance) || 0;
+  
   if (e.charms.left) {
     const meta = CHARM_METADATA[e.charms.left] || { price: 0 };
     total += Math.max(0, meta.price - ALLOWANCE);
@@ -276,275 +315,612 @@ function getEPrice(e) {
   return total;
 }
 
+// --- RENDERER ---
 function renderItems() {
   listContainer.innerHTML = '';
+
   cart.forEach((item, index) => {
     if (item.type.includes('Combo')) {
       const comboCard = document.createElement('div');
       comboCard.className = 'combo-card-group';
+
       const header = document.createElement('div');
       header.className = 'combo-group-header';
-      header.innerHTML = `<div class="combo-header-info"><span class="combo-header-title">${getComboTitle(item.bracelet.metal, item.earrings.metal)}</span><span class="combo-header-price">Rs. ${item.price}</span></div>`;
+      const title = getComboTitle(item.bracelet.metal, item.earrings.metal);
+      
+      header.innerHTML = `
+        <div class="combo-header-info">
+          <span class="combo-header-title">${title}</span>
+          <span class="combo-header-price">Rs. ${item.price}</span>
+        </div>
+      `;
       comboCard.appendChild(header);
 
-      const bRow = document.createElement('div'); bRow.className = 'combo-sub-item';
-      const bWrapper = document.createElement('div'); bWrapper.className = 'item-row-content';
-      const bThumb = document.createElement('div'); bThumb.className = 'item-thumb';
-      bThumb.appendChild(buildMiniBracelet(item.bracelet.metal, item.bracelet.charms));
-      const bBadge = document.createElement('div'); bBadge.className = 'charm-badge';
-      bBadge.textContent = item.bracelet.charms.length; bThumb.appendChild(bBadge);
-      const bDetails = document.createElement('div'); bDetails.className = 'item-details';
-      bDetails.innerHTML = `<div class="sub-item-name">Bracelet</div><div class="sub-item-meta">${item.bracelet.metal} base</div>`;
-      const bActions = document.createElement('div'); bActions.className = 'item-actions';
-      bActions.innerHTML = `<button class="icon-btn edit-btn" onclick="editItem(${index}, 'bracelet')">✎</button><button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'bracelet')">✕</button>`;
-      bWrapper.appendChild(bThumb); bWrapper.appendChild(bDetails); bWrapper.appendChild(bActions);
-      bRow.appendChild(bWrapper); comboCard.appendChild(bRow);
+      // Bracelet Row
+      const bRow = document.createElement('div');
+      bRow.className = 'combo-sub-item';
+      const bWrapper = document.createElement('div');
+      bWrapper.className = 'item-row-content';
 
-      const eRow = document.createElement('div'); eRow.className = 'combo-sub-item';
-      const eWrapper = document.createElement('div'); eWrapper.className = 'item-row-content';
-      const eThumb = document.createElement('div'); eThumb.className = 'item-thumb';
+      const bThumb = document.createElement('div');
+      bThumb.className = 'item-thumb';
+      bThumb.appendChild(buildMiniBracelet(item.bracelet.metal, item.bracelet.charms));
+      const bBadge = document.createElement('div');
+      bBadge.className = 'charm-badge';
+      bBadge.textContent = item.bracelet.charms.length;
+      bThumb.appendChild(bBadge);
+
+      const bDetails = document.createElement('div');
+      bDetails.className = 'item-details';
+      bDetails.innerHTML = `
+        <div class="sub-item-name">Bracelet</div>
+        <div class="sub-item-meta">${item.bracelet.metal} base</div>
+      `;
+
+      const bActions = document.createElement('div');
+      bActions.className = 'item-actions';
+      bActions.innerHTML = `
+        <button class="icon-btn edit-btn" onclick="editItem(${index}, 'bracelet')">✎</button>
+        <button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'bracelet')">✕</button>
+      `;
+
+      bWrapper.appendChild(bThumb);
+      bWrapper.appendChild(bDetails);
+      bWrapper.appendChild(bActions);
+      bRow.appendChild(bWrapper);
+      comboCard.appendChild(bRow);
+
+      // Earring Row
+      const eRow = document.createElement('div');
+      eRow.className = 'combo-sub-item';
+      const eWrapper = document.createElement('div');
+      eWrapper.className = 'item-row-content';
+
+      const eThumb = document.createElement('div');
+      eThumb.className = 'item-thumb';
       eThumb.appendChild(buildMiniEarrings(item.earrings.metal, item.earrings.charms));
       const eCount = (item.earrings.charms.left?1:0) + (item.earrings.charms.right?1:0);
-      const eBadge = document.createElement('div'); eBadge.className = 'charm-badge';
-      eBadge.textContent = eCount; eThumb.appendChild(eBadge);
-      const eDetails = document.createElement('div'); eDetails.className = 'item-details';
-      eDetails.innerHTML = `<div class="sub-item-name">Earrings</div><div class="sub-item-meta">${item.earrings.metal} base</div>`;
-      const eActions = document.createElement('div'); eActions.className = 'item-actions';
-      eActions.innerHTML = `<button class="icon-btn edit-btn" onclick="editItem(${index}, 'earrings')">✎</button><button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'earrings')">✕</button>`;
-      eWrapper.appendChild(eThumb); eWrapper.appendChild(eDetails); eWrapper.appendChild(eActions);
-      eRow.appendChild(eWrapper); comboCard.appendChild(eRow);
+      const eBadge = document.createElement('div');
+      eBadge.className = 'charm-badge';
+      eBadge.textContent = eCount;
+      eThumb.appendChild(eBadge);
+
+      const eDetails = document.createElement('div');
+      eDetails.className = 'item-details';
+      eDetails.innerHTML = `
+        <div class="sub-item-name">Earrings</div>
+        <div class="sub-item-meta">${item.earrings.metal} base</div>
+      `;
+
+      const eActions = document.createElement('div');
+      eActions.className = 'item-actions';
+      eActions.innerHTML = `
+        <button class="icon-btn edit-btn" onclick="editItem(${index}, 'earrings')">✎</button>
+        <button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'earrings')">✕</button>
+      `;
+
+      eWrapper.appendChild(eThumb);
+      eWrapper.appendChild(eDetails);
+      eWrapper.appendChild(eActions);
+      eRow.appendChild(eWrapper);
+      comboCard.appendChild(eRow);
 
       listContainer.appendChild(comboCard);
+
     } else {
-      const card = document.createElement('div'); card.className = 'cart-item-card';
-      const wrapper = document.createElement('div'); wrapper.className = 'item-row-content';
-      const thumbBox = document.createElement('div'); thumbBox.className = 'item-thumb';
+      const card = document.createElement('div');
+      card.className = 'cart-item-card';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'item-row-content';
+      
+      const thumbBox = document.createElement('div');
+      thumbBox.className = 'item-thumb';
+      
+      let charmCount = 0;
       let displayTitle = '';
+      
       if (item.isReadyMade) {
         const img = document.createElement('img');
-        img.src = item.image; img.className = 'mini-base';
-        img.style.objectFit = 'contain'; img.style.width = '100%'; img.style.height = '100%'; img.style.transform = 'none'; img.style.top = '0'; img.style.left = '0';
-        thumbBox.appendChild(img); displayTitle = item.title;
-      } else {
+        img.src = item.image;
+        img.className = 'mini-base';
+        img.style.objectFit = 'contain'; 
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.transform = 'none';
+        img.style.top = '0';
+        img.style.left = '0';
+        
+        thumbBox.appendChild(img);
+        displayTitle = item.title;
+      } 
+      else {
         if (item.type === 'Bracelet') {
           thumbBox.appendChild(buildMiniBracelet(item.metal, item.charms));
+          charmCount = item.charms.length;
           displayTitle = `${item.metal} Bracelet`;
-          const badge = document.createElement('div'); badge.className = 'charm-badge';
-          badge.textContent = item.charms.length; thumbBox.appendChild(badge);
         } else {
           thumbBox.appendChild(buildMiniEarrings(item.metal, item.charms));
+          charmCount = (item.charms.left?1:0) + (item.charms.right?1:0);
           displayTitle = `${item.metal} Earrings`;
-          const badge = document.createElement('div'); badge.className = 'charm-badge';
-          badge.textContent = (item.charms.left?1:0)+(item.charms.right?1:0); thumbBox.appendChild(badge);
         }
+  
+        const badge = document.createElement('div');
+        badge.className = 'charm-badge';
+        badge.textContent = charmCount;
+        thumbBox.appendChild(badge);
       }
-      const details = document.createElement('div'); details.className = 'item-details';
-      details.innerHTML = `<div class="item-title">${displayTitle}</div><div class="item-price">Rs. ${item.price}</div>`;
-      const actions = document.createElement('div'); actions.className = 'item-actions';
-      actions.innerHTML = `<button class="icon-btn edit-btn" onclick="editItem(${index})">✎</button><button class="icon-btn delete-btn" onclick="deleteItem(${index})">✕</button>`;
-      wrapper.appendChild(thumbBox); wrapper.appendChild(details); wrapper.appendChild(actions);
-      card.appendChild(wrapper); listContainer.appendChild(card);
+
+      const details = document.createElement('div');
+      details.className = 'item-details';
+      details.innerHTML = `
+        <div class="item-title">${displayTitle}</div>
+        <div class="item-price">Rs. ${item.price}</div>
+      `;
+
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+      actions.innerHTML = `
+        <button class="icon-btn edit-btn" onclick="editItem(${index})">✎</button>
+        <button class="icon-btn delete-btn" onclick="deleteItem(${index})">✕</button>
+      `;
+
+      wrapper.appendChild(thumbBox);
+      wrapper.appendChild(details);
+      wrapper.appendChild(actions);
+      card.appendChild(wrapper);
+      listContainer.appendChild(card);
     }
   });
 }
 
+// ===================================
+// ✅ FIXED: COUPON & CALCULATION LOGIC
+// ===================================
+
 function getDiscountableAmount() {
-  let bracelets = []; let earrings = []; let readyMadeTotal = 0;
+  let bracelets = [];
+  let earrings = [];
+  let readyMadeTotal = 0;
+
   cart.forEach(item => {
-    if (item.isReadyMade) readyMadeTotal += item.price;
+    if (item.isReadyMade) {
+      readyMadeTotal += item.price;
+    }
     else if(item.type === 'Bracelet') bracelets.push(getBPrice(item));
     else if(item.type === 'Earrings') earrings.push(getEPrice(item));
-    else if(item.type.includes('Combo')) { bracelets.push(getBPrice(item.bracelet)); earrings.push(getEPrice(item.earrings)); }
+    else if(item.type.includes('Combo')) {
+      bracelets.push(getBPrice(item.bracelet));
+      earrings.push(getEPrice(item.earrings));
+    }
   });
-  let subtotal = readyMadeTotal; bracelets.forEach(p => subtotal += p); earrings.forEach(p => subtotal += p);
-  bracelets.sort((a,b) => a-b); earrings.sort((a,b) => a-b);
-  let comboDiscount = 0; const comboPercent = Number(CONFIG.combo_discount_percent) || 0;
+
+  let subtotal = readyMadeTotal; 
+  bracelets.forEach(p => subtotal += p);
+  earrings.forEach(p => subtotal += p);
+
+  bracelets.sort((a,b) => a-b);
+  earrings.sort((a,b) => a-b);
+  
+  let comboDiscount = 0;
+  const comboPercent = Number(CONFIG.combo_discount_percent) || 0;
   const pairs = Math.min(bracelets.length, earrings.length);
-  for(let i=0; i<pairs; i++) comboDiscount += Math.floor((bracelets[i] + earrings[i]) * (comboPercent / 100));
+  
+  for(let i=0; i<pairs; i++) {
+    comboDiscount += Math.floor((bracelets[i] + earrings[i]) * (comboPercent / 100));
+  }
+
   return subtotal - comboDiscount;
 }
 
+// ✅ ADDED: public_listing check
 function renderCoupons() {
   const currentTotal = getDiscountableAmount();
   const drawerList = document.getElementById('drawerList');
   const featuredCard = document.getElementById('featuredCouponCard');
   if(!drawerList || !featuredCard) return;
-  drawerList.innerHTML = '';
-  const shipFee = Number(CONFIG.shipping_fee_default) || 0;
-  const freeThreshold = Number(CONFIG.free_shipping_above) || 0;
-  const alreadyHasFreeShipping = currentTotal >= freeThreshold;
 
+  drawerList.innerHTML = '';
+  
+  const shipFee = Number(CONFIG.shipping_fee_default) || 0;
+  const freeShipThreshold = Number(CONFIG.free_shipping_above) || 0;
+  const alreadyHasFreeShipping = currentTotal >= freeShipThreshold;
+
+  // Filter: Must be Active AND Public
   const sortedCoupons = COUPONS_DB.filter(c => {
+    // 1. Must be Active
     if(String(c.active).toUpperCase() !== 'TRUE') return false;
+    
+    // 2. Check if 'public_listing' is TRUE
     if(String(c.public_listing).toUpperCase() !== 'TRUE') return false;
+
+    // 3. Free ship check
     if (alreadyHasFreeShipping && c.freeShip) return false;
+    
     return true;
   }).map(c => {
     let savings = 0;
-    if (c.freeShip) savings = shipFee;
-    else if (c.flatAmount && Number(c.flatAmount) > 0) savings = Number(c.flatAmount);
+    
+    if (c.freeShip) {
+      savings = shipFee;
+    } 
+    else if (c.flatAmount && Number(c.flatAmount) > 0) {
+      savings = Number(c.flatAmount);
+    }
     else {
       let calculatedRaw = Math.floor(currentTotal * (c.percent / 100));
-      if (c.maxDiscount && Number(c.maxDiscount) > 0) calculatedRaw = Math.min(calculatedRaw, Number(c.maxDiscount));
+      if (c.maxDiscount && Number(c.maxDiscount) > 0) {
+        calculatedRaw = Math.min(calculatedRaw, Number(c.maxDiscount));
+      }
       savings = calculatedRaw;
     }
-    return { ...c, currentSavings: savings, isLocked: currentTotal < c.minOrder, missingAmount: c.minOrder - currentTotal };
+    
+    return {
+      ...c,
+      currentSavings: savings,
+      isLocked: currentTotal < c.minOrder,
+      missingAmount: c.minOrder - currentTotal
+    };
   }).sort((a, b) => {
     if (a.isLocked !== b.isLocked) return a.isLocked ? 1 : -1;
     return b.currentSavings - a.currentSavings;
   });
 
+  // Featured Coupon
   let bestCoupon = sortedCoupons[0];
+  
   if (bestCoupon) {
     const isLocked = bestCoupon.isLocked;
+    const diff = bestCoupon.missingAmount;
+    
+    let titleHTML = "";
+    let subHTML = "";
+
+    if (isLocked) {
+      titleHTML = `<span class="featured-code">${bestCoupon.code}</span>`;
+      subHTML = `<div class="featured-desc">${bestCoupon.desc}</div>`;
+    } else {
+      titleHTML = `<span class="featured-code">Save ₹${bestCoupon.currentSavings}</span>`;
+      subHTML = `<div class="featured-desc">with code <b>${bestCoupon.code}</b></div>`;
+    }
+
+    const conditionLine = isLocked 
+      ? `<div style="font-size:12px; color:#7D5C29; font-weight:600; margin-top:4px;">Add items worth ₹${diff} to avail</div>` 
+      : ``;
+
     const actionBtn = isLocked ? `` : `<button class="featured-apply-btn" onclick="selectCoupon('${bestCoupon.code}')">APPLY</button>`;
-    const conditionLine = isLocked ? `<div style="font-size:12px; color:#7D5C29; font-weight:600; margin-top:4px;">Add items worth ₹${bestCoupon.missingAmount} to avail</div>` : ``;
-    const titleHTML = isLocked ? `<span class="featured-code">${bestCoupon.code}</span>` : `<span class="featured-code">Save ₹${bestCoupon.currentSavings}</span>`;
-    const subHTML = isLocked ? `<div class="featured-desc">${bestCoupon.desc}</div>` : `<div class="featured-desc">with code <b>${bestCoupon.code}</b></div>`;
-    featuredCard.innerHTML = `<div class="featured-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg></div><div class="featured-content">${titleHTML}${subHTML}${conditionLine}</div>${actionBtn}`;
+
+    featuredCard.innerHTML = `
+      <div class="featured-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+      </div>
+      <div class="featured-content">
+        ${titleHTML}
+        ${subHTML}
+        ${conditionLine}
+      </div>
+      ${actionBtn}
+    `;
   } else {
     featuredCard.innerHTML = `<div style="padding:10px; color:#888; font-size:13px;">No public coupons available for this order.</div>`;
   }
 
+  // Render List
   sortedCoupons.forEach(coupon => {
     const isLocked = coupon.isLocked;
+    const diff = coupon.missingAmount;
+    
     let benefitText = "";
     if (isLocked) {
        if (coupon.freeShip) benefitText = 'Free Shipping';
        else if (coupon.flatAmount) benefitText = `Save ₹${coupon.flatAmount}`;
        else benefitText = `Save ${coupon.percent}%`;
-    } else benefitText = `Save ₹${coupon.currentSavings} with this code`;
-    let actionBtn = isLocked ? `<button class="c-apply-btn" disabled>APPLY</button>` : `<button class="c-apply-btn" onclick="selectCoupon('${coupon.code}')">APPLY</button>`;
-    let footerHtml = isLocked ? `<div class="c-progress-bar"><div class="c-progress-fill" style="width:${Math.min(100, (currentTotal / coupon.minOrder) * 100)}%"></div></div><div class="c-progress-text">Add ₹${coupon.missingAmount} more to unlock</div>` : `<div style="font-size:11px; color:#15803d; margin-top:8px;">You are eligible for this offer!</div>`;
-    const card = document.createElement('div'); card.className = 'swiss-coupon-card';
-    card.innerHTML = `<div class="coupon-strip"><span class="strip-text">${coupon.type}</span></div><div class="coupon-main"><div class="coupon-top-row"><span class="c-code">${coupon.code}</span>${actionBtn}</div><div class="c-benefit">${benefitText}</div><div class="c-desc">${coupon.desc}</div>${footerHtml}</div>`;
+    } else {
+       benefitText = `Save ₹${coupon.currentSavings} with this code`;
+    }
+    
+    let actionBtn = isLocked 
+      ? `<button class="c-apply-btn" disabled>APPLY</button>` 
+      : `<button class="c-apply-btn" onclick="selectCoupon('${coupon.code}')">APPLY</button>`;
+      
+    let footerHtml = isLocked 
+      ? `<div class="c-progress-bar"><div class="c-progress-fill" style="width:${Math.min(100, (currentTotal / coupon.minOrder) * 100)}%"></div></div><div class="c-progress-text">Add ₹${diff} more to unlock</div>`
+      : `<div style="font-size:11px; color:#15803d; margin-top:8px;">You are eligible for this offer!</div>`;
+
+    const card = document.createElement('div');
+    card.className = 'swiss-coupon-card';
+    card.innerHTML = `
+      <div class="coupon-strip"><span class="strip-text">${coupon.type}</span></div>
+      <div class="coupon-main">
+        <div class="coupon-top-row"><span class="c-code">${coupon.code}</span>${actionBtn}</div>
+        <div class="c-benefit">${benefitText}</div>
+        <div class="c-desc">${coupon.desc}</div>
+        ${footerHtml}
+      </div>
+    `;
     drawerList.appendChild(card);
   });
 }
 
+// ✅ NEW: Logic for Manual "Exclusive" Code Entry
 function checkManualCode() {
   const input = document.getElementById('manualInput');
   const code = input.value.trim();
   if(!code) return;
-  const coupon = COUPONS_DB.find(c => c.code.toLowerCase() === code.toLowerCase() && String(c.active).toUpperCase() === 'TRUE');
-  if(!coupon) { alert('Invalid or expired coupon code.'); return; }
+
+  // Search entire DB (ignoring public_listing)
+  const coupon = COUPONS_DB.find(c => 
+    c.code.toLowerCase() === code.toLowerCase() && 
+    String(c.active).toUpperCase() === 'TRUE'
+  );
+
+  if(!coupon) {
+    alert('Invalid or expired coupon code.');
+    return;
+  }
+
+  // Check validation manually since it's not in the sorted list
   const currentTotal = getDiscountableAmount();
-  if(currentTotal < coupon.minOrder) { alert(`This coupon requires a minimum order of Rs. ${coupon.minOrder}. Please add more items.`); return; }
+  if(currentTotal < coupon.minOrder) {
+    alert(`This coupon requires a minimum order of Rs. ${coupon.minOrder}. Please add more items.`);
+    return;
+  }
+
+  // If valid, apply it
   selectCoupon(coupon.code);
-  input.value = '';
+  input.value = ''; // clear input
 }
 
-function openCouponDrawer() { document.getElementById('couponOverlay').classList.add('active'); document.getElementById('couponDrawer').classList.add('active'); renderCoupons(); }
-function closeCouponDrawer() { document.getElementById('couponOverlay').classList.remove('active'); document.getElementById('couponDrawer').classList.remove('active'); }
+function openCouponDrawer() {
+  document.getElementById('couponOverlay').classList.add('active');
+  document.getElementById('couponDrawer').classList.add('active');
+  renderCoupons();
+}
+
+function closeCouponDrawer() {
+  document.getElementById('couponOverlay').classList.remove('active');
+  document.getElementById('couponDrawer').classList.remove('active');
+}
 
 function selectCoupon(code) {
   const coupon = COUPONS_DB.find(c => c.code === code);
   activeCoupon = coupon;
+  
+  // ✅ 2. SAVE TO SESSION STORAGE
   sessionStorage.setItem('pyc_applied_coupon', JSON.stringify(coupon));
+
   closeCouponDrawer();
+  
   document.getElementById('couponSectionRaw').style.display = 'none';
   document.getElementById('appliedCouponView').style.display = 'flex';
   document.getElementById('appliedCouponText').textContent = `'${coupon.code}' applied`;
+  
   calculateTotals();
 }
 
 function removeCoupon() {
   activeCoupon = null;
+  // ✅ 3. REMOVE FROM SESSION STORAGE
   sessionStorage.removeItem('pyc_applied_coupon');
+
   document.getElementById('appliedCouponView').style.display = 'none';
   document.getElementById('couponSectionRaw').style.display = 'block';
   calculateTotals();
   renderCoupons();
 }
 
+// --- MATH & ACTIONS ---
+// ===================================
+// ✅ UPDATED MATH: Shows True Value & Combo Savings Explicitly
+// ===================================
+
 function calculateTotals() {
   let grossTotal = 0; 
-  let allBracelets = []; let allEarrings = [];
+  let allBracelets = [];
+  let allEarrings = [];
+
+  // 1. EXTRACT PRICES
   cart.forEach(item => {
     if (item.type.includes('Combo')) {
-      const bPrice = getBPrice(item.bracelet); const ePrice = getEPrice(item.earrings);
-      grossTotal += (bPrice + ePrice); allBracelets.push(bPrice); allEarrings.push(ePrice);
-    } else if (item.type === 'Bracelet') {
-      const price = getBPrice(item); grossTotal += price; allBracelets.push(price);
-    } else if (item.type === 'Earrings') {
-      const price = getEPrice(item); grossTotal += price; allEarrings.push(price);
-    } else if (item.isReadyMade) grossTotal += item.price;
+      const bPrice = getBPrice(item.bracelet);
+      const ePrice = getEPrice(item.earrings);
+      grossTotal += (bPrice + ePrice);
+      allBracelets.push(bPrice);
+      allEarrings.push(ePrice);
+    } 
+    else if (item.type === 'Bracelet') {
+      const price = getBPrice(item);
+      grossTotal += price;
+      allBracelets.push(price);
+    } 
+    else if (item.type === 'Earrings') {
+      const price = getEPrice(item);
+      grossTotal += price;
+      allEarrings.push(price);
+    }
+    else if (item.isReadyMade) {
+      grossTotal += item.price;
+    }
   });
 
-  allBracelets.sort((a,b) => a-b); allEarrings.sort((a,b) => a-b);
-  let comboSavings = 0; const comboPercent = Number(CONFIG.combo_discount_percent) || 0;
+  // 2. COMBO SAVINGS
+  allBracelets.sort((a,b) => a-b);
+  allEarrings.sort((a,b) => a-b);
+  let comboSavings = 0;
+  const comboPercent = Number(CONFIG.combo_discount_percent) || 0;
   const pairs = Math.min(allBracelets.length, allEarrings.length);
-  for(let i=0; i<pairs; i++) comboSavings += Math.floor((allBracelets[i] + allEarrings[i]) * (comboPercent / 100));
+  for(let i=0; i<pairs; i++) {
+    comboSavings += Math.floor((allBracelets[i] + allEarrings[i]) * (comboPercent / 100));
+  }
 
   let subtotalAfterCombo = grossTotal - comboSavings;
+
+  // 3. DETERMINE NATURAL SHIPPING COST (What it WOULD be)
   const shipFee = Number(CONFIG.shipping_fee_default) || 0;
   const freeThreshold = Number(CONFIG.free_shipping_above) || 0;
   let naturalShipping = shipFee;
-  if (subtotalAfterCombo >= freeThreshold) naturalShipping = 0;
+  if (subtotalAfterCombo >= freeThreshold) {
+    naturalShipping = 0;
+  }
 
+  // 4. COUPON LOGIC
   let couponDisc = 0;
+  
   if (activeCoupon) {
-    if (activeCoupon.freeShip) couponDisc = naturalShipping;
+    if (activeCoupon.freeShip) {
+      // ✅ LOGIC UPDATE: 
+      // Coupon Value = The Shipping Cost (e.g. 80)
+      // We deduct this from the subtotal
+      couponDisc = naturalShipping; 
+    } 
     else if (subtotalAfterCombo >= activeCoupon.minOrder) {
-       if (activeCoupon.flatAmount && Number(activeCoupon.flatAmount) > 0) couponDisc = Number(activeCoupon.flatAmount);
-       else {
+       if (activeCoupon.flatAmount && Number(activeCoupon.flatAmount) > 0) {
+         couponDisc = Number(activeCoupon.flatAmount);
+       } else {
          let rawDisc = Math.floor(subtotalAfterCombo * (activeCoupon.percent / 100));
-         if (activeCoupon.maxDiscount && Number(activeCoupon.maxDiscount) > 0) rawDisc = Math.min(rawDisc, Number(activeCoupon.maxDiscount));
+         if (activeCoupon.maxDiscount && Number(activeCoupon.maxDiscount) > 0) {
+           rawDisc = Math.min(rawDisc, Number(activeCoupon.maxDiscount));
+         }
          couponDisc = rawDisc;
        }
     }
   }
 
+  // 5. CALCULATE FINAL SHIPPING
+  // If Free Ship Coupon is active, Shipping is 0 ("FREE")
+  // If Natural Threshold met, Shipping is 0 ("FREE")
   let finalShipping = naturalShipping;
-  if (activeCoupon && activeCoupon.freeShip) finalShipping = 0;
-  else if (subtotalAfterCombo >= freeThreshold) finalShipping = 0;
+  if (activeCoupon && activeCoupon.freeShip) {
+    finalShipping = 0;
+  } else if (subtotalAfterCombo >= freeThreshold) {
+    finalShipping = 0;
+  }
 
   let subtotalPostDiscount = subtotalAfterCombo - couponDisc;
   const finalTotal = subtotalPostDiscount + finalShipping;
 
+  // --- RENDER ---
   document.getElementById('cartValueVal').textContent = `Rs. ${grossTotal}`;
+  
   const comboEl = document.getElementById('comboRow');
-  if(comboSavings > 0) { comboEl.style.display = 'flex'; document.getElementById('comboVal').textContent = `- Rs. ${comboSavings}`; } else comboEl.style.display = 'none';
+  if(comboSavings > 0) { 
+    comboEl.style.display = 'flex'; 
+    document.getElementById('comboVal').textContent = `- Rs. ${comboSavings}`; 
+  } else {
+    comboEl.style.display = 'none';
+  }
 
   const coupEl = document.getElementById('couponRow');
   if (activeCoupon) { 
     coupEl.style.display = 'flex'; 
     document.getElementById('couponCodeLabel').textContent = `Coupon (${activeCoupon.code})`;
+    // ✅ SHOWS "- Rs. 80" INSTEAD OF "FREE SHIPPING" TEXT
     document.getElementById('couponVal').textContent = `- Rs. ${couponDisc}`; 
-  } else coupEl.style.display = 'none';
+  } else {
+    coupEl.style.display = 'none';
+  }
 
   document.getElementById('subtotalVal').textContent = `Rs. ${subtotalPostDiscount}`;
+  
   const shipEl = document.getElementById('shippingVal');
-  if (finalShipping === 0) { shipEl.textContent = 'FREE'; shipEl.style.color = '#15803d'; } 
-  else { shipEl.textContent = `Rs. ${finalShipping}`; shipEl.style.color = '#111'; }
+  if (finalShipping === 0) {
+    shipEl.textContent = 'FREE';
+    shipEl.style.color = '#15803d';
+  } else {
+    shipEl.textContent = `Rs. ${finalShipping}`;
+    shipEl.style.color = '#111';
+  }
+
   document.getElementById('finalTotal').textContent = `Rs. ${finalTotal}`;
 }
 
+// ===================================
+// ✅ DELETE & EDIT
+// ===================================
+
+// --- DELETE LOGIC WITH CONFIRMATION ---
+
 let pendingDeleteIndex = null;
 let pendingDeleteSubType = null;
-function deleteItem(index, subType = null) { pendingDeleteIndex = index; pendingDeleteSubType = subType; document.getElementById('deleteModal').style.display = 'flex'; }
+
+// 1. Triggered when user clicks the Red Cross
+function deleteItem(index, subType = null) {
+  pendingDeleteIndex = index;
+  pendingDeleteSubType = subType;
+  
+  // Show the modal
+  document.getElementById('deleteModal').style.display = 'flex';
+}
+
+// 2. Triggered when user clicks "Yes, Remove" in modal
 function confirmDelete() {
   if (pendingDeleteIndex === null) return;
-  const index = pendingDeleteIndex; const subType = pendingDeleteSubType;
-  if (subType === null) cart.splice(index, 1);
-  else {
+
+  const index = pendingDeleteIndex;
+  const subType = pendingDeleteSubType;
+
+  if (subType === null) {
+    // Standard delete
+    cart.splice(index, 1);
+  } else {
+    // Combo split logic
     const combo = cart[index];
+    
     if (subType === 'bracelet') {
-      const newEarring = { id: Date.now(), type: 'Earrings', metal: combo.earrings.metal, charms: combo.earrings.charms, price: getEPrice(combo.earrings), image: `assets/bases/LeftHook_${combo.earrings.metal}.png` };
+      // User deleted bracelet, keep earring
+      const newEarring = {
+        id: Date.now(),
+        type: 'Earrings',
+        metal: combo.earrings.metal,
+        charms: combo.earrings.charms,
+        price: getEPrice(combo.earrings),
+        image: `assets/bases/LeftHook_${combo.earrings.metal}.png`
+      };
       cart[index] = newEarring;
-    } else if (subType === 'earrings') {
-      const newBracelet = { id: Date.now(), type: 'Bracelet', metal: combo.bracelet.metal, charms: combo.bracelet.charms, price: getBPrice(combo.bracelet), image: `assets/bases/bracelet_base_${combo.bracelet.metal}.png` };
+    } 
+    else if (subType === 'earrings') {
+      // User deleted earring, keep bracelet
+      const newBracelet = {
+        id: Date.now(),
+        type: 'Bracelet',
+        metal: combo.bracelet.metal,
+        charms: combo.bracelet.charms,
+        price: getBPrice(combo.bracelet),
+        image: `assets/bases/bracelet_base_${combo.bracelet.metal}.png`
+      };
       cart[index] = newBracelet;
     }
   }
-  localStorage.setItem('pyc_cart', JSON.stringify(cart)); init(); closeDeleteModal();
+
+  // Save and Refresh
+  localStorage.setItem('pyc_cart', JSON.stringify(cart));
+  init();
+  
+  // Close modal
+  closeDeleteModal();
 }
-function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; pendingDeleteIndex = null; pendingDeleteSubType = null; }
-document.getElementById('deleteModal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'none';
+  pendingDeleteIndex = null;
+  pendingDeleteSubType = null;
+}
+
+// Close modal if clicking outside the card
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeDeleteModal();
+  }
+});
 
 function editItem(index, subType) {
-  const item = cart[index]; let draft = {}; let url = '';
-  sessionStorage.removeItem('pyc_draft'); sessionStorage.removeItem('combo_bracelet_data'); sessionStorage.removeItem('combo_earring_data');
+  const item = cart[index];
+  let draft = {};
+  let url = '';
+
+  sessionStorage.removeItem('pyc_draft');
+  sessionStorage.removeItem('combo_bracelet_data');
+  sessionStorage.removeItem('combo_earring_data');
+
   if (item.type.includes('Combo')) {
     if (subType === 'bracelet') {
       sessionStorage.setItem('combo_earring_data', JSON.stringify(item.earrings));
@@ -552,28 +928,70 @@ function editItem(index, subType) {
       url = 'builder.html?mode=combo&resume=true';
     } else {
       sessionStorage.setItem('combo_bracelet_data', JSON.stringify(item.bracelet));
-      draft = { url: 'earring-builder.html?mode=combo', data: { metal: item.earrings.metal, charms: item.earrings.charms }, comboContext: { bracelet: item.bracelet } };
+      draft = { 
+        url: 'earring-builder.html?mode=combo', 
+        data: { metal: item.earrings.metal, charms: item.earrings.charms },
+        comboContext: { bracelet: item.bracelet }
+      };
       url = 'earring-builder.html?mode=combo&resume=true';
     }
-  } else if (item.type === 'Bracelet') {
-    draft = { url: 'builder.html', data: { metal: item.metal, charms: item.charms } }; url = 'builder.html?resume=true';
-  } else { 
-    draft = { url: 'earring-builder.html', data: { metal: item.metal, charms: item.charms } }; url = 'earring-builder.html?resume=true';
+  } 
+  else if (item.type === 'Bracelet') {
+    draft = { url: 'builder.html', data: { metal: item.metal, charms: item.charms } };
+    url = 'builder.html?resume=true';
+  } 
+  else { 
+    draft = { url: 'earring-builder.html', data: { metal: item.metal, charms: item.charms } };
+    url = 'earring-builder.html?resume=true';
   }
-  sessionStorage.setItem('pyc_draft', JSON.stringify(draft));
-  cart.splice(index, 1); localStorage.setItem('pyc_cart', JSON.stringify(cart)); window.location.href = url;
-}
 
-function saveCartState() { if (activeCoupon) sessionStorage.setItem('pyc_applied_coupon', JSON.stringify(activeCoupon)); else sessionStorage.removeItem('pyc_applied_coupon'); }
-function onCheckoutClick() {
-  const hasSeenUpsell = sessionStorage.getItem('pyc_upsell_seen');
-  if (!hasSeenUpsell) { document.getElementById('checkoutUpsellModal').style.display = 'flex'; sessionStorage.setItem('pyc_upsell_seen', 'true'); }
-  else { saveCartState(); window.location.href = 'checkout.html'; }
+  sessionStorage.setItem('pyc_draft', JSON.stringify(draft));
+  cart.splice(index, 1);
+  localStorage.setItem('pyc_cart', JSON.stringify(cart));
+  window.location.href = url;
 }
-function forceCheckout() { document.getElementById('checkoutUpsellModal').style.display = 'none'; if (activeCoupon) sessionStorage.setItem('pyc_applied_coupon', JSON.stringify(activeCoupon)); else sessionStorage.removeItem('pyc_applied_coupon'); window.location.href = 'checkout.html'; }
-document.getElementById('checkoutUpsellModal').onclick = function(e) { if (e.target === this) forceCheckout(); };
 
 init();
+
+// --- CHECKOUT HANDLERS ---
+
+function saveCartState() {
+  if (activeCoupon) {
+    sessionStorage.setItem('pyc_applied_coupon', JSON.stringify(activeCoupon));
+  } else {
+    sessionStorage.removeItem('pyc_applied_coupon');
+  }
+}
+
+function onCheckoutClick() {
+  const hasSeenUpsell = sessionStorage.getItem('pyc_upsell_seen');
+
+  if (!hasSeenUpsell) {
+    document.getElementById('checkoutUpsellModal').style.display = 'flex';
+    sessionStorage.setItem('pyc_upsell_seen', 'true');
+  } else {
+    saveCartState();
+    window.location.href = 'checkout.html';
+  }
+}
+
+function forceCheckout() {
+  document.getElementById('checkoutUpsellModal').style.display = 'none';
+
+  if (activeCoupon) {
+    sessionStorage.setItem('pyc_applied_coupon', JSON.stringify(activeCoupon));
+  } else {
+    sessionStorage.removeItem('pyc_applied_coupon');
+  }
+
+  window.location.href = 'checkout.html';
+}
+
+document.getElementById('checkoutUpsellModal').onclick = function(e) {
+  if (e.target === this) {
+    forceCheckout();
+  }
+};
 </script>
 </body>
 </html>
