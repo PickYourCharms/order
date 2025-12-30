@@ -14,10 +14,7 @@ async function fetchStoreData() {
     const data = await response.json();
 
     if (data.status === "success") {
-      console.log("✅ Data fetched successfully");
-      console.log("Raw charms data:", data.charms);
-      
-      // Process Charms
+      // 1. Process Charms (Normalize metal to lowercase)
       const charmsGold = data.charms.filter(c => {
         const m = String(c.metal || "").toLowerCase().trim();
         return m === 'gold' || m === 'both';
@@ -28,29 +25,13 @@ async function fetchStoreData() {
         return m === 'silver' || m === 'both';
       }).map(c => c.id);
 
-      // ✅ UPDATED: Better filename extraction
+      // 2. Process Metadata (Prices & Premium)
       const charmMeta = {};
       data.charms.forEach(c => {
-        // Handle both "assets/charms/file.png" and "file.png" formats
-        let imageFile = c.image_url || c.id;
-        
-        // If it contains a path, extract just the filename
-        if (imageFile.includes('/')) {
-          imageFile = imageFile.split('/').pop();
-        }
-        
-        charmMeta[c.id] = { 
-          price: c.price, 
-          isPremium: c.is_premium,
-          name: c.name,
-          imageFile: imageFile
-        };
-        
-        console.log(`Charm registered: ${c.id} → ${imageFile}`);
+        charmMeta[c.id] = { price: c.price, isPremium: c.is_premium };
       });
 
-      console.log('✅ Processed metadata:', charmMeta);
-
+      // 3. Save ALL Levers to Storage
       localStorage.setItem('pyc_charms_gold', JSON.stringify(charmsGold));
       localStorage.setItem('pyc_charms_silver', JSON.stringify(charmsSilver));
       localStorage.setItem('pyc_charm_metadata', JSON.stringify(charmMeta));
@@ -58,59 +39,56 @@ async function fetchStoreData() {
       localStorage.setItem('pyc_coupons', JSON.stringify(data.coupons));
       localStorage.setItem('pyc_config', JSON.stringify(data.config));
       
-      console.log("✅ Store data saved to localStorage");
+      console.log("Store data & Pricing Config updated.");
 
+      // 4. Update UI immediately if on Index Page
       if (typeof updateHomePagePrices === 'function') {
         updateHomePagePrices();
       }
 
+      // 5. Refresh Tray if on Builder Page
       if (typeof loadTray === 'function') {
-        console.log('🔄 Triggering tray reload...');
         if(window.CHARMS) {
             window.CHARMS.gold = charmsGold;
             window.CHARMS.silver = charmsSilver;
-        }
-        // ✅ ADD: Also update global metadata
-        if (window.CHARM_METADATA && typeof window.CHARM_METADATA === 'object') {
-          Object.assign(window.CHARM_METADATA, charmMeta);
         }
         loadTray();
       }
     }
   } catch (error) {
-    console.error("❌ Failed to fetch store data:", error);
+    console.error("Failed to fetch store data.", error);
   }
 }
-```
 
-### Step 4: Check your Google Sheet column names
+fetchStoreData();
 
-Make sure your **Charms_Inventory** sheet has exactly these column headers:
-- `id` (not `ID` or `Id`)
-- `image_url` (not `image_URL` or `imageUrl`)
+// ==========================================
+// ✅ FIRST-TOUCH UTM TRACKING (Paste at bottom of store_data.js)
+// ==========================================
+(function captureFirstTouchUTMs() {
+  // 1. GUARD CLAUSE: If we already have a First Source, STOP.
+  // This ensures we never overwrite the original source, even if they click a new ad.
+  if (localStorage.getItem('pyc_first_touch_utm')) {
+    // console.log("First Touch already active. Ignoring new UTMs.");
+    return; 
+  }
 
-The column names are **case-sensitive**!
-
-### Step 5: Clear cache and test
-
-1. Open browser console (F12)
-2. Run: `localStorage.clear()` and `sessionStorage.clear()`
-3. Refresh the page
-4. Check console logs - you should see all the debug messages
-
----
-
-## What to look for in console:
-
-✅ **Good output:**
-```
-✅ Data fetched successfully
-Charm registered: 3DBowRibbon_Charm_Gold.png → 3DBowRibbon_Charm_Gold.png
-✅ Processed metadata: {3DBowRibbon_Charm_Gold.png: {...}, ...}
-✅ Loaded 5 charms into tray
-```
-
-❌ **Bad output (tells you the problem):**
-```
-❌ Missing metadata for charm ID: 3DBowRibbon_Charm_Gold.png
-Available metadata keys: []
+  const params = new URLSearchParams(window.location.search);
+  
+  // 2. Only capture if actual parameters exist
+  if (params.has('utm_source') || params.has('utm_campaign') || params.has('utm_medium')) {
+    
+    const utmData = {
+      source: params.get('utm_source') || '',
+      medium: params.get('utm_medium') || '',
+      campaign: params.get('utm_campaign') || '',
+      term: params.get('utm_term') || '',
+      content: params.get('utm_content') || '',
+      first_visit_date: new Date().toISOString() // Useful for your analytics
+    };
+    
+    // 3. Save to Local Storage (Persists forever, even after browser restart)
+    localStorage.setItem('pyc_first_touch_utm', JSON.stringify(utmData));
+    console.log("First Touch Captured:", utmData);
+  }
+})();
