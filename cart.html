@@ -14,7 +14,7 @@
   <script src="navigation.js"></script>
   
   <style>
-    /* ✅ ADDED: Styles for the Coupon Button Interaction */
+    /* ✅ BUTTON INTERACTION STYLES */
     .coupon-input-wrapper button {
       background: #fff;
       border: none;
@@ -152,24 +152,21 @@
 <div id="messageModal" class="delete-modal-overlay">
   <div class="delete-modal-card">
     <h3 id="msgTitle" style="margin-bottom:8px;">Oops!</h3>
-    <p id="msgBody" style="margin-bottom:20px; color:#666;">You've entered an invalid coupon.</p>
+    <p id="msgBody" style="margin-bottom:20px; color:#666;">Something went wrong.</p>
     <div class="delete-actions">
       <button class="confirm-btn" style="background:#000; width:100%;" onclick="closeMessageModal()">Okay</button>
     </div>
   </div>
-</div>  
-  
+</div>
+
 <script>
 // ===================================
-// ✅ FULLY FIXED: PERSISTENT COUPONS & SHEET DRIVEN
+// ✅ CONFIG & DATA LOADING
 // ===================================
-
-// --- LOAD CONFIGURATION FROM GOOGLE SHEET ---
 const CONFIG = JSON.parse(localStorage.getItem('pyc_config') || "{}");
 const CHARM_METADATA = JSON.parse(localStorage.getItem('pyc_charm_metadata') || "{}");
 const COUPONS_DB = JSON.parse(localStorage.getItem('pyc_coupons') || "[]");
 
-// ✅ NO FALLBACK VALUES - EVERYTHING FROM SHEET
 const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 0;
 const EARRING_BASE_PRICE = Number(CONFIG.earring_base_price) || 0;
 
@@ -188,6 +185,9 @@ const cartCountBadge = document.getElementById('cartCountBadge');
 const emptyState = document.getElementById('emptyState');
 const cartContent = document.getElementById('cartContent');
 
+// ===================================
+// ✅ INIT
+// ===================================
 function init() {
   cartCountBadge.textContent = cart.length;
   document.getElementById('navCartBtn').style.display = cart.length > 0 ? 'block' : 'none';
@@ -201,12 +201,11 @@ function init() {
     emptyState.style.display = 'none';
     cartContent.style.display = 'block';
     
-    // ✅ 1. RESTORE COUPON FROM SESSION STORAGE
+    // Restore Coupon
     const savedCoupon = sessionStorage.getItem('pyc_applied_coupon');
     if (savedCoupon) {
       try {
         activeCoupon = JSON.parse(savedCoupon);
-        // Restore UI State
         document.getElementById('couponSectionRaw').style.display = 'none';
         document.getElementById('appliedCouponView').style.display = 'flex';
         document.getElementById('appliedCouponText').textContent = `'${activeCoupon.code}' applied`;
@@ -221,6 +220,7 @@ function init() {
     calculateTotals();
   }
 
+  // Force scroll restore
   setTimeout(() => {
     window.history.pushState(null, null, window.location.href);
   }, 100);
@@ -237,7 +237,9 @@ window.addEventListener('pageshow', function(event) {
   }
 });
 
-// --- MINI BUILDERS ---
+// ===================================
+// ✅ MINI BUILDERS
+// ===================================
 function buildMiniBracelet(metal, charms) {
   const container = document.createElement('div');
   container.className = 'mini-canvas-scaler';
@@ -295,4 +297,654 @@ function buildMiniEarrings(metal, charms) {
   if (charms.right) {
     const c = document.createElement('img');
     c.className = 'mini-charm';
-    c.src
+    c.src = `assets/charms/${charms.right}`;
+    c.style.left = (PHYSICS.earrings.rightX - 23) + 'px';
+    c.style.top = PHYSICS.earrings.y + 'px';
+    container.appendChild(c);
+  }
+  return container;
+}
+
+function getComboTitle(bMetal, eMetal) {
+  if (bMetal === eMetal) {
+    return `${bMetal.charAt(0).toUpperCase() + bMetal.slice(1)} Combo Set`;
+  } else {
+    return `Mixed Metal Combo`;
+  }
+}
+
+// ===================================
+// ✅ PRICING HELPERS
+// ===================================
+function getBPrice(b) {
+  let total = BASE_PRICE;
+  const ALLOWANCE = Number(CONFIG.bracelet_base_charm_allowance) || 0;
+  
+  b.charms.forEach((file, index) => {
+    const meta = CHARM_METADATA[file] || { price: 0 };
+    if (index === 0) total += Math.max(0, meta.price - ALLOWANCE);
+    else total += meta.price;
+  });
+  return total;
+}
+
+function getEPrice(e) {
+  let total = EARRING_BASE_PRICE;
+  const ALLOWANCE = Number(CONFIG.earring_base_charm_allowance) || 0;
+  
+  if (e.charms.left) {
+    const meta = CHARM_METADATA[e.charms.left] || { price: 0 };
+    total += Math.max(0, meta.price - ALLOWANCE);
+  }
+  if (e.charms.right) {
+    const meta = CHARM_METADATA[e.charms.right] || { price: 0 };
+    total += Math.max(0, meta.price - ALLOWANCE);
+  }
+  return total;
+}
+
+// ===================================
+// ✅ RENDER ITEMS
+// ===================================
+function renderItems() {
+  listContainer.innerHTML = '';
+
+  cart.forEach((item, index) => {
+    if (item.type.includes('Combo')) {
+      const comboCard = document.createElement('div');
+      comboCard.className = 'combo-card-group';
+
+      const bGross = getBPrice(item.bracelet);
+      const eGross = getEPrice(item.earrings);
+      const grossPrice = bGross + eGross;
+
+      const header = document.createElement('div');
+      header.className = 'combo-group-header';
+      const title = getComboTitle(item.bracelet.metal, item.earrings.metal);
+      
+      header.innerHTML = `
+        <div class="combo-header-info">
+          <span class="combo-header-title">${title}</span>
+          <span class="combo-header-price">Rs. ${grossPrice}</span>
+        </div>
+      `;
+      comboCard.appendChild(header);
+
+      // Bracelet Row
+      const bRow = document.createElement('div');
+      bRow.className = 'combo-sub-item';
+      const bWrapper = document.createElement('div');
+      bWrapper.className = 'item-row-content';
+
+      const bThumb = document.createElement('div');
+      bThumb.className = 'item-thumb';
+      bThumb.appendChild(buildMiniBracelet(item.bracelet.metal, item.bracelet.charms));
+      const bBadge = document.createElement('div');
+      bBadge.className = 'charm-badge';
+      bBadge.textContent = item.bracelet.charms.length;
+      bThumb.appendChild(bBadge);
+
+      const bDetails = document.createElement('div');
+      bDetails.className = 'item-details';
+      bDetails.innerHTML = `
+        <div class="sub-item-name">Bracelet</div>
+        <div class="sub-item-meta">${item.bracelet.metal} base</div>
+      `;
+
+      const bActions = document.createElement('div');
+      bActions.className = 'item-actions';
+      bActions.innerHTML = `
+        <button class="icon-btn edit-btn" onclick="editItem(${index}, 'bracelet')">✎</button>
+        <button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'bracelet')">✕</button>
+      `;
+
+      bWrapper.appendChild(bThumb);
+      bWrapper.appendChild(bDetails);
+      bWrapper.appendChild(bActions);
+      bRow.appendChild(bWrapper);
+      comboCard.appendChild(bRow);
+
+      // Earring Row
+      const eRow = document.createElement('div');
+      eRow.className = 'combo-sub-item';
+      const eWrapper = document.createElement('div');
+      eWrapper.className = 'item-row-content';
+
+      const eThumb = document.createElement('div');
+      eThumb.className = 'item-thumb';
+      eThumb.appendChild(buildMiniEarrings(item.earrings.metal, item.earrings.charms));
+      const eCount = (item.earrings.charms.left?1:0) + (item.earrings.charms.right?1:0);
+      const eBadge = document.createElement('div');
+      eBadge.className = 'charm-badge';
+      eBadge.textContent = eCount;
+      eThumb.appendChild(eBadge);
+
+      const eDetails = document.createElement('div');
+      eDetails.className = 'item-details';
+      eDetails.innerHTML = `
+        <div class="sub-item-name">Earrings</div>
+        <div class="sub-item-meta">${item.earrings.metal} base</div>
+      `;
+
+      const eActions = document.createElement('div');
+      eActions.className = 'item-actions';
+      eActions.innerHTML = `
+        <button class="icon-btn edit-btn" onclick="editItem(${index}, 'earrings')">✎</button>
+        <button class="icon-btn delete-btn" onclick="deleteItem(${index}, 'earrings')">✕</button>
+      `;
+
+      eWrapper.appendChild(eThumb);
+      eWrapper.appendChild(eDetails);
+      eWrapper.appendChild(eActions);
+      eRow.appendChild(eWrapper);
+      comboCard.appendChild(eRow);
+
+      listContainer.appendChild(comboCard);
+
+    } else {
+      const card = document.createElement('div');
+      card.className = 'cart-item-card';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'item-row-content';
+      
+      const thumbBox = document.createElement('div');
+      thumbBox.className = 'item-thumb';
+      
+      let charmCount = 0;
+      let displayTitle = '';
+      let displayPrice = 0;
+
+      if (item.isReadyMade) {
+        const img = document.createElement('img');
+        img.src = item.image;
+        img.className = 'mini-base';
+        img.style.objectFit = 'contain'; 
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.transform = 'none';
+        img.style.top = '0';
+        img.style.left = '0';
+        
+        thumbBox.appendChild(img);
+        displayTitle = item.title;
+        displayPrice = item.price; 
+      } 
+      else {
+        if (item.type === 'Bracelet') {
+          thumbBox.appendChild(buildMiniBracelet(item.metal, item.charms));
+          charmCount = item.charms.length;
+          displayTitle = `${item.metal} Bracelet`;
+          displayPrice = getBPrice(item); 
+        } else {
+          thumbBox.appendChild(buildMiniEarrings(item.metal, item.charms));
+          charmCount = (item.charms.left?1:0) + (item.charms.right?1:0);
+          displayTitle = `${item.metal} Earrings`;
+          displayPrice = getEPrice(item); 
+        }
+  
+        const badge = document.createElement('div');
+        badge.className = 'charm-badge';
+        badge.textContent = charmCount;
+        thumbBox.appendChild(badge);
+      }
+
+      const details = document.createElement('div');
+      details.className = 'item-details';
+      details.innerHTML = `
+        <div class="item-title">${displayTitle}</div>
+        <div class="item-price">Rs. ${displayPrice}</div>
+      `;
+
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+      actions.innerHTML = `
+        <button class="icon-btn edit-btn" onclick="editItem(${index})">✎</button>
+        <button class="icon-btn delete-btn" onclick="deleteItem(${index})">✕</button>
+      `;
+
+      wrapper.appendChild(thumbBox);
+      wrapper.appendChild(details);
+      wrapper.appendChild(actions);
+      card.appendChild(wrapper);
+      listContainer.appendChild(card);
+    }
+  });
+}
+
+function getDiscountableAmount() {
+  let bracelets = [];
+  let earrings = [];
+  let readyMadeTotal = 0;
+
+  cart.forEach(item => {
+    if (item.isReadyMade) {
+      readyMadeTotal += item.price;
+    }
+    else if(item.type === 'Bracelet') bracelets.push(getBPrice(item));
+    else if(item.type === 'Earrings') earrings.push(getEPrice(item));
+    else if(item.type.includes('Combo')) {
+      bracelets.push(getBPrice(item.bracelet));
+      earrings.push(getEPrice(item.earrings));
+    }
+  });
+
+  let subtotal = readyMadeTotal; 
+  bracelets.forEach(p => subtotal += p);
+  earrings.forEach(p => subtotal += p);
+
+  bracelets.sort((a,b) => a-b);
+  earrings.sort((a,b) => a-b);
+  
+  let comboDiscount = 0;
+  const comboPercent = Number(CONFIG.combo_discount_percent) || 0;
+  const pairs = Math.min(bracelets.length, earrings.length);
+  
+  for(let i=0; i<pairs; i++) {
+    comboDiscount += Math.floor((bracelets[i] + earrings[i]) * (comboPercent / 100));
+  }
+
+  return subtotal - comboDiscount;
+}
+
+// ===================================
+// ✅ COUPON FUNCTIONS
+// ===================================
+
+// Input Listener for Manual Code
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('manualInput');
+  const btn = document.querySelector('.coupon-input-wrapper button');
+  if(input && btn) {
+    input.addEventListener('input', function() {
+      if(this.value.trim().length > 0) btn.classList.add('ready');
+      else btn.classList.remove('ready');
+    });
+  }
+});
+
+function showMessage(title, body) {
+  document.getElementById('msgTitle').textContent = title;
+  document.getElementById('msgBody').textContent = body;
+  document.getElementById('messageModal').style.display = 'flex';
+}
+
+function closeMessageModal() {
+  document.getElementById('messageModal').style.display = 'none';
+}
+
+// Close Message Modal on Outside Click
+document.getElementById('messageModal').addEventListener('click', function(e) {
+  if (e.target === this) closeMessageModal();
+});
+
+function checkManualCode() {
+  const input = document.getElementById('manualInput');
+  const code = input.value.trim();
+  if(!code) return;
+
+  const coupon = COUPONS_DB.find(c => 
+    c.code.toLowerCase() === code.toLowerCase() && 
+    String(c.active).toUpperCase() === 'TRUE'
+  );
+
+  if(!coupon) {
+    showMessage('Invalid Coupon', 'The code you entered is invalid or expired.');
+    return;
+  }
+
+  const currentTotal = getDiscountableAmount();
+  if(currentTotal < coupon.minOrder) {
+    showMessage('Order Value Low', `This coupon requires a minimum order of Rs. ${coupon.minOrder}.`);
+    return;
+  }
+
+  selectCoupon(coupon.code);
+  input.value = ''; 
+  document.querySelector('.coupon-input-wrapper button').classList.remove('ready');
+}
+
+function renderCoupons() {
+  const currentTotal = getDiscountableAmount();
+  const drawerList = document.getElementById('drawerList');
+  const featuredCard = document.getElementById('featuredCouponCard');
+  if(!drawerList || !featuredCard) return;
+
+  drawerList.innerHTML = '';
+  
+  const shipFee = Number(CONFIG.shipping_fee_default) || 0;
+  const freeShipThreshold = Number(CONFIG.free_shipping_above) || 0;
+  const alreadyHasFreeShipping = currentTotal >= freeShipThreshold;
+
+  const sortedCoupons = COUPONS_DB.filter(c => {
+    if(String(c.active).toUpperCase() !== 'TRUE') return false;
+    if(String(c.public_listing).toUpperCase() !== 'TRUE') return false;
+    if (alreadyHasFreeShipping && c.freeShip) return false;
+    return true;
+  }).map(c => {
+    let savings = 0;
+    if (c.freeShip) savings = shipFee;
+    else if (c.flatAmount && Number(c.flatAmount) > 0) savings = Number(c.flatAmount);
+    else {
+      let calculatedRaw = Math.floor(currentTotal * (c.percent / 100));
+      if (c.maxDiscount && Number(c.maxDiscount) > 0) calculatedRaw = Math.min(calculatedRaw, Number(c.maxDiscount));
+      savings = calculatedRaw;
+    }
+    return { ...c, currentSavings: savings, isLocked: currentTotal < c.minOrder, missingAmount: c.minOrder - currentTotal };
+  }).sort((a, b) => {
+    if (a.isLocked !== b.isLocked) return a.isLocked ? 1 : -1;
+    return b.currentSavings - a.currentSavings;
+  });
+
+  let bestCoupon = sortedCoupons[0];
+  if (bestCoupon) {
+    const isLocked = bestCoupon.isLocked;
+    const diff = bestCoupon.missingAmount;
+    let titleHTML = isLocked ? `<span class="featured-code">${bestCoupon.code}</span>` : `<span class="featured-code">Save ₹${bestCoupon.currentSavings}</span>`;
+    let subHTML = isLocked ? `<div class="featured-desc">${bestCoupon.desc}</div>` : `<div class="featured-desc">with code <b>${bestCoupon.code}</b></div>`;
+    const conditionLine = isLocked ? `<div style="font-size:12px; color:#7D5C29; font-weight:600; margin-top:4px;">Add items worth ₹${diff} to avail</div>` : ``;
+    const actionBtn = isLocked ? `` : `<button class="featured-apply-btn" onclick="selectCoupon('${bestCoupon.code}')">APPLY</button>`;
+
+    featuredCard.innerHTML = `
+      <div class="featured-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+      </div>
+      <div class="featured-content">
+        ${titleHTML} ${subHTML} ${conditionLine}
+      </div>
+      ${actionBtn}
+    `;
+  } else {
+    featuredCard.innerHTML = `<div style="padding:10px; color:#888; font-size:13px;">No public coupons available for this order.</div>`;
+  }
+
+  sortedCoupons.forEach(coupon => {
+    const isLocked = coupon.isLocked;
+    const diff = coupon.missingAmount;
+    let benefitText = isLocked ? (coupon.freeShip ? 'Free Shipping' : (coupon.flatAmount ? `Save ₹${coupon.flatAmount}` : `Save ${coupon.percent}%`)) : `Save ₹${coupon.currentSavings} with this code`;
+    let actionBtn = isLocked ? `<button class="c-apply-btn" disabled>APPLY</button>` : `<button class="c-apply-btn" onclick="selectCoupon('${coupon.code}')">APPLY</button>`;
+    let footerHtml = isLocked ? `<div class="c-progress-bar"><div class="c-progress-fill" style="width:${Math.min(100, (currentTotal / coupon.minOrder) * 100)}%"></div></div><div class="c-progress-text">Add ₹${diff} more to unlock</div>` : `<div style="font-size:11px; color:#15803d; margin-top:8px;">You are eligible for this offer!</div>`;
+
+    const card = document.createElement('div');
+    card.className = 'swiss-coupon-card';
+    card.innerHTML = `
+      <div class="coupon-strip"><span class="strip-text">${coupon.type}</span></div>
+      <div class="coupon-main">
+        <div class="coupon-top-row"><span class="c-code">${coupon.code}</span>${actionBtn}</div>
+        <div class="c-benefit">${benefitText}</div>
+        <div class="c-desc">${coupon.desc}</div>
+        ${footerHtml}
+      </div>
+    `;
+    drawerList.appendChild(card);
+  });
+}
+
+function openCouponDrawer() {
+  document.getElementById('couponOverlay').classList.add('active');
+  document.getElementById('couponDrawer').classList.add('active');
+  renderCoupons();
+}
+
+function closeCouponDrawer() {
+  document.getElementById('couponOverlay').classList.remove('active');
+  document.getElementById('couponDrawer').classList.remove('active');
+}
+
+function selectCoupon(code) {
+  const coupon = COUPONS_DB.find(c => c.code === code);
+  activeCoupon = coupon;
+  sessionStorage.setItem('pyc_applied_coupon', JSON.stringify(coupon));
+  closeCouponDrawer();
+  document.getElementById('couponSectionRaw').style.display = 'none';
+  document.getElementById('appliedCouponView').style.display = 'flex';
+  document.getElementById('appliedCouponText').textContent = `'${coupon.code}' applied`;
+  calculateTotals();
+}
+
+function removeCoupon() {
+  activeCoupon = null;
+  sessionStorage.removeItem('pyc_applied_coupon');
+  document.getElementById('appliedCouponView').style.display = 'none';
+  document.getElementById('couponSectionRaw').style.display = 'block';
+  calculateTotals();
+  renderCoupons();
+}
+
+// ===================================
+// ✅ CALCULATE TOTALS
+// ===================================
+function calculateTotals() {
+  let grossTotal = 0; 
+  let allBracelets = [];
+  let allEarrings = [];
+
+  cart.forEach(item => {
+    if (item.type.includes('Combo')) {
+      const bPrice = getBPrice(item.bracelet);
+      const ePrice = getEPrice(item.earrings);
+      grossTotal += (bPrice + ePrice);
+      allBracelets.push(bPrice);
+      allEarrings.push(ePrice);
+    } 
+    else if (item.type === 'Bracelet') {
+      const price = getBPrice(item);
+      grossTotal += price;
+      allBracelets.push(price);
+    } 
+    else if (item.type === 'Earrings') {
+      const price = getEPrice(item);
+      grossTotal += price;
+      allEarrings.push(price);
+    }
+    else if (item.isReadyMade) {
+      grossTotal += item.price;
+    }
+  });
+
+  allBracelets.sort((a,b) => a-b);
+  allEarrings.sort((a,b) => a-b);
+  let comboSavings = 0;
+  const comboPercent = Number(CONFIG.combo_discount_percent) || 0;
+  const pairs = Math.min(allBracelets.length, allEarrings.length);
+  for(let i=0; i<pairs; i++) {
+    comboSavings += Math.floor((allBracelets[i] + allEarrings[i]) * (comboPercent / 100));
+  }
+
+  let subtotalAfterCombo = grossTotal - comboSavings;
+
+  const shipFee = Number(CONFIG.shipping_fee_default) || 0;
+  const freeThreshold = Number(CONFIG.free_shipping_above) || 0;
+  let naturalShipping = shipFee;
+  if (subtotalAfterCombo >= freeThreshold) naturalShipping = 0;
+
+  let couponDisc = 0;
+  if (activeCoupon) {
+    if (activeCoupon.freeShip) {
+      couponDisc = 0; 
+    } 
+    else if (subtotalAfterCombo >= activeCoupon.minOrder) {
+       if (activeCoupon.flatAmount && Number(activeCoupon.flatAmount) > 0) {
+         couponDisc = Number(activeCoupon.flatAmount);
+       } else {
+         let rawDisc = Math.floor(subtotalAfterCombo * (activeCoupon.percent / 100));
+         if (activeCoupon.maxDiscount && Number(activeCoupon.maxDiscount) > 0) {
+           rawDisc = Math.min(rawDisc, Number(activeCoupon.maxDiscount));
+         }
+         couponDisc = rawDisc;
+       }
+    }
+  }
+
+  let finalShipping = naturalShipping;
+  if (activeCoupon && activeCoupon.freeShip) finalShipping = 0; 
+  else if (subtotalAfterCombo >= freeThreshold) finalShipping = 0;
+
+  let subtotalPostDiscount = subtotalAfterCombo - couponDisc;
+  const finalTotal = subtotalPostDiscount + finalShipping;
+
+  document.getElementById('cartValueVal').textContent = `Rs. ${grossTotal}`;
+  
+  const comboEl = document.getElementById('comboRow');
+  if(comboSavings > 0) { 
+    comboEl.style.display = 'flex'; 
+    document.getElementById('comboVal').textContent = `- Rs. ${comboSavings}`; 
+  } else {
+    comboEl.style.display = 'none';
+  }
+
+  const coupEl = document.getElementById('couponRow');
+  if (activeCoupon) { 
+    coupEl.style.display = 'flex'; 
+    document.getElementById('couponCodeLabel').textContent = `Coupon (${activeCoupon.code})`;
+    if (activeCoupon.freeShip) document.getElementById('couponVal').textContent = "Free Shipping";
+    else document.getElementById('couponVal').textContent = `- Rs. ${couponDisc}`; 
+  } else {
+    coupEl.style.display = 'none';
+  }
+
+  document.getElementById('subtotalVal').textContent = `Rs. ${subtotalPostDiscount}`;
+  const shipEl = document.getElementById('shippingVal');
+  if (finalShipping === 0) {
+    shipEl.textContent = 'FREE';
+    shipEl.style.color = '#15803d';
+  } else {
+    shipEl.textContent = `Rs. ${finalShipping}`;
+    shipEl.style.color = '#111';
+  }
+  document.getElementById('finalTotal').textContent = `Rs. ${finalTotal}`;
+}
+
+// ===================================
+// ✅ DELETE & EDIT
+// ===================================
+let pendingDeleteIndex = null;
+let pendingDeleteSubType = null;
+
+function deleteItem(index, subType = null) {
+  pendingDeleteIndex = index;
+  pendingDeleteSubType = subType;
+  document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function confirmDelete() {
+  if (pendingDeleteIndex === null) return;
+  const index = pendingDeleteIndex;
+  const subType = pendingDeleteSubType;
+
+  if (subType === null) {
+    cart.splice(index, 1);
+  } else {
+    const combo = cart[index];
+    if (subType === 'bracelet') {
+      const newEarring = {
+        id: Date.now(),
+        type: 'Earrings',
+        metal: combo.earrings.metal,
+        charms: combo.earrings.charms,
+        price: getEPrice(combo.earrings),
+        image: `assets/bases/LeftHook_${combo.earrings.metal}.png`
+      };
+      cart[index] = newEarring;
+    } 
+    else if (subType === 'earrings') {
+      const newBracelet = {
+        id: Date.now(),
+        type: 'Bracelet',
+        metal: combo.bracelet.metal,
+        charms: combo.bracelet.charms,
+        price: getBPrice(combo.bracelet),
+        image: `assets/bases/bracelet_base_${combo.bracelet.metal}.png`
+      };
+      cart[index] = newBracelet;
+    }
+  }
+
+  localStorage.setItem('pyc_cart', JSON.stringify(cart));
+  init();
+  closeDeleteModal();
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'none';
+  pendingDeleteIndex = null;
+  pendingDeleteSubType = null;
+}
+
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDeleteModal();
+});
+
+function editItem(index, subType) {
+  const item = cart[index];
+  let draft = {};
+  let url = '';
+
+  sessionStorage.removeItem('pyc_draft');
+  sessionStorage.removeItem('combo_bracelet_data');
+  sessionStorage.removeItem('combo_earring_data');
+
+  if (item.type.includes('Combo')) {
+    if (subType === 'bracelet') {
+      sessionStorage.setItem('combo_earring_data', JSON.stringify(item.earrings));
+      draft = { url: 'builder.html?mode=combo', data: { metal: item.bracelet.metal, charms: item.bracelet.charms } };
+      url = 'builder.html?mode=combo&resume=true';
+    } else {
+      sessionStorage.setItem('combo_bracelet_data', JSON.stringify(item.bracelet));
+      draft = { 
+        url: 'earring-builder.html?mode=combo', 
+        data: { metal: item.earrings.metal, charms: item.earrings.charms },
+        comboContext: { bracelet: item.bracelet }
+      };
+      url = 'earring-builder.html?mode=combo&resume=true';
+    }
+  } 
+  else if (item.type === 'Bracelet') {
+    draft = { url: 'builder.html', data: { metal: item.metal, charms: item.charms } };
+    url = 'builder.html?resume=true';
+  } 
+  else { 
+    draft = { url: 'earring-builder.html', data: { metal: item.metal, charms: item.charms } };
+    url = 'earring-builder.html?resume=true';
+  }
+
+  sessionStorage.setItem('pyc_draft', JSON.stringify(draft));
+  cart.splice(index, 1);
+  localStorage.setItem('pyc_cart', JSON.stringify(cart));
+  window.location.href = url;
+}
+
+// ===================================
+// ✅ CHECKOUT NAVIGATION
+// ===================================
+function saveCartState() {
+  if (activeCoupon) sessionStorage.setItem('pyc_applied_coupon', JSON.stringify(activeCoupon));
+  else sessionStorage.removeItem('pyc_applied_coupon');
+}
+
+function onCheckoutClick() {
+  const hasSeenUpsell = sessionStorage.getItem('pyc_upsell_seen');
+  if (!hasSeenUpsell) {
+    document.getElementById('checkoutUpsellModal').style.display = 'flex';
+    sessionStorage.setItem('pyc_upsell_seen', 'true');
+  } else {
+    saveCartState();
+    window.location.href = 'checkout.html';
+  }
+}
+
+function forceCheckout() {
+  document.getElementById('checkoutUpsellModal').style.display = 'none';
+  if (activeCoupon) sessionStorage.setItem('pyc_applied_coupon', JSON.stringify(activeCoupon));
+  else sessionStorage.removeItem('pyc_applied_coupon');
+  window.location.href = 'checkout.html';
+}
+
+document.getElementById('checkoutUpsellModal').onclick = function(e) {
+  if (e.target === this) forceCheckout();
+};
+
+// Start the page
+init();
+</script>
+</body>
+</html>
