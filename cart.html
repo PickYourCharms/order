@@ -128,6 +128,16 @@
     </div>
   </div>
 </div>
+
+<div id="messageModal" class="delete-modal-overlay">
+  <div class="delete-modal-card">
+    <h3 id="msgTitle" style="margin-bottom:8px;">Oops!</h3>
+    <p id="msgBody" style="margin-bottom:20px; color:#666;">You've entered an invalid coupon.</p>
+    <div class="delete-actions">
+      <button class="confirm-btn" style="background:#000; width:100%;" onclick="closeMessageModal()">Okay</button>
+    </div>
+  </div>
+</div>  
   
 <script>
 // ===================================
@@ -532,6 +542,72 @@ function renderCoupons() {
   const shipFee = Number(CONFIG.shipping_fee_default) || 0;
   const freeShipThreshold = Number(CONFIG.free_shipping_above) || 0;
   const alreadyHasFreeShipping = currentTotal >= freeShipThreshold;
+
+  // 1. INPUT LISTENER: Makes the button turn green when user types
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('manualInput');
+  const btn = document.querySelector('.coupon-input-wrapper button');
+  
+  if(input && btn) {
+    input.addEventListener('input', function() {
+      if(this.value.trim().length > 0) {
+        btn.classList.add('ready');
+      } else {
+        btn.classList.remove('ready');
+      }
+    });
+  }
+});
+
+// 2. MODAL FUNCTIONS
+function showMessage(title, body) {
+  document.getElementById('msgTitle').textContent = title;
+  document.getElementById('msgBody').textContent = body;
+  document.getElementById('messageModal').style.display = 'flex';
+}
+
+function closeMessageModal() {
+  document.getElementById('messageModal').style.display = 'none';
+}
+
+// 3. UPDATED CHECK FUNCTION (Replaces your old checkManualCode)
+function checkManualCode() {
+  const input = document.getElementById('manualInput');
+  const code = input.value.trim();
+  
+  if(!code) return;
+
+  // Search entire DB (ignoring public_listing)
+  const coupon = COUPONS_DB.find(c => 
+    c.code.toLowerCase() === code.toLowerCase() && 
+    String(c.active).toUpperCase() === 'TRUE'
+  );
+
+  if(!coupon) {
+    // 🚨 REPLACED ALERT WITH MODAL HERE
+    showMessage('Invalid Coupon', 'The code you entered is invalid or expired.');
+    return;
+  }
+
+  // Check validation
+  const currentTotal = getDiscountableAmount();
+  if(currentTotal < coupon.minOrder) {
+    // 🚨 REPLACED ALERT WITH MODAL HERE
+    showMessage('Order Value Low', `This coupon requires a minimum order of Rs. ${coupon.minOrder}.`);
+    return;
+  }
+
+  // If valid, apply it
+  selectCoupon(coupon.code);
+  input.value = ''; 
+  // Reset button style
+  document.querySelector('.coupon-input-wrapper button').classList.remove('ready');
+}
+
+// Close modal when clicking outside
+document.getElementById('messageModal').addEventListener('click', function(e) {
+  if (e.target === this) closeMessageModal();
+});
 
   // Filter: Must be Active AND Public
   const sortedCoupons = COUPONS_DB.filter(c => {
