@@ -269,10 +269,43 @@ function loadTray() {
   });
 }
 
-// === FIX: Corrected Add Charm Logic for Earrings ===
+// === NEW HELPER: Calculates Real-Time Stock ===
+function getDynamicStock(charmId) {
+  const meta = CHARM_METADATA[charmId];
+  if (!meta) return 0;
+
+  const totalStock = meta.stock || 0;
+  // NOTE: getCartUsage is defined in store_data.js and globally available
+  const cartUsed = typeof getCartUsage === 'function' ? getCartUsage(charmId) : 0; 
+  
+  let stagedUsed = 0;
+  // If editing combo, check if bracelet uses this charm
+  const stagedBracelet = sessionStorage.getItem('combo_bracelet_data');
+  if (stagedBracelet) {
+    const bData = JSON.parse(stagedBracelet);
+    if (bData.charms && Array.isArray(bData.charms)) {
+      bData.charms.forEach(c => { if(c === charmId) stagedUsed++; });
+    }
+  }
+
+  return Math.max(0, totalStock - cartUsed - stagedUsed);
+}
+
+// === UPDATED ADD FUNCTION ===
 function addCharm(file){
-  if(!charms.left) charms.left=file;
-  else if(!charms.right) charms.right=file;
+  // 1. How many am I using RIGHT NOW in this specific earring set?
+  const currentUsageInEarrings = (charms.left === file ? 1 : 0) + (charms.right === file ? 1 : 0);
+  
+  // 2. How many are actually available globally?
+  const maxAllocatable = getDynamicStock(file);
+
+  if(currentUsageInEarrings >= maxAllocatable) {
+     alert("Sorry! We only have " + (maxAllocatable + currentUsageInEarrings) + " of this charm left.");
+     return;
+  }
+
+  if(!charms.left) charms.left = file;
+  else if(!charms.right) charms.right = file;
   else return; // Both full
   
   render();
