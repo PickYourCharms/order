@@ -8,76 +8,65 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=6.2">
-    <link rel="stylesheet" href="desktop.css">
+  <link rel="stylesheet" href="desktop.css">
   <script src="store_data.js"></script>
-<script src="desktop.js"></script>
+  <script src="desktop.js"></script>
   <script src="navigation.js"></script>
 
   <style>
-    /* === FOOTER UPDATES === */
-.sticky-footer {
-  position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
-  padding: 12px 16px 20px 16px; /* Slightly taller padding at bottom */
-  border-top: 1px solid #f0f0f0; 
-  display: flex; justify-content: center;
-  z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
-}
-
-.footer-stack {
-  width: 100%; max-width: 500px;
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
-}
-
-.whatsapp-btn { width: 100%; margin: 0; }
-
-.privacy-link {
-  font-size: 11px; color: #999; text-decoration: underline;
-  cursor: pointer; transition: color 0.2s;
-}
-.privacy-link:hover { color: #111; }
     /* === INTERNAL OVERRIDES FOR CHECKOUT === */
     body { background-color: #ffffff; }
     
     .checkout-container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 0 16px 120px 16px;
+      max-width: 600px; margin: 0 auto; padding: 0 16px 120px 16px;
+    }
+    
+    /* Footer & Button */
+    .sticky-footer {
+      position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
+      padding: 12px 16px 20px 16px; 
+      border-top: 1px solid #f0f0f0; 
+      display: flex; justify-content: center;
+      z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    }
+    
+    .footer-stack {
+      width: 100%; max-width: 500px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
     }
 
-    /* === FORM STYLES === */
-/* FIXED: Adds spacing below the row and ensures even width */
-.form-row { 
-  display: flex; 
-  gap: 16px;            /* Adds proper space between First & Last Name */
-  margin-bottom: 16px;  /* IMPORTANT: Pushes the Phone Number field down */
-  width: 100%;
-}
-
-.form-col { 
-  flex: 1;              /* Forces both columns to take 50% width */
-  min-width: 0;         /* Prevents layout breaking on small screens */
-}
-
-/* Ensure inputs fill their container exactly */
-.form-col .premium-input {
-  width: 100%;
-  box-sizing: border-box; /* Ensures padding doesn't make it wider than 100% */
-}
-    .section-title {
-      font-size: 15px; font-weight: 700; color: #111;
-      margin-bottom: 12px; margin-top: 24px;
+    .whatsapp-btn {
+      width: 100%; margin: 0; 
+      background: #25D366; color: #fff;
+      border: none; padding: 16px 24px; 
+      border-radius: 999px; 
+      font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; 
+      gap: 12px; cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s;
+      box-shadow: 0 8px 20px rgba(37, 211, 102, 0.25);
     }
+    .whatsapp-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+    .privacy-link {
+      font-size: 11px; color: #999; text-decoration: underline;
+      cursor: pointer; transition: color 0.2s;
+    }
+    .privacy-link:hover { color: #111; }
+
+    /* Form Styles */
+    .section-title { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 12px; margin-top: 24px; }
     .section-desc { font-size: 13px; color: #888; margin-top: -8px; margin-bottom: 16px; }
 
     .form-group { margin-bottom: 16px; }
-    .form-label {
-      display: block; font-size: 13px; font-weight: 600; color: #444;
-      margin-bottom: 6px; margin-left: 4px;
-    }
+    .form-label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; margin-left: 4px; }
     .required-star { color: #dc2626; margin-left: 2px; }
     .optional-tag { color: #999; font-weight: 400; font-size: 12px; margin-left: 4px; }
 
-    /* Phone & Errors */
+    .form-row { display: flex; gap: 16px; margin-bottom: 16px; width: 100%; }
+    .form-col { flex: 1; min-width: 0; }
+    .form-col .premium-input { width: 100%; box-sizing: border-box; }
+
     .phone-wrapper { position: relative; }
     .phone-prefix {
       position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
@@ -85,9 +74,6 @@
       display: flex; align-items: center; gap: 6px;
     }
     input.phone-field { padding-left: 85px; }
-    
-    .form-row { display: flex; gap: 12px; }
-    .form-col { flex: 1; }
 
     /* Vibe & Toggle */
     .vibe-scroll-container {
@@ -124,29 +110,7 @@
     .bill-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #555; }
     .bill-row.total { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #ddd; font-size: 18px; font-weight: 800; color: #000; }
     .discount-text { color: #15803d; }
-
-    /* Footer & Button */
-    .sticky-footer {
-      position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
-      padding: 16px; border-top: 1px solid #f0f0f0; display: flex; justify-content: center;
-      z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
-    }
     
-    /* === UPDATED WHATSAPP BUTTON === */
-    .whatsapp-btn {
-      width: 100%; max-width: 500px; 
-      background: #25D366; 
-      color: #fff;
-      border: none; padding: 16px 24px; 
-      border-radius: 999px; 
-      font-size: 16px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center; 
-      gap: 12px; cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s;
-      box-shadow: 0 8px 20px rgba(37, 211, 102, 0.25);
-    }
-    .whatsapp-btn:active { transform: scale(0.98); opacity: 0.9; }
-
     .helper-text { font-size: 12px; color: #666; margin-top: 4px; }
     
     /* Modals */
@@ -208,37 +172,28 @@
 
   <h3 class="section-title" style="margin-top: 30px;">Contact Info</h3>
   
-<div class="form-row">
-  <div class="form-col">
-    <label class="form-label">First Name <span class="required-star">*</span></label>
-    <input type="text" id="customerFirstName" class="premium-input" placeholder="e.g. Ananya" 
-           autocomplete="given-name" 
-           oninput="validateInput(this); saveDraft()">
+  <div class="form-row">
+    <div class="form-col">
+      <label class="form-label">First Name <span class="required-star">*</span></label>
+      <input type="text" id="customerFirstName" class="premium-input" placeholder="e.g. Ananya" autocomplete="given-name" oninput="validateInput(this); saveDraft()">
+    </div>
+    <div class="form-col">
+      <label class="form-label">Last Name <span class="required-star">*</span></label>
+      <input type="text" id="customerLastName" class="premium-input" placeholder="Singh" autocomplete="family-name" oninput="validateInput(this); saveDraft()">
+    </div>
   </div>
-  <div class="form-col">
-    <label class="form-label">Last Name <span class="required-star">*</span></label>
-    <input type="text" id="customerLastName" class="premium-input" placeholder="Singh" 
-           autocomplete="family-name" 
-           oninput="validateInput(this); saveDraft()">
-  </div>
-</div>
 
   <div class="form-group">
     <label class="form-label">Phone Number <span class="required-star">*</span></label>
     <div class="phone-wrapper">
       <span class="phone-prefix">🇮🇳 +91</span>
-      <input type="tel" id="customerPhone" class="premium-input phone-field" placeholder="98765 43210" 
-             autocomplete="tel"
-             oninput="handlePhoneInput(event, this)" 
-             onblur="saveDraft()">
+      <input type="tel" id="customerPhone" class="premium-input phone-field" placeholder="98765 43210" autocomplete="tel" oninput="handlePhoneInput(event, this)" onblur="saveDraft()">
     </div>
   </div>
 
   <div class="form-group">
     <label class="form-label">Email Address <span class="required-star">*</span></label>
-    <input type="email" id="customerEmail" class="premium-input" placeholder="name@example.com" 
-           autocomplete="email"
-           oninput="validateInput(this); saveDraft()">
+    <input type="email" id="customerEmail" class="premium-input" placeholder="name@example.com" autocomplete="email" oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="toggle-container" style="margin-top: 30px;">
@@ -267,9 +222,7 @@
       <label class="form-label">Receiver Phone <span class="required-star">*</span></label>
       <div class="phone-wrapper">
         <span class="phone-prefix">🇮🇳 +91</span>
-        <input type="tel" id="receiverPhone" class="premium-input phone-field" 
-               oninput="handlePhoneInput(event, this)" 
-               onblur="saveDraft()">
+        <input type="tel" id="receiverPhone" class="premium-input phone-field" oninput="handlePhoneInput(event, this)" onblur="saveDraft()">
       </div>
     </div>
 
@@ -294,16 +247,12 @@
   
   <div class="form-group">
     <label class="form-label">Flat / House No / Building <span class="required-star">*</span></label>
-    <input type="text" id="addressLine1" class="premium-input" placeholder="e.g. 104, Sunrise Apartments" 
-           autocomplete="address-line1"
-           oninput="validateInput(this); saveDraft()">
+    <input type="text" id="addressLine1" class="premium-input" placeholder="e.g. 104, Sunrise Apartments" autocomplete="address-line1" oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="form-group">
     <label class="form-label">Road Name / Area / Colony <span class="required-star">*</span></label>
-    <input type="text" id="addressLine2" class="premium-input" placeholder="e.g. MG Road, Indiranagar" 
-           autocomplete="address-line2"
-           oninput="validateInput(this); saveDraft()">
+    <input type="text" id="addressLine2" class="premium-input" placeholder="e.g. MG Road, Indiranagar" autocomplete="address-line2" oninput="validateInput(this); saveDraft()">
   </div>
 
   <div class="form-group">
@@ -313,9 +262,7 @@
 
   <div class="form-group">
     <label class="form-label">Pincode <span class="required-star">*</span></label>
-    <input type="tel" id="pincode" class="premium-input" placeholder="560001" maxlength="6" 
-           autocomplete="postal-code"
-           oninput="handlePincodeInput(this)">
+    <input type="tel" id="pincode" class="premium-input" placeholder="560001" maxlength="6" autocomplete="postal-code" oninput="handlePincodeInput(this)">
     <div id="pincodeMsg" class="helper-text"></div>
   </div>
 
@@ -331,8 +278,7 @@
   </div>
 
   <div class="receipt-card">
-<h3 class="section-title" style="margin-top:0; margin-bottom: 20px;">Payment Summary</h3>
-    
+    <h3 class="section-title" style="margin-top:0; margin-bottom: 20px;">Payment Summary</h3>
     <div>
       <div class="bill-row"><span>Cart Value</span><span id="cartValueVal">Rs. 0</span></div>
       <div class="bill-row discount-text" id="comboRow" style="display:none;"><span>Combo Savings</span><span id="comboVal">-Rs. 0</span></div>
@@ -387,19 +333,15 @@
   // ===================================
   // ✅ CHECKOUT LOGIC: MATCHING CART EXACTLY
   // ===================================
-
-  // --- CONFIG & CONSTANTS ---
   const API_URL = window.SCRIPT_URL || "https://script.google.com/macros/s/AKfycbxt-6YixCAHAFsb23MBd79YW7YcAvzlUPbotCRbwzapkIaxqcifJP9TqlBkxQ0lqKnE/exec"; 
   const CONFIG = JSON.parse(localStorage.getItem('pyc_config') || "{}");
   const CHARM_METADATA = JSON.parse(localStorage.getItem('pyc_charm_metadata') || "{}");
-  const PHONE_NUMBER = "918910344676"; // Your WhatsApp Number
+  const PHONE_NUMBER = "918910344676"; 
 
-  // Pricing Basics
   const BASE_PRICE = Number(CONFIG.bracelet_base_price) || 0;
   const EARRING_BASE_PRICE = Number(CONFIG.earring_base_price) || 0;
 
   let currentOrderID = null;
-
   let cart = [];
   let appliedCoupon = null;
   let currentVibe = "";
@@ -420,7 +362,6 @@
     restoreDraft();
     calculateTotals();
 
-    // === BACK BUTTON INTERCEPTION ===
     setTimeout(() => {
       window.history.pushState({ page: 'checkout' }, null, window.location.href);
     }, 100);
@@ -431,21 +372,14 @@
     };
   }
 
-  // ===================================
-  // ✅ HELPER: PRICING FUNCTIONS (Need these to calc Gross Total)
-  // ===================================
-  
   function getBPrice(b) {
     let total = BASE_PRICE;
     const ALLOWANCE = Number(CONFIG.bracelet_base_charm_allowance) || 0;
     
     b.charms.forEach((file, index) => {
       const meta = CHARM_METADATA[file] || { price: 0 };
-      if (index === 0) {
-        total += Math.max(0, meta.price - ALLOWANCE);
-      } else {
-        total += meta.price;
-      }
+      if (index === 0) total += Math.max(0, meta.price - ALLOWANCE);
+      else total += meta.price;
     });
     return total;
   }
@@ -464,10 +398,6 @@
     }
     return total;
   }
-
-  // ===================================
-  // ✅ UPDATED MATH: Shows True Value & Combo Savings Explicitly
-  // ===================================
 
 function calculateTotals() {
   let grossTotal = 0; 
@@ -507,7 +437,6 @@ function calculateTotals() {
   }
   let subtotalAfterCombo = grossTotal - comboSavings;
 
-  // 3. DETERMINE NATURAL SHIPPING (Based on Pincode/Config)
   const pincode = document.getElementById('pincode').value;
   const msg = document.getElementById('pincodeMsg');
   
@@ -530,12 +459,10 @@ function calculateTotals() {
     naturalColor = "#15803d";
   }
 
-  // 4. COUPON LOGIC
   let couponDisc = 0;
   
   if (appliedCoupon) {
     if (appliedCoupon.freeShip) {
-      // ✅ FIX: Set discount to 0. Benefit is handled in step 5.
       couponDisc = 0; 
     } 
     else if (subtotalAfterCombo >= appliedCoupon.minOrder) {
@@ -551,7 +478,6 @@ function calculateTotals() {
     }
   }
 
-  // 5. FINAL SHIPPING LOGIC
   let finalShipping = naturalShipping;
   if (appliedCoupon && appliedCoupon.freeShip) {
     finalShipping = 0;
@@ -562,7 +488,6 @@ function calculateTotals() {
   let subtotalPostDiscount = subtotalAfterCombo - couponDisc;
   const finalTotal = subtotalPostDiscount + finalShipping;
 
-  // --- RENDER ---
   if(msg) {
     msg.textContent = naturalText;
     msg.style.color = naturalColor;
@@ -595,10 +520,6 @@ function calculateTotals() {
   document.getElementById('finalTotal').textContent = `Rs. ${finalTotal}`;
 }
 
-  // ===================================
-  // ✅ EXISTING UI HANDLERS (Unchanged)
-  // ===================================
-
   function selectVibe(btn, vibe) {
     document.querySelectorAll('.vibe-chip').forEach(b => b.classList.remove('selected'));
     if(currentVibe === vibe) { currentVibe = ""; document.getElementById('otherVibeInput').style.display = 'none'; } 
@@ -614,7 +535,6 @@ function calculateTotals() {
   }
 function copyContactDetails() {
     if(document.getElementById('copyDetails').checked) {
-      // ✅ CHANGED: Combine First + Last name
       const fName = document.getElementById('customerFirstName').value;
       const lName = document.getElementById('customerLastName').value;
       document.getElementById('receiverName').value = (fName + " " + lName).trim();
@@ -651,19 +571,16 @@ function copyContactDetails() {
           const details = data[0].PostOffice[0];
           document.getElementById('city').value = details.District; document.getElementById('state').value = details.State;
           validateInput(document.getElementById('city')); validateInput(document.getElementById('state'));
-          msg.textContent = ""; saveDraft(); calculateTotals(); // Recalculate to update shipping msg
+          msg.textContent = ""; saveDraft(); calculateTotals(); 
         } else { msg.textContent = "Invalid Pincode"; msg.style.color = "#dc2626"; }
       }).catch(err => { console.error(err); msg.textContent = ""; });
   }
   function validateInput(el) { if(el.value.trim() !== "") el.classList.remove('input-error'); }
 
-  // --- STORAGE ---
 function saveDraft() {
     const data = {
-      // ✅ CHANGED: Saving split names
       firstName: document.getElementById('customerFirstName').value,
       lastName: document.getElementById('customerLastName').value,
-      
       phone: document.getElementById('customerPhone').value,
       email: document.getElementById('customerEmail').value,
       addressLine1: document.getElementById('addressLine1').value,
@@ -688,10 +605,8 @@ function saveDraft() {
     const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
     if(!data) return;
     
-    // ✅ CHANGED: Restoring split names
     document.getElementById('customerFirstName').value = data.firstName || '';
     document.getElementById('customerLastName').value = data.lastName || '';
-    
     document.getElementById('customerPhone').value = data.phone || '';
     document.getElementById('customerEmail').value = data.email || '';
     document.getElementById('addressLine1').value = data.addressLine1 || '';
@@ -729,7 +644,6 @@ function saveDraft() {
     let rand = '';
     for(let i=0; i<5; i++) rand += chars.charAt(Math.floor(Math.random() * chars.length));
     
-    // Determine type code based on content
     let hasCustom = false; 
     let hasReady = false;
     cart.forEach(item => {
@@ -738,22 +652,19 @@ function saveDraft() {
         else if (item.isReadyMade) hasReady = true; 
     });
     
-    let typeCode = 'CM'; // Custom
-    if(hasCustom && hasReady) typeCode = 'MX'; // Mixed
-    else if(!hasCustom && hasReady) typeCode = 'RM'; // Readymade
+    let typeCode = 'CM';
+    if(hasCustom && hasReady) typeCode = 'MX';
+    else if(!hasCustom && hasReady) typeCode = 'RM';
     
     return `PYC-${typeCode}-${dd}${mm}${yyyy}-${HH}${MM}-${rand}`;
   }
 
 function proceedToWhatsApp() {
-    // 1. Retrieve First-Touch Data
     const firstTouchData = JSON.parse(localStorage.getItem('pyc_first_touch_utm') || "{}");
     
-    // 1. Validation 
     let isValid = true;
     let firstError = null;
     
-    // ✅ CHANGED: Validating new IDs
     const mandatoryIds = ['customerFirstName', 'customerLastName', 'customerPhone', 'customerEmail', 'addressLine1', 'addressLine2', 'city', 'state', 'pincode'];
     
     if(document.getElementById('isGift').checked) mandatoryIds.push('receiverName', 'receiverPhone');
@@ -778,12 +689,10 @@ function proceedToWhatsApp() {
     btn.innerHTML = "Processing Order... ↻";
     btn.disabled = true;
 
-    // 2. Prepare Data
     const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
     const orderID = generateOrderID(); 
     currentOrderID = orderID;
     
-    // Clean up Cart Items
     const itemsClean = cart.map(item => {
       if (item.type.includes('Combo')) {
         return {
@@ -798,21 +707,18 @@ function proceedToWhatsApp() {
         metal: item.metal || '',
         price: item.price,
         charms: item.charms || [], 
-        title: item.title || ''
+        title: item.title || '',
+        sheetId: item.sheetId || '' // Include Sheet ID for stock tracking
       };
     });
 
-    // ✅ Helper: Create full name for message
     const fullNameCombined = (data.firstName + " " + data.lastName).trim();
 
     const payload = {
       order_id: orderID,
       order_type: "WhatsApp Checkout",
-      
-      // ✅ These now map correctly because saveDraft() saves them
       customer_first_name: data.firstName,
       customer_last_name: data.lastName,
-      
       customer_phone: data.phone,
       customer_email: data.email,
       shipping_address: data.addressLine1 + ", " + data.addressLine2 + (data.landmark ? ", " + data.landmark : ""),
@@ -846,6 +752,16 @@ function proceedToWhatsApp() {
     })
     .then(response => response.json())
     .then(result => {
+      
+      // === NEW: HANDLE STOCK ERROR ===
+      if(result.result === "error" && result.type === "out_of_stock") {
+         alert("Order Failed: " + result.message + "\n\nPlease go back to cart and remove the out-of-stock items.");
+         btn.innerHTML = originalText;
+         btn.disabled = false;
+         return; // STOP execution
+      }
+      // ==============================
+
       console.log("Order Saved:", result);
       
       let itemsStr = "";
@@ -874,7 +790,6 @@ function proceedToWhatsApp() {
         }
       }
 
-      // ✅ CHANGED: Used fullNameCombined instead of data.name (which is now undefined)
       let msg = `Hey PickYourCharms!✨\nI’ve just placed an order! 💌\n\n*Order ID:* ${orderID}\n*Name:* ${fullNameCombined}\n\n*Items:*${itemsStr}${giftDetailsStr}\n\n*Total:* ${payload.final_amount}`;
       
       const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
@@ -894,7 +809,6 @@ function proceedToWhatsApp() {
     });
   }
 
-  // === NAVIGATION LOGIC ===
   function handleBackNavigation() {
     document.getElementById('confirmBackModal').style.display = 'flex';
   }
@@ -912,7 +826,6 @@ function proceedToWhatsApp() {
     window.location.href = 'cart.html'; 
   }
 
-  // === ORDER CONFIRMATION MODAL ===
   function confirmOrderPlaced() {
     sessionStorage.removeItem('pyc_checkout_visited');
     localStorage.removeItem('pyc_cart');
@@ -927,7 +840,6 @@ function dismissOrderConfirmation() {
     btn.textContent = "Cancelling...";
     btn.disabled = true;
 
-    // Send delete signal to Google Sheet
     if (currentOrderID) {
       fetch(API_URL, {
         method: 'POST',
@@ -938,14 +850,12 @@ function dismissOrderConfirmation() {
       })
       .then(() => {
         console.log("Order cancelled in sheet");
-        // Reset UI
         document.getElementById('orderConfirmationModal').style.display = 'none';
         btn.textContent = originalText;
         btn.disabled = false;
       })
       .catch(err => {
         console.error("Failed to cancel order", err);
-        // Close anyway so user isn't stuck
         document.getElementById('orderConfirmationModal').style.display = 'none';
         btn.textContent = originalText;
         btn.disabled = false;
