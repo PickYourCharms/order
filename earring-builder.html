@@ -182,6 +182,7 @@ const builderSurface = document.getElementById('builderSurface');
 const modal = document.getElementById('modal');
 const modalText = document.getElementById('modalText');
 const modalConfirm = document.getElementById('modalConfirm');
+const modalSecondaryBtn = document.querySelector('#modal .secondary'); // For toggling Cancel
 const cta = document.getElementById('cta');
 const navCartBtn = document.getElementById('navCartBtn');
 const pageTitle = document.getElementById('pageTitle');
@@ -300,7 +301,7 @@ function addCharm(file){
   const maxAllocatable = getDynamicStock(file);
 
   if(currentUsageInEarrings >= maxAllocatable) {
-     alert("Sorry! We only have " + (maxAllocatable + currentUsageInEarrings) + " of this charm left.");
+     showAlert("Uh-oh! We just ran out of stock");
      return;
   }
 
@@ -529,11 +530,24 @@ function addToCart(item) {
   pageTitle.textContent = "Added to Bag ✨";
 }
 
+// === ALERT FUNCTION (Only OKAY) ===
+function showAlert(text) {
+  modalText.textContent = text;
+  modalSecondaryBtn.style.display = 'none'; // Hide cancel
+  modalConfirm.textContent = 'Okay';
+  modalConfirm.onclick = () => { closeModal(); };
+  modal.style.display = 'flex';
+}
+
+// === CONFIRM MODAL (Cancel + Confirm) ===
 function showModal(text,fn){
-  modalText.textContent=text;
-  modalConfirm.onclick=()=>{closeModal();fn();};
+  modalText.textContent = text;
+  modalSecondaryBtn.style.display = 'block'; // Show cancel
+  modalConfirm.textContent = 'Confirm';
+  modalConfirm.onclick=()=>{ closeModal(); fn(); };
   modal.style.display='flex';
 }
+
 function closeModal(){modal.style.display='none';}
 
 init();
