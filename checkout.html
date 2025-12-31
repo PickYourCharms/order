@@ -45,19 +45,17 @@
     }
 
     /* === FORM STYLES === */
-    /* Fix for side-by-side inputs */
-.form-row {
-  display: flex;
-  gap: 16px; /* Increased gap slightly for better breathing room */
-  justify-content: space-between;
+/* FIXED: Adds spacing below the row and ensures even width */
+.form-row { 
+  display: flex; 
+  gap: 16px;            /* Adds proper space between First & Last Name */
+  margin-bottom: 16px;  /* IMPORTANT: Pushes the Phone Number field down */
   width: 100%;
 }
 
-.form-col {
-  flex: 1; /* Ensures both columns take exactly 50% space */
-  min-width: 0; /* Prevents layout breakage on smaller screens */
-  display: flex;
-  flex-direction: column;
+.form-col { 
+  flex: 1;              /* Forces both columns to take 50% width */
+  min-width: 0;         /* Prevents layout breaking on small screens */
 }
 
 /* Ensure inputs fill their container exactly */
