@@ -45,6 +45,26 @@
     }
 
     /* === FORM STYLES === */
+    /* Fix for side-by-side inputs */
+.form-row {
+  display: flex;
+  gap: 16px; /* Increased gap slightly for better breathing room */
+  justify-content: space-between;
+  width: 100%;
+}
+
+.form-col {
+  flex: 1; /* Ensures both columns take exactly 50% space */
+  min-width: 0; /* Prevents layout breakage on smaller screens */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure inputs fill their container exactly */
+.form-col .premium-input {
+  width: 100%;
+  box-sizing: border-box; /* Ensures padding doesn't make it wider than 100% */
+}
     .section-title {
       font-size: 15px; font-weight: 700; color: #111;
       margin-bottom: 12px; margin-top: 24px;
