@@ -1,5 +1,5 @@
 // ✅ URL UPDATED
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxt-6YixCAHAFsb23MBd79YW7YcAvzlUPbotCRbwzapkIaxqcifJP9TqlBkxQ0lqKnE/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7xdyUSNUk8hdXXtjpdympOzcWNH9mjsSu6gPV13XwHPg1Kp-DzsZ2GazmHJKgUZF_/exec";
 window.SCRIPT_URL = SCRIPT_URL; // Make it globally available
 
 async function fetchStoreData() {
