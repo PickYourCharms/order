@@ -263,6 +263,14 @@ function loadTray() {
 
   // 3. Render
   list.forEach(file => {
+    // === NEW: Filter by Type ===
+    const meta = CHARM_METADATA[file];
+    const type = (meta && meta.type) ? meta.type : 'both';
+    
+    // In Earring Builder, hide charms meant ONLY for Bracelets
+    if (type === 'bracelet') return; 
+    // ===========================
+
     const img = document.createElement('img');
     img.src = 'assets/charms/' + file;
     img.onclick = () => addCharm(file);
