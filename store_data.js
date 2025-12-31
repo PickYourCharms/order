@@ -1,5 +1,5 @@
 // ✅ URL UPDATED
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7xdyUSNUk8hdXXtjpdympOzcWNH9mjsSu6gPV13XwHPg1Kp-DzsZ2GazmHJKgUZF_/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbOepNlaJ-lRWtWUsRnuwt3WvmebqSykit0x9O1YAH6rOpdxXiYBZwJ57YeybB7WgO/exec";
 window.SCRIPT_URL = SCRIPT_URL; // Make it globally available
 
 async function fetchStoreData() {
@@ -25,10 +25,15 @@ async function fetchStoreData() {
         return m === 'silver' || m === 'both';
       }).map(c => c.id);
 
-      // 2. Process Metadata (Prices & Premium)
+      // 2. Process Metadata (Prices, Premium & STOCK)
+      // ✅ FIXED: This logic is now inside the success block where 'data' exists
       const charmMeta = {};
       data.charms.forEach(c => {
-        charmMeta[c.id] = { price: c.price, isPremium: c.is_premium };
+        charmMeta[c.id] = { 
+            price: c.price, 
+            isPremium: c.is_premium,
+            stock: Number(c.stock) || 0 // <--- CAPTURE STOCK HERE
+        };
       });
 
       // 3. Save ALL Levers to Storage
@@ -58,6 +63,42 @@ async function fetchStoreData() {
   } catch (error) {
     console.error("Failed to fetch store data.", error);
   }
+}
+
+// ==========================================
+// ✅ INVENTORY HELPER (Real-time Usage Count)
+// ==========================================
+function getCartUsage(charmId) {
+  const cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
+  let usedCount = 0;
+
+  cart.forEach(item => {
+    // 1. Check Standard Bracelet
+    if (item.type === 'Bracelet' && Array.isArray(item.charms)) {
+      item.charms.forEach(c => { if(c === charmId) usedCount++; });
+    }
+    
+    // 2. Check Standard Earrings
+    if (item.type === 'Earrings' && item.charms) {
+      if (item.charms.left === charmId) usedCount++;
+      if (item.charms.right === charmId) usedCount++;
+    }
+    
+    // 3. Check Combos
+    if (item.type && item.type.includes('Combo')) {
+      // Check Bracelet part
+      if (item.bracelet && Array.isArray(item.bracelet.charms)) {
+        item.bracelet.charms.forEach(c => { if(c === charmId) usedCount++; });
+      }
+      // Check Earring part
+      if (item.earrings && item.earrings.charms) {
+        if (item.earrings.charms.left === charmId) usedCount++;
+        if (item.earrings.charms.right === charmId) usedCount++;
+      }
+    }
+  });
+
+  return usedCount;
 }
 
 fetchStoreData();
