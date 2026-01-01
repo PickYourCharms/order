@@ -381,6 +381,10 @@
       isDeviceBack = true; 
       handleBackNavigation();
     };
+    if (sessionStorage.getItem('pyc_awaiting_payment') === 'true') {
+        document.getElementById('orderConfirmationModal').style.display = 'flex';
+        sessionStorage.removeItem('pyc_awaiting_payment'); // Clear flag so it doesn't show again on refresh
+    }
   }
 
   function getBPrice(b) {
@@ -808,11 +812,27 @@ function proceedToWhatsApp() {
       let msg = `Hey PickYourCharms!✨\nI’ve just placed an order! 💌\n\n*Order ID:* ${orderID}\n*Name:* ${fullNameCombined}\n\n*Items:*${itemsStr}${giftDetailsStr}\n\n*Total:* ${payload.final_amount}`;
       
       const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank');
-      
+
+      // ✅ 1. Set flag so modal appears when they return/reload
+      sessionStorage.setItem('pyc_awaiting_payment', 'true');
+
+      // ✅ 2. Show modal immediately (for Desktop users or if page doesn't reload)
       document.getElementById('orderConfirmationModal').style.display = 'flex';
       btn.innerHTML = originalText;
       btn.disabled = false;
+
+      // ✅ 3. iOS/Mobile Friendly Redirection
+      // Check if user is on a mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile) {
+          // On Mobile: Redirect current tab. This bypasses the pop-up blocker.
+          // It creates a smooth "App Switch" effect to WhatsApp.
+          window.location.href = url;
+      } else {
+          // On Desktop: Open in new tab (safe to keep existing tab open)
+          window.open(url, '_blank');
+      }
     })
     .catch(error => {
       console.error('Error saving order:', error);
