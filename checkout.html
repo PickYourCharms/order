@@ -704,6 +704,24 @@ function proceedToWhatsApp() {
     btn.innerHTML = "Processing Order... ↻";
     btn.disabled = true;
 
+    // ✅ FIX FOR IOS SAFARI: Open the window IMMEDIATELY (Before Fetch)
+    // We open a blank page first. Safari allows this because it's inside the click event.
+    let whatsappWindow = null;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (!isMobile) {
+        // On Desktop, open a new tab immediately
+        whatsappWindow = window.open('', '_blank');
+        if (whatsappWindow) {
+            whatsappWindow.document.write('<html><body style="background:#25D366; display:flex; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif;"><h2>Connecting to WhatsApp...</h2></body></html>');
+        }
+    }
+    // Note: On Mobile, we will use location.href *after* fetch, but if that fails, we fallback to a direct link.
+    // Actually, the most reliable way for iOS is to NOT wait for fetch if possible, 
+    // BUT we need the order ID.
+    // Strategy: We will use the 'whatsappWindow' trick for desktop, 
+    // and for mobile we will attempt a different strategy below.
+
     const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
     const orderID = generateOrderID(); 
     currentOrderID = orderID;
@@ -723,7 +741,7 @@ function proceedToWhatsApp() {
         price: item.price,
         charms: item.charms || [], 
         title: item.title || '',
-        sheetId: item.sheetId || '' // Include Sheet ID for stock tracking
+        sheetId: item.sheetId || '' 
       };
     });
 
@@ -755,7 +773,7 @@ function proceedToWhatsApp() {
       coupon_discount: document.getElementById('couponVal').textContent,
       shipping_fee: document.getElementById('shippingVal').textContent,
       final_amount: document.getElementById('finalTotal').textContent,
-      device_type: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "Desktop",
+      device_type: isMobile ? "Mobile" : "Desktop",
       utm_source: firstTouchData.source || "direct", 
       utm_campaign: firstTouchData.campaign || "",
       utm_medium: firstTouchData.medium || "",
@@ -768,18 +786,16 @@ function proceedToWhatsApp() {
     .then(response => response.json())
     .then(result => {
       
-      // === NEW: HANDLE OUT OF STOCK ===
+      // Handle Out of Stock
       if(result.result === "error" && result.type === "out_of_stock") {
-         // SAVE ERROR LOG FOR CART TO READ
+         if(whatsappWindow) whatsappWindow.close(); // Close the preemptive window
          sessionStorage.setItem('pyc_stock_error_log', result.message);
-         
          document.getElementById('stockErrorMsg').textContent = "Some items are out of stock. Please fix your cart.";
          document.getElementById('outOfStockModal').style.display = 'flex';
          btn.innerHTML = originalText;
          btn.disabled = false;
          return; 
       }
-      // ==============================
 
       console.log("Order Saved:", result);
       
@@ -813,36 +829,45 @@ function proceedToWhatsApp() {
       
       const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
 
-      // ✅ 1. Set flag so modal appears when they return/reload
+      // ✅ EXECUTE REDIRECT
+      if (!isMobile && whatsappWindow) {
+          // Desktop: Redirect the tab we opened earlier
+          whatsappWindow.location.href = url;
+      } else {
+          // Mobile: Try direct location change
+          window.location.href = url;
+          
+          // Fallback for aggressive iOS: If redirection fails, show a manual link
+          setTimeout(() => {
+              // If we are still on this page after 1 second, the redirect failed.
+              // We create a visible link for the user to click manually.
+              const manualLink = document.createElement('a');
+              manualLink.href = url;
+              manualLink.innerHTML = "Click here to open WhatsApp";
+              manualLink.style.cssText = "display:block; margin-top:10px; color:#25D366; font-weight:bold; text-decoration:underline;";
+              
+              // Only append if not already there
+              if(!document.getElementById('manualWA')) {
+                  manualLink.id = 'manualWA';
+                  document.querySelector('.footer-stack').appendChild(manualLink);
+              }
+          }, 1500);
+      }
+      
+      // Show Modal
       sessionStorage.setItem('pyc_awaiting_payment', 'true');
-
-      // ✅ 2. Show modal immediately (for Desktop users or if page doesn't reload)
       document.getElementById('orderConfirmationModal').style.display = 'flex';
       btn.innerHTML = originalText;
       btn.disabled = false;
-
-      // ✅ 3. iOS/Mobile Friendly Redirection
-      // Check if user is on a mobile device
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-      if (isMobile) {
-          // On Mobile: Redirect current tab. This bypasses the pop-up blocker.
-          // It creates a smooth "App Switch" effect to WhatsApp.
-          window.location.href = url;
-      } else {
-          // On Desktop: Open in new tab (safe to keep existing tab open)
-          window.open(url, '_blank');
-      }
     })
     .catch(error => {
       console.error('Error saving order:', error);
-      alert("Network error. Opening WhatsApp anyway...");
-      const url = `https://wa.me/${PHONE_NUMBER}?text=Order%20${orderID}%20(Error%20Saving%20Data)`;
-      window.open(url, '_blank');
+      if(whatsappWindow) whatsappWindow.close();
+      alert("Network error. Please try again or contact support.");
       btn.innerHTML = originalText;
       btn.disabled = false;
     });
-  }
+}
 
   function handleBackNavigation() {
     document.getElementById('confirmBackModal').style.display = 'flex';
