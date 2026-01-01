@@ -381,10 +381,6 @@
       isDeviceBack = true; 
       handleBackNavigation();
     };
-    if (sessionStorage.getItem('pyc_awaiting_payment') === 'true') {
-        document.getElementById('orderConfirmationModal').style.display = 'flex';
-        sessionStorage.removeItem('pyc_awaiting_payment'); // Clear flag so it doesn't show again on refresh
-    }
   }
 
   function getBPrice(b) {
@@ -675,198 +671,173 @@ function saveDraft() {
   }
 
 function proceedToWhatsApp() {
-    const firstTouchData = JSON.parse(localStorage.getItem('pyc_first_touch_utm') || "{}");
-    
-    let isValid = true;
-    let firstError = null;
-    
-    const mandatoryIds = ['customerFirstName', 'customerLastName', 'customerPhone', 'customerEmail', 'addressLine1', 'addressLine2', 'city', 'state', 'pincode'];
-    
-    if(document.getElementById('isGift').checked) mandatoryIds.push('receiverName', 'receiverPhone');
-    
-    mandatoryIds.forEach(id => {
-      const el = document.getElementById(id);
-      const val = el.value.trim();
-      let error = false;
-      if(!val) error = true;
-      if(id.includes('Phone') && val.length !== 10) error = true;
-      if(id === 'pincode' && val.length !== 6) error = true;
-      if(error) { el.classList.add('input-error'); isValid = false; if(!firstError) firstError = el; } 
-      else el.classList.remove('input-error');
-    });
+  const firstTouchData = JSON.parse(localStorage.getItem('pyc_first_touch_utm') || "{}");
 
-    if(!isValid) { firstError.scrollIntoView({behavior: 'smooth', block: 'center'}); firstError.focus(); return; }
+  // --- 1. VALIDATION ---
+  let isValid = true;
+  let firstError = null;
 
-    saveDraft(); 
-    
-    const btn = document.querySelector('.whatsapp-btn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = "Processing Order... ↻";
-    btn.disabled = true;
+  const mandatoryIds = ['customerFirstName', 'customerLastName', 'customerPhone', 'customerEmail', 'addressLine1', 'addressLine2', 'city', 'state', 'pincode'];
+  if (document.getElementById('isGift').checked) mandatoryIds.push('receiverName', 'receiverPhone');
 
-    // ✅ FIX FOR IOS SAFARI: Open the window IMMEDIATELY (Before Fetch)
-    // We open a blank page first. Safari allows this because it's inside the click event.
-    let whatsappWindow = null;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    if (!isMobile) {
-        // On Desktop, open a new tab immediately
-        whatsappWindow = window.open('', '_blank');
-        if (whatsappWindow) {
-            whatsappWindow.document.write('<html><body style="background:#25D366; display:flex; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif;"><h2>Connecting to WhatsApp...</h2></body></html>');
-        }
-    }
-    // Note: On Mobile, we will use location.href *after* fetch, but if that fails, we fallback to a direct link.
-    // Actually, the most reliable way for iOS is to NOT wait for fetch if possible, 
-    // BUT we need the order ID.
-    // Strategy: We will use the 'whatsappWindow' trick for desktop, 
-    // and for mobile we will attempt a different strategy below.
+  mandatoryIds.forEach(id => {
+    const el = document.getElementById(id);
+    const val = el.value.trim();
+    let error = false;
+    if (!val) error = true;
+    if (id.includes('Phone') && val.length !== 10) error = true;
+    if (id === 'pincode' && val.length !== 6) error = true;
+    if (error) {
+      el.classList.add('input-error');
+      isValid = false;
+      if (!firstError) firstError = el;
+    } else el.classList.remove('input-error');
+  });
 
-    const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
-    const orderID = generateOrderID(); 
-    currentOrderID = orderID;
-    
-    const itemsClean = cart.map(item => {
-      if (item.type.includes('Combo')) {
-        return {
-          type: item.type,
-          price: item.price,
-          bracelet_details: { metal: item.bracelet.metal, charms: item.bracelet.charms },
-          earrings_details: { metal: item.earrings.metal, charms: item.earrings.charms }
-        };
-      }
+  if (!isValid) {
+    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    firstError.focus();
+    return;
+  }
+
+  saveDraft();
+
+  // --- 2. PREPARE UI & BUTTON STATE ---
+  const btn = document.querySelector('.whatsapp-btn');
+  const originalText = btn.innerHTML; 
+  btn.innerHTML = "Processing Order... ↻";
+  btn.disabled = true;
+
+  // --- 3. PREPARE DATA ---
+  const data = JSON.parse(localStorage.getItem('checkout_draft_persistent'));
+  const orderID = generateOrderID();
+  currentOrderID = orderID;
+
+  const itemsClean = cart.map(item => {
+    if (item.type.includes('Combo')) {
       return {
         type: item.type,
-        metal: item.metal || '',
         price: item.price,
-        charms: item.charms || [], 
-        title: item.title || '',
-        sheetId: item.sheetId || '' 
+        bracelet_details: { metal: item.bracelet.metal, charms: item.bracelet.charms },
+        earrings_details: { metal: item.earrings.metal, charms: item.earrings.charms }
       };
-    });
-
-    const fullNameCombined = (data.firstName + " " + data.lastName).trim();
-
-    const payload = {
-      order_id: orderID,
-      order_type: "WhatsApp Checkout",
-      customer_first_name: data.firstName,
-      customer_last_name: data.lastName,
-      customer_phone: data.phone,
-      customer_email: data.email,
-      shipping_address: data.addressLine1 + ", " + data.addressLine2 + (data.landmark ? ", " + data.landmark : ""),
-      city: data.city,
-      pincode: data.pincode,
-      vibe: data.vibe,
-      vibe_custom_text: data.vibeText,
-      is_gift: data.isGift,
-      receiver_name: data.receiverName,
-      receiver_phone: data.receiverPhone,
-      relation: data.relation,
-      occasion: data.occasion,
-      gift_message: data.giftMessage,
-      items_json: itemsClean,
-      combo_applied: document.getElementById('comboRow').style.display !== 'none',
-      subtotal: document.getElementById('subtotalVal').textContent, 
-      combo_discount: document.getElementById('comboVal').textContent,
-      coupon_code: appliedCoupon ? appliedCoupon.code : "",
-      coupon_discount: document.getElementById('couponVal').textContent,
-      shipping_fee: document.getElementById('shippingVal').textContent,
-      final_amount: document.getElementById('finalTotal').textContent,
-      device_type: isMobile ? "Mobile" : "Desktop",
-      utm_source: firstTouchData.source || "direct", 
-      utm_campaign: firstTouchData.campaign || "",
-      utm_medium: firstTouchData.medium || "",
+    }
+    return {
+      type: item.type,
+      metal: item.metal || '',
+      price: item.price,
+      charms: item.charms || [],
+      title: item.title || '',
+      sheetId: item.sheetId || ''
     };
+  });
 
-    fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(result => {
-      
-      // Handle Out of Stock
-      if(result.result === "error" && result.type === "out_of_stock") {
-         if(whatsappWindow) whatsappWindow.close(); // Close the preemptive window
-         sessionStorage.setItem('pyc_stock_error_log', result.message);
-         document.getElementById('stockErrorMsg').textContent = "Some items are out of stock. Please fix your cart.";
-         document.getElementById('outOfStockModal').style.display = 'flex';
-         btn.innerHTML = originalText;
-         btn.disabled = false;
-         return; 
-      }
+  const fullNameCombined = (data.firstName + " " + data.lastName).trim();
+  
+  // Keep analytics logic for backend data, even if we treat all UX as mobile
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      console.log("Order Saved:", result);
-      
-      let itemsStr = "";
-      cart.forEach((item, i) => {
-        let desc = item.type;
-        if(item.type === 'Bracelet') desc += ` (${item.charms.length} charms)`;
-        else if(item.type.includes('Combo')) desc += ` (Combo)`;
-        else if(item.isReadyMade) desc += ` (${item.title})`;
-        itemsStr += `\n${i+1}. ${desc} - Rs. ${item.price}`;
-      });
-      
-      let giftDetailsStr = "";
-      if (data.isGift) {
-        giftDetailsStr = `\n\n🎁 *GIFT DETAILS*`;
-        giftDetailsStr += `\n*Receiver:* ${data.receiverName}`;
-        giftDetailsStr += `\n*Phone:* ${data.receiverPhone}`;
-        
-        if (data.relation && data.relation.trim() !== "") {
-          giftDetailsStr += `\n*Relation:* ${data.relation}`;
-        }
-        if (data.occasion && data.occasion.trim() !== "") {
-          giftDetailsStr += `\n*Occasion:* ${data.occasion}`;
-        }
-        if (data.giftMessage && data.giftMessage.trim() !== "") {
-          giftDetailsStr += `\n*Note:* ${data.giftMessage}`;
-        }
-      }
+  const payload = {
+    order_id: orderID,
+    order_type: "WhatsApp Checkout",
+    customer_first_name: data.firstName,
+    customer_last_name: data.lastName,
+    customer_phone: data.phone,
+    customer_email: data.email,
+    shipping_address: data.addressLine1 + ", " + data.addressLine2 + (data.landmark ? ", " + data.landmark : ""),
+    city: data.city,
+    pincode: data.pincode,
+    vibe: data.vibe,
+    vibe_custom_text: data.vibeText,
+    is_gift: data.isGift,
+    receiver_name: data.receiverName,
+    receiver_phone: data.receiverPhone,
+    relation: data.relation,
+    occasion: data.occasion,
+    gift_message: data.giftMessage,
+    items_json: itemsClean,
+    combo_applied: document.getElementById('comboRow').style.display !== 'none',
+    subtotal: document.getElementById('subtotalVal').textContent,
+    combo_discount: document.getElementById('comboVal').textContent,
+    coupon_code: appliedCoupon ? appliedCoupon.code : "",
+    coupon_discount: document.getElementById('couponVal').textContent,
+    shipping_fee: document.getElementById('shippingVal').textContent,
+    final_amount: document.getElementById('finalTotal').textContent,
+    device_type: isMobile ? "Mobile" : "Desktop",
+    utm_source: firstTouchData.source || "direct",
+    utm_campaign: firstTouchData.campaign || "",
+    utm_medium: firstTouchData.medium || "",
+  };
 
-      let msg = `Hey PickYourCharms!✨\nI’ve just placed an order! 💌\n\n*Order ID:* ${orderID}\n*Name:* ${fullNameCombined}\n\n*Items:*${itemsStr}${giftDetailsStr}\n\n*Total:* ${payload.final_amount}`;
+  // --- 4. SEND TO SERVER ---
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+  .then(response => response.json())
+  .then(result => {
+    
+    // CASE: OUT OF STOCK
+    if (result.result === "error" && result.type === "out_of_stock") {
+      sessionStorage.setItem('pyc_stock_error_log', result.message);
+      document.getElementById('stockErrorMsg').textContent = "Some items in your cart just went out of stock.";
+      document.getElementById('outOfStockModal').style.display = 'flex';
       
-      const url = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
-
-      // ✅ EXECUTE REDIRECT
-      if (!isMobile && whatsappWindow) {
-          // Desktop: Redirect the tab we opened earlier
-          whatsappWindow.location.href = url;
-      } else {
-          // Mobile: Try direct location change
-          window.location.href = url;
-          
-          // Fallback for aggressive iOS: If redirection fails, show a manual link
-          setTimeout(() => {
-              // If we are still on this page after 1 second, the redirect failed.
-              // We create a visible link for the user to click manually.
-              const manualLink = document.createElement('a');
-              manualLink.href = url;
-              manualLink.innerHTML = "Click here to open WhatsApp";
-              manualLink.style.cssText = "display:block; margin-top:10px; color:#25D366; font-weight:bold; text-decoration:underline;";
-              
-              // Only append if not already there
-              if(!document.getElementById('manualWA')) {
-                  manualLink.id = 'manualWA';
-                  document.querySelector('.footer-stack').appendChild(manualLink);
-              }
-          }, 1500);
-      }
-      
-      // Show Modal
-      sessionStorage.setItem('pyc_awaiting_payment', 'true');
-      document.getElementById('orderConfirmationModal').style.display = 'flex';
+      // Reset Button immediately
       btn.innerHTML = originalText;
       btn.disabled = false;
-    })
-    .catch(error => {
-      console.error('Error saving order:', error);
-      if(whatsappWindow) whatsappWindow.close();
-      alert("Network error. Please try again or contact support.");
-      btn.innerHTML = originalText;
-      btn.disabled = false;
+      return; 
+    }
+
+    // CASE: SUCCESS
+    console.log("Order Saved:", result);
+
+    let itemsStr = "";
+    cart.forEach((item, i) => {
+      let desc = item.type;
+      if (item.type === 'Bracelet') desc += ` (${item.charms.length} charms)`;
+      else if (item.type.includes('Combo')) desc += ` (Combo)`;
+      else if (item.isReadyMade) desc += ` (${item.title})`;
+      itemsStr += `\n${i + 1}. ${desc} - Rs. ${item.price}`;
     });
+
+    let giftDetailsStr = "";
+    if (data.isGift) {
+      giftDetailsStr = `\n\n🎁 *GIFT DETAILS*`;
+      giftDetailsStr += `\n*Receiver:* ${data.receiverName}`;
+      giftDetailsStr += `\n*Phone:* ${data.receiverPhone}`;
+      if (data.relation) giftDetailsStr += `\n*Relation:* ${data.relation}`;
+      if (data.occasion) giftDetailsStr += `\n*Occasion:* ${data.occasion}`;
+      if (data.giftMessage) giftDetailsStr += `\n*Note:* ${data.giftMessage}`;
+    }
+
+    const msg = `Hey PickYourCharms!✨\nI’ve just placed an order! 💌\n\n*Order ID:* ${orderID}\n*Name:* ${fullNameCombined}\n\n*Items:*${itemsStr}${giftDetailsStr}\n\n*Total:* ${payload.final_amount}`;
+    const waUrl = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
+
+    // --- UNIVERSAL REDIRECT (NO POPUPS) ---
+    // This navigates the current tab. No browser blocks this.
+    window.location.href = waUrl;
+
+    // Show modal & Reset Button
+    document.getElementById('orderConfirmationModal').style.display = 'flex';
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  })
+  .catch(error => {
+    // CASE: NETWORK ERROR
+    console.error('Error saving order:', error);
+    
+    alert("Network error saving order details. Opening WhatsApp directly...");
+    
+    const errorUrl = `https://wa.me/${PHONE_NUMBER}?text=Order%20${orderID}%20(Error%20Saving%20Data)`;
+    
+    // Direct navigation fallback
+    window.location.href = errorUrl;
+
+    // Reset Button
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  });
 }
 
   function handleBackNavigation() {
