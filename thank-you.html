@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Confirmed - PickYourCharms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="desktop.css">
+  <style>
+    /* === INTERNAL STYLES FOR SUCCESS PAGE === */
+    body { background: #fff; }
+    
+    .success-container {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .success-icon-wrapper {
+      width: 80px;
+      height: 80px;
+      background: #f0fdf4; /* Light Green */
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .success-icon-wrapper svg {
+      width: 40px;
+      height: 40px;
+      color: #15803d; /* Brand Green */
+      stroke-width: 2.5;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0 0 12px;
+      color: #111;
+      letter-spacing: -0.02em;
+    }
+
+    p.sub-text {
+      font-size: 15px;
+      color: #666;
+      line-height: 1.5;
+      margin: 0 0 24px;
+    }
+
+    .order-details-card {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 16px;
+      padding: 16px 24px;
+      margin-bottom: 32px;
+      width: 100%;
+    }
+
+    .order-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .order-id {
+      font-size: 18px;
+      font-weight: 700;
+      color: #000;
+      font-family: monospace; /* Monospace for ID clarity */
+    }
+
+    .action-btn {
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s;
+      width: 100%;
+      display: block;
+    }
+    
+    .action-btn:active { transform: scale(0.98); }
+
+    .secondary-link {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #555;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="navbar">
+  <div class="nav-center">
+    <a href="index.html" class="logo-link">
+      <img src="assets/home/PYC_LOGO_TEXT.png" class="logo-img" alt="PickYourCharms">
+    </a>
+  </div>
+</header>
+
+<div class="success-container">
+  
+  <div class="success-icon-wrapper">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  </div>
+
+  <h1>Order Placed! ✨</h1>
+  <p class="sub-text">Thank you for shopping with us. We've received your order and are getting it ready!</p>
+
+  <div class="order-details-card">
+    <div class="order-label">Order ID</div>
+    <div id="displayOrderId" class="order-id">Loading...</div>
+  </div>
+
+  <a href="index.html" class="action-btn">Continue Shopping</a>
+  
+  <button class="secondary-link" onclick="contactSupport()">Need help?</button>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-content">
+    <span class="footer-brand">PickYourCharms</span>
+    <div class="footer-links">
+      <a href="policies.html#terms" class="footer-link">Terms & Conditions</a>
+      <a href="policies.html#refund" class="footer-link">Refund Policy</a>
+      <a href="policies.html#return" class="footer-link">Return Policy</a>
+      <a href="policies.html#shipping" class="footer-link">Shipping Policy</a>
+      <a href="policies.html#privacy" class="footer-link">Privacy Policy</a>
+    </div>
+    <div class="footer-copyright">© 2026 PickYourCharms. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  // 1. Get Order ID from URL (e.g., thank-you.html?orderId=PYC-12345)
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('orderId');
+  
+  if (orderId) {
+    document.getElementById('displayOrderId').textContent = orderId;
+  } else {
+    document.getElementById('displayOrderId').textContent = "Pending";
+  }
+
+  // 2. Clear Cart Data (Since order is successful)
+  // We do this here as a safety measure to ensure the cart is empty
+  // if the user hits "Back" or if the previous page missed it.
+  localStorage.removeItem('pyc_cart');
+  sessionStorage.removeItem('pyc_draft');
+  sessionStorage.removeItem('pyc_checkout_visited');
+
+  function contactSupport() {
+    window.location.href = "mailto:pickyourcharms.official@gmail.com";
+  }
+</script>
+
+</body>
+</html>
