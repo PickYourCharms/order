@@ -101,15 +101,15 @@
     
     .action-btn:active { transform: scale(0.98); }
 
-    .secondary-link {
-      margin-top: 16px;
+    .help-link {
+      margin-top: 20px;
       font-size: 14px;
       color: #555;
       text-decoration: underline;
       cursor: pointer;
-      background: none;
-      border: none;
+      display: inline-block;
     }
+    .help-link:hover { color: #000; }
 
     @keyframes popIn {
       0% { transform: scale(0); opacity: 0; }
@@ -121,12 +121,13 @@
 <body>
 
 <header class="navbar">
-  <div class="nav-center">
+  <div class="nav-left"></div> <div class="nav-center">
     <a href="index.html" class="logo-link">
       <img src="assets/home/PYC_LOGO_TEXT.png" class="logo-img" alt="PickYourCharms">
     </a>
   </div>
-</header>
+
+  <div class="nav-right"></div> </header>
 
 <div class="success-container">
   
@@ -141,12 +142,12 @@
 
   <div class="order-details-card">
     <div class="order-label">Order ID</div>
-    <div id="displayOrderId" class="order-id">Loading...</div>
+    <div id="displayOrderId" class="order-id">Pending</div>
   </div>
 
   <a href="index.html" class="action-btn">Continue Shopping</a>
   
-  <button class="secondary-link" onclick="contactSupport()">Need help?</button>
+  <a href="mailto:pickyourcharms.official@gmail.com" class="help-link">Need help?</a>
 </div>
 
 <footer class="site-footer">
@@ -164,26 +165,18 @@
 </footer>
 
 <script>
-  // 1. Get Order ID from URL (e.g., thank-you.html?orderId=PYC-12345)
+  // 1. Get Order ID from URL
   const params = new URLSearchParams(window.location.search);
   const orderId = params.get('orderId');
   
   if (orderId) {
     document.getElementById('displayOrderId').textContent = orderId;
-  } else {
-    document.getElementById('displayOrderId').textContent = "Pending";
   }
 
-  // 2. Clear Cart Data (Since order is successful)
-  // We do this here as a safety measure to ensure the cart is empty
-  // if the user hits "Back" or if the previous page missed it.
+  // 2. Clear Cart Data
   localStorage.removeItem('pyc_cart');
   sessionStorage.removeItem('pyc_draft');
   sessionStorage.removeItem('pyc_checkout_visited');
-
-  function contactSupport() {
-    window.location.href = "mailto:pickyourcharms.official@gmail.com";
-  }
 </script>
 
 </body>
