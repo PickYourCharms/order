@@ -440,6 +440,15 @@ cta.onclick = function() {
 };
 
 function addToCart(item) {
+  if(typeof fbq !== 'undefined') {
+    fbq('track', 'AddToCart', {
+      content_name: 'Custom Bracelet (' + item.metal + ')',
+      content_ids: ['custom_bracelet_' + item.metal], 
+      content_type: 'product',
+      value: Number(item.price),
+      currency: 'INR'
+    });
+  }
   window.history.pushState({ page: 'frozen' }, null, window.location.href);
   let cart = JSON.parse(localStorage.getItem('pyc_cart') || '[]');
   cart.push(item);
